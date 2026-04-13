@@ -12,10 +12,12 @@ path = ".algokit/generators/create_env_file"
 [project]
 type = 'contract'
 name = 'refugee-identity-system'
-artifacts = 'smart_contracts/artifacts'
+# Blockchain moved into Nexathon for full integration
+artifacts = 'Nexathon/blockchain/artifacts'
 
 [project.deploy]
-command = "poetry run python -m smart_contracts deploy"
+# PYTHONPATH so blockchain package (Nexathon/blockchain) is found — use env (AlgoKit resolves the first token as the executable)
+command = "env PYTHONPATH=Nexathon poetry run python -m blockchain deploy"
 
 [project.deploy.testnet]
 environment_secrets = [
@@ -30,17 +32,20 @@ environment_secrets = [
 [project.run]
 # Commands intented for use locally and in CI
 build = { commands = [
-  'poetry run python -m smart_contracts build',
+  'env PYTHONPATH=Nexathon poetry run python -m blockchain build',
 ], description = 'Build all smart contracts in the project' }
+test = { commands = [
+  'poetry run pytest tests/ -v',
+], description = 'Run integration tests (requires LocalNet: algokit localnet start)' }
 lint = { commands = [
 ], description = 'Perform linting' }
 audit-teal = { commands = [
   # 🚨 IMPORTANT 🚨: For strict TEAL validation, remove --exclude statements. The default starter contract is not for production. Ensure thorough testing and adherence to best practices in smart contract development. This is not a replacement for a professional audit.
-  'algokit task analyze smart_contracts/artifacts --recursive --force --exclude rekey-to --exclude is-updatable --exclude missing-fee-check --exclude is-deletable --exclude can-close-asset --exclude can-close-account --exclude unprotected-deletable --exclude unprotected-updatable',
+  'algokit task analyze Nexathon/blockchain/artifacts --recursive --force --exclude rekey-to --exclude is-updatable --exclude missing-fee-check --exclude is-deletable --exclude can-close-asset --exclude can-close-account --exclude unprotected-deletable --exclude unprotected-updatable',
 ], description = 'Audit TEAL files' }
 
 # Commands intented for CI only, prefixed with `ci-` by convention
 ci-teal-diff = { commands = [
-  'git add -N ./smart_contracts/artifacts',
-  'git diff --exit-code --minimal ./smart_contracts/artifacts',
+  'git add -N ./Nexathon/blockchain/artifacts',
+  'git diff --exit-code --minimal ./Nexathon/blockchain/artifacts',
 ], description = 'Check TEAL files for differences' }

@@ -1,10 +1,15 @@
 [tool.poetry]
 name = "refugee-identity-system"
 version = "0.1.0"
-description = "Algorand smart contracts"
+description = "Algorand smart contracts + Nexathon app"
 authors = ["Ananya <ananyaaa3080@gmail.com>"]
 readme = "README.md"
 package-mode = false
+# Make Nexathon packages importable: blockchain (contracts) and Nexathon (backend)
+packages = [
+    {include = "blockchain", from = "Nexathon"},
+    {include = "Nexathon"},
+]
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -12,10 +17,19 @@ algokit-utils = "^4.0.0"
 python-dotenv = "^1.0.0"
 algorand-python = "^3"
 algorand-python-testing = "^1"
+# Backend API (FastAPI) for Nexathon - integrates with blockchain
+fastapi = "^0.115.0"
+uvicorn = {extras = ["standard"], version = "^0.32.0"}
 
 [tool.poetry.group.dev.dependencies]
 algokit-client-generator = "^2.1.0"
 puyapy = "*"
+pytest = "^8.0"
+pytest-order = "^1.0"
+
+[tool.pytest.ini_options]
+# Add Nexathon to path so blockchain package is importable in tests
+pythonpath = ["Nexathon"]
 
 [build-system]
 requires = ["poetry-core"]

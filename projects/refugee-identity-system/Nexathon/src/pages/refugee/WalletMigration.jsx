@@ -5,92 +5,160 @@ import {
     ArrowRight, ShieldCheck, RefreshCw, Loader2, AlertTriangle, Fingerprint
 } from 'lucide-react';
 import { clsx } from 'clsx';
-import { MOCK_REFUGEES } from '../../utils/mockData';
 import { useToast } from '../../context/ToastContext';
-import { LoadingSpinner } from '../../components/ui/Common';
 import { useWallet } from '../../context/WalletContext';
 import { peraWallet } from '../../utils/wallet';
+import { api } from '../../utils/api';
 
 const WalletMigration = () => {
     const navigate = useNavigate();
     const { showToast } = useToast();
-    const { account, connectWallet: contextConnectWallet } = useWallet();
+    const { account, setManualAccount } = useWallet();
     const [step, setStep] = useState(1);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [signatureStatus, setSignatureStatus] = useState('');
     const [migrationData, setMigrationData] = useState({
-        refugee: MOCK_REFUGEES[0],
+        identityId: '',
+        custodialAddress: '',
+        qrPayload: '',
         newAddress: '',
         isWalletConnected: false
     });
 
     const nextStep = () => setStep(prev => prev + 1);
 
+    const shorten = (addr) => (addr ? `${addr.slice(0, 6)}…${addr.slice(-6)}` : '');
+
+    const tryParseQr = () => {
+        const raw = (migrationData.qrPayload || '').trim();
+        if (!raw) return;
+
+        // Accept either JSON ({ identity_id, old_wallet }) or query-string-ish payload.
+        let identity_id = '';
+        let old_wallet = '';
+        try {
+            const obj = JSON.parse(raw);
+            identity_id = obj.identity_id || obj.identityId || obj.identity || '';
+            old_wallet = obj.old_wallet || obj.oldWallet || obj.w1 || obj.custodial_wallet || '';
+        } catch {
+            try {
+                const s = raw.startsWith('http') ? new URL(raw).search : raw;
+                const params = new URLSearchParams(s.startsWith('?') ? s : `?${s}`);
+                identity_id = params.get('identity_id') || params.get('identityId') || params.get('identity') || '';
+                old_wallet = params.get('old_wallet') || params.get('oldWallet') || params.get('w1') || params.get('custodial_wallet') || '';
+            } catch {
+                // Ignore parse errors; user can fill manually.
+            }
+        }
+
+        setMigrationData((p) => ({
+            ...p,
+            identityId: (identity_id || p.identityId || '').trim(),
+            custodialAddress: (old_wallet || p.custodialAddress || '').trim(),
+        }));
+    };
+
     const simulateScan = () => {
+        const identityId = migrationData.identityId.trim();
+        const w1 = migrationData.custodialAddress.trim();
+        if (!identityId) {
+            showToast('error', 'Identity ID required', 'Scan your original camp QR code or enter the identity_id manually.');
+            return;
+        }
+        if (!w1) {
+            showToast('error', 'Custodial address required', 'Enter or paste the wallet address from your camp QR code (W1).');
+            return;
+        }
         setIsProcessing(true);
         setTimeout(() => {
             setIsProcessing(false);
             nextStep();
-            showToast('success', 'Identity Found', 'Security credentials verified from your QR card.');
-        }, 1500);
+            showToast('success', 'Identity Found', 'Custodial wallet address captured for migration.');
+        }, 800);
     };
 
     const connectWallet = async () => {
         setIsProcessing(true);
         try {
-            await contextConnectWallet();
-            // Note: WalletContext will update 'account'
-            // We'll use the updated account when it's available
-            setMigrationData(prev => ({
+            const newAccounts = await peraWallet.connect();
+            const addr = newAccounts[0];
+            setManualAccount(addr);
+            setMigrationData((prev) => ({
                 ...prev,
-                newAddress: 'Awaiting Handshake...', // Temporary until account is confirmed
-                isWalletConnected: true
+                newAddress: addr,
+                isWalletConnected: true,
             }));
-
-            // Re-sync with the real account once connected (demo logic)
-            const realAccount = localStorage.getItem('walletAddress');
-            if (realAccount) {
-                setMigrationData(prev => ({ ...prev, newAddress: realAccount }));
-            }
-
             setIsProcessing(false);
             showToast('success', 'Wallet Linked', 'Your new Pera wallet has been securely paired.');
         } catch (error) {
-            console.error("Connection Error:", error);
+            console.error('Connection Error:', error);
             setIsProcessing(false);
-            showToast('error', 'Connection Failed', 'User rejected the connection request.');
+            if (error?.data?.type !== 'CONNECT_MODAL_CLOSED') {
+                showToast('error', 'Connection Failed', 'User rejected the connection request.');
+            }
         }
     };
 
     const finalSubmit = async () => {
         setIsProcessing(true);
+        setSignatureStatus('Waiting for wallet approval...');
+        const newAddr = migrationData.newAddress === 'Awaiting Handshake...' ? account : migrationData.newAddress;
+        const oldAddr = migrationData.custodialAddress.trim();
+        const identityId = migrationData.identityId.trim();
+        if (!identityId || !oldAddr || !newAddr) {
+            setIsProcessing(false);
+            setSignatureStatus('');
+            showToast('error', 'Missing required data', 'identity_id, custodial wallet (W1), and Pera wallet (W2) are required.');
+            return;
+        }
 
         try {
-            // Force a real wallet interaction to "sign" the migration
             await peraWallet.reconnectSession();
+            setSignatureStatus('Waiting for wallet approval...');
+            const { data } = await api.migrationMessage({
+                identity_id: identityId,
+                old_wallet: oldAddr,
+                new_wallet: newAddr,
+            });
+            const msgBytes = Uint8Array.from(atob(data.message_b64), (c) => c.charCodeAt(0));
+            const walletPrompt = `Migrate your identity from your camp-issued ID to your personal wallet.
 
-            const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-            const response = await fetch(`${BASE_URL}/migrate-wallet`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "ngrok-skip-browser-warning": "69420"
-                },
-                body: JSON.stringify({
-                    oldWalletAddress: migrationData.refugee.walletAddress,
-                    newWalletAddress: migrationData.newAddress === 'Awaiting Handshake...' ? account : migrationData.newAddress,
-                    walletType: 'pera'
-                })
+Old Wallet (W1): ${shorten(oldAddr)}
+New Wallet (W2): ${shorten(newAddr)}
+
+By signing, you confirm ownership of this wallet.`;
+
+            let signed;
+            try {
+                signed = await peraWallet.signData([{ data: msgBytes, message: walletPrompt }], newAddr);
+            } catch (e) {
+                setIsProcessing(false);
+                setSignatureStatus('');
+                showToast('error', 'Signature required to continue migration', 'Signature required to continue migration');
+                return;
+            }
+
+            setSignatureStatus('Signature received');
+            const sigU8 = signed[0];
+            const signature_b64 = btoa(String.fromCharCode.apply(null, [...sigU8]));
+
+            setSignatureStatus('Verification in progress...');
+            await api.migrationSubmit({
+                identity_id: identityId,
+                old_wallet: oldAddr,
+                new_wallet: newAddr,
+                signed_message: signature_b64,
             });
 
-            if (!response.ok) throw new Error("Backend failed to migrate wallet");
-
             setIsProcessing(false);
-            nextStep(); // Moves to the Success screen
-            showToast('success', 'Migration Complete', 'Your identity is now under your full sovereignty.');
+            setSignatureStatus('');
+            nextStep();
+            showToast('success', 'Request submitted', 'Camp staff will approve your on-chain migration when your wallet has opted in to the app.');
         } catch (error) {
-            console.error("Migration Error:", error);
+            console.error('Migration Error:', error);
             setIsProcessing(false);
-            showToast('error', 'Migration Failed', 'User rejected the signature or backend failed.');
+            setSignatureStatus('');
+            showToast('error', 'Migration Failed', error?.message || 'Signature rejected or backend error.');
         }
     };
 
@@ -138,12 +206,44 @@ const WalletMigration = () => {
                             )}
                         </div>
 
+                        <label className="block w-full text-left text-[#7a94bb] text-[10px] font-bold uppercase tracking-widest mb-2">
+                            QR payload (must contain identity_id + W1)
+                        </label>
+                        <textarea
+                            value={migrationData.qrPayload}
+                            onChange={(e) => setMigrationData((p) => ({ ...p, qrPayload: e.target.value }))}
+                            onBlur={tryParseQr}
+                            placeholder='Paste scanned QR content here (JSON or query params). Example: {"identity_id":"...","old_wallet":"..."}'
+                            className="w-full mb-6 font-mono text-xs bg-[#060d1f] border border-[#1a2d4a] rounded-xl px-4 py-3 text-[#e2eaf8] placeholder:text-[#3d5278] min-h-[90px]"
+                        />
+
+                        <label className="block w-full text-left text-[#7a94bb] text-[10px] font-bold uppercase tracking-widest mb-2">
+                            identity_id from QR
+                        </label>
+                        <input
+                            type="text"
+                            value={migrationData.identityId}
+                            onChange={(e) => setMigrationData((p) => ({ ...p, identityId: e.target.value.trim() }))}
+                            placeholder="Identity ID from your camp-issued QR"
+                            className="w-full mb-6 font-mono text-xs bg-[#060d1f] border border-[#1a2d4a] rounded-xl px-4 py-3 text-[#e2eaf8] placeholder:text-[#3d5278]"
+                        />
+
+                        <label className="block w-full text-left text-[#7a94bb] text-[10px] font-bold uppercase tracking-widest mb-2">
+                            Custodial wallet (W1) from QR
+                        </label>
+                        <input
+                            type="text"
+                            value={migrationData.custodialAddress}
+                            onChange={(e) => setMigrationData((p) => ({ ...p, custodialAddress: e.target.value.trim() }))}
+                            placeholder="58-character Algorand address from your registration card"
+                            className="w-full mb-6 font-mono text-xs bg-[#060d1f] border border-[#1a2d4a] rounded-xl px-4 py-3 text-[#e2eaf8] placeholder:text-[#3d5278]"
+                        />
                         <button
                             onClick={simulateScan}
                             disabled={isProcessing}
                             className="w-full bg-[#8b5cf6] text-white font-bold py-5 rounded-2xl hover:bg-[#a78bfa] transition-all text-xs tracking-[0.2em] shadow-[0_0_30px_rgba(139,92,246,0.2)] disabled:opacity-50"
                         >
-                            {isProcessing ? 'VERIFYING...' : 'SIMULATE SECURITY CARD SCAN'}
+                            {isProcessing ? 'VERIFYING...' : 'CONFIRM CUSTODIAL ADDRESS'}
                         </button>
                     </div>
                 </div>
@@ -216,7 +316,7 @@ const WalletMigration = () => {
                         <div className="bg-[#060d1f] rounded-2xl border border-[#1a2d4a] overflow-hidden mb-10">
                             <div className="p-4 border-b border-[#1a2d4a]">
                                 <label className="block text-[#3d5278] text-[9px] font-bold uppercase tracking-[0.2em] mb-2">Retiring Managed Wallet</label>
-                                <div className="font-mono text-[#7a94bb] text-[10px] truncate opacity-50">{migrationData.refugee.walletAddress}</div>
+                                    <div className="font-mono text-[#7a94bb] text-[10px] break-all opacity-90">{migrationData.custodialAddress}</div>
                             </div>
                             <div className="flex justify-center p-2">
                                 <ArrowLeftRight className="text-[#3d5278]" size={16} />
@@ -266,19 +366,19 @@ const WalletMigration = () => {
                             <RefreshCw size={56} className="animate-[spin_4s_linear_infinite]" />
                         </div>
 
-                        <h2 className="text-[#10b981] text-4xl font-bold mb-4 tracking-tight uppercase">Migration Complete</h2>
+                        <h2 className="text-[#10b981] text-4xl font-bold mb-4 tracking-tight uppercase">Request Submitted</h2>
                         <p className="text-[#7a94bb] text-lg mb-12 max-w-sm mx-auto">
-                            You now have full sovereignty and control over your digital identity history.
+                            After you opt in to the identity app in Pera, camp admin can approve the migration on-chain.
                         </p>
 
                         <div className="grid gap-4 max-w-sm mx-auto mb-12 text-left">
                             <div className="p-4 bg-[#060d1f] border border-[#1a2d4a] rounded-2xl">
                                 <label className="block text-[#3d5278] text-[9px] font-bold uppercase tracking-widest mb-2">New Active Wallet</label>
-                                <div className="font-mono text-[#00c9b1] text-xs truncate font-bold">PERA3N8OPQR9STU4VWX5YZA6BCD7EFGHIJK</div>
+                                <div className="font-mono text-[#00c9b1] text-xs break-all font-bold">{migrationData.newAddress === 'Awaiting Handshake...' ? account : migrationData.newAddress}</div>
                             </div>
                             <div className="p-4 bg-[#060d1f] border border-[#1a2d4a] rounded-2xl opacity-40">
                                 <label className="block text-[#ef4444] text-[9px] font-bold uppercase tracking-widest mb-2">Retired Wallet</label>
-                                <div className="font-mono text-[#7a94bb] text-xs truncate line-through">CUST9K4LMNO5PQRT6UVWX7YZA8BCDE1F2GH</div>
+                                <div className="font-mono text-[#7a94bb] text-xs break-all line-through">{migrationData.custodialAddress}</div>
                             </div>
                             <div className="flex justify-between px-4 text-[10px] text-[#3d5278] font-bold uppercase tracking-widest">
                                 <span>Block Hash</span>
@@ -305,7 +405,7 @@ const WalletMigration = () => {
                         </div>
                         <h3 className="text-white text-3xl font-bold mb-4 tracking-tight">Confirm Sovereign Transition</h3>
                         <p className="text-[#7a94bb] mb-12 max-w-xs uppercase text-[10px] tracking-[0.3em] font-bold border-l-2 border-[#8b5cf6] pl-6 h-8 flex items-center">
-                            Waiting for mobile signature...
+                            {signatureStatus || 'Waiting for wallet approval...'}
                         </p>
                         <div className="flex items-center gap-1.5 opacity-40">
                             <div className="w-1.5 h-1.5 rounded-full bg-[#8b5cf6] animate-bounce" />

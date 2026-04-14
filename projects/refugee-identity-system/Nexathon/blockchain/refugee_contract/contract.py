@@ -17,6 +17,7 @@ from algopy import (
     Txn,
     UInt64,
     arc4,
+    op,
     subroutine,
 )
 
@@ -120,9 +121,17 @@ class RefugeeContract(ARC4Contract):
     def migrate_wallet(self, old_wallet: Account, new_wallet: Account) -> None:
         """Admin migrates identity from custodial wallet (old) to refugee's new wallet."""
         assert self._is_admin(), "migrate_wallet: sender not admin"
+        # Accounts[0] is the sender (admin); W1 and W2 must be at indices 1 and 2.
+        # Callers (AlgoKit / SDK) should pass account_references [W1, W2, admin] so the
+        # foreign-account list normalizes to [sender, W1, W2] after deduplication.
+        assert op.Txn.num_accounts >= UInt64(3), "migrate_wallet: missing foreign accounts"
+        assert old_wallet == op.Txn.accounts(1), "migrate_wallet: accounts[1] must be W1"
+        assert new_wallet == op.Txn.accounts(2), "migrate_wallet: accounts[2] must be W2"
         assert old_wallet.is_opted_in(Global.current_application_id), "migrate_wallet: old wallet not opted in"
         assert new_wallet.is_opted_in(Global.current_application_id), "migrate_wallet: new wallet not opted in"
         assert old_wallet in self.identity_hash, "migrate_wallet: old wallet not registered"
+        # Prevent overwriting an already-registered W2 identity.
+        assert new_wallet not in self.identity_hash, "migrate_wallet: new wallet already registered"
         old_id = self.identity_hash[old_wallet]
         assert old_id != Bytes(b"MIGRATED"), "migrate_wallet: old wallet already migrated"
         # Copy all identity data to new wallet

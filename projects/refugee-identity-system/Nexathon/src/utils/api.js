@@ -23,4 +23,13 @@ export const api = {
     getRefugeeState: (address) => request('GET', `/api/blockchain/refugee-state/${address}`),
     claimAid: (address) => request('POST', '/api/blockchain/claim-aid', { address }),
     generateCustodialWallet: () => request('POST', '/api/blockchain/generate-custodial-wallet'),
+    migrationMessage: ({ identity_id, old_wallet, new_wallet }) =>
+        request(
+            'GET',
+            `/api/blockchain/migration-message?identity_id=${encodeURIComponent(identity_id)}&old_wallet=${encodeURIComponent(old_wallet)}&new_wallet=${encodeURIComponent(new_wallet)}`
+        ),
+    migrationSubmit: (body) => request('POST', '/api/blockchain/migration-request', body),
+    migrationRequests: () => request('GET', '/api/blockchain/migration-requests'),
+    migrationApprove: (id) => request('POST', '/api/blockchain/migration-approve', { id }),
+    migrationReject: (id) => request('POST', '/api/blockchain/migration-reject', { id }),
 };

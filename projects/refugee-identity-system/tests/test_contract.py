@@ -8,6 +8,7 @@ import hashlib
 
 import algokit_utils
 import pytest
+from algosdk import encoding
 
 # Test hash constants (same as original refugee-identity-contract)
 IDENTITY_HASH = hashlib.sha256(b"Ahmed Ali DOB:1990 Syrian").digest()
@@ -196,6 +197,12 @@ class TestRefugeeContract:
         self, client, algorand, deployer, aid_worker, refugee
     ):
         """Admin migrates identity from custodial to new self-sovereign wallet."""
+        w1_before = client.state.local_state(refugee.address)
+        assert w1_before.identity_hash == IDENTITY_HASH
+        assert w1_before.personhood_hash == PERSONHOOD_HASH
+        assert w1_before.age_proof_hash == AGE_PROOF_HASH
+        assert w1_before.aid_claimed == 1
+
         new_wallet = algorand.account.random()
         algorand.send.payment(
             algokit_utils.PaymentParams(
@@ -213,19 +220,34 @@ class TestRefugeeContract:
             ),
         )
 
-        # Admin migrates
+        # Admin migrates (foreign accounts: W1 at Accounts[1], W2 at Accounts[2]; slot 0 is sender)
         client.send.migrate_wallet(
             args=(refugee.address, new_wallet.address),
             params=algokit_utils.CommonAppCallParams(
                 sender=deployer.address,
                 signer=deployer.signer,
+                account_references=[refugee.address, new_wallet.address, deployer.address],
             ),
         )
 
-        # New wallet has identity
-        new_identity = client.state.local_state(new_wallet.address).identity_hash
-        assert new_identity == IDENTITY_HASH
+        w2 = client.state.local_state(new_wallet.address)
+        assert w2.identity_hash == IDENTITY_HASH
+        assert w2.personhood_hash == PERSONHOOD_HASH
+        assert w2.age_proof_hash == AGE_PROOF_HASH
+        assert w2.aid_claimed == 1
+        assert w2.wallet_address == encoding.decode_address(new_wallet.address)
 
-        # Old wallet marked as migrated
-        old_identity = client.state.local_state(refugee.address).identity_hash
-        assert old_identity == MIGRATED_SENTINEL
+        old_after = client.state.local_state(refugee.address)
+        assert old_after.identity_hash == MIGRATED_SENTINEL
+        assert old_after.personhood_hash == PERSONHOOD_HASH
+        assert old_after.age_proof_hash == AGE_PROOF_HASH
+
+        with pytest.raises(Exception):
+            client.send.migrate_wallet(
+                args=(refugee.address, new_wallet.address),
+                params=algokit_utils.CommonAppCallParams(
+                    sender=deployer.address,
+                    signer=deployer.signer,
+                    account_references=[refugee.address, new_wallet.address, deployer.address],
+                ),
+            )

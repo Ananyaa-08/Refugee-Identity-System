@@ -3,7 +3,7 @@
   "sources": [
     "../../refugee_contract/contract.py"
   ],
-  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AA6BQ;AAAsB;AAAtB;AANR;;AAAA;;;AAAA;;AAAA;AAAA;AAAA;;AAAA;AAAA;;;;;;;;;;;;;;;;;;;;;;AAAA;;;AAAA;;;;;;;;;;AAAA;AAAA;;AAAA;;;;;;AAAA;AAsBK;;AAAA;AANA;;AAAA;AAAA;AAGG;;AAAmB;;AAAnB;AACA;AAAsB;AAAtB;AAJH;AAAA;AA2BA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;AAAA;AAAA;AAAA;AAGU;;;AAAP;AACgB;;;AAAA;AAAA;;AACI;;;;;AAAjB;AAAX;;;AACY;AAAA;AAAA;AAA6B;AAA7B;AAAA;AANP;AAAA;AAQc;;AAAiB;;;;;;;;AAAjB;AAAP;AACA;AAAA;AAAA;AAA6B;AAA7B;AAAA;;;;AAEP;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;AAAA;AAAA;AAAA;AAAA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;AAAA;AAAA;AAAA;AAAA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;AAAA;AAAA;AAAA;AASU;;;AAAP;AACO;;AAAoB;;AAApB;AAAP;AAEyB;;AAAA;AAAA;AAAA;AAAA;;AAClB;AAAP;AAEgB;;AAAA;;;AACI;;AAAA;;;AACH;;AAAA;;;AACV;;AAAiB;;AAAjB;AAAP;AACO;;AAAqB;;AAArB;AAAP;AACO;AAAkB;;AAAlB;AAAP;AAEA;;AAAA;;AAAA;;AAAA;AACA;;AAAA;AAAA;;AAAA;AACA;;AAAA;;AAAA;;AAAA;AACA;;AAAA;;AAAA;;AAAA;AACA;AAA4B;AAA5B;AAEA;AAAA;AAAA;AAAA;AAAuB;AAAvB;AAAA;AAAA;AAAA;AA5BH;AAAA;;;AA8BA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAGU;;;AAAA;;;AAAoB;;;AAApB;;;;AAAP;AAC2B;;AAApB;;AAAA;AAAA;;AAAA;AAAP;AACO;AAAA;AAAW;AAAX;AAAA;;AAAP;AAEmB;AAAA;AAAA;AAAA;AAAA;;AACZ;;;AAAA;;AAAA;;;;AAAP;AACA;AAAA;AAA4B;AAA5B;AATH;AAAA;;;;;;;;;AAWA;;;AAAA;;AAAA;AAAA;AAAA;AAAA;AAAA;;;AAAA;AAAA;;AAAA;AAAA;AAAA;AAAA;AAAA;AAGU;;;AAAP;AACO;;AAAuB;;AAAvB;AAAP;AAC8B;;AAAvB;AAAP;AACO;AAAA;AAAc;AAAd;AAAA;AAAA;AAAA;;AAAA;;AAAP;AAEiB;;AAAV;AAAP;AAEiB;AAAA;AAAA;;AAAA;AAAA;AAAA;;AAAA;AACP;AAAA;AAAA;;AAAA;AAAA;AAAA;;AAAA;AACa;AAAA;AAAA;AACb;AAAV;AACR;;;;;;;AAEQ;;AAAA;AAAA;;AAAA;;AAAA;AACA;AAAA;AAAA;;AAAA;AACA;AAAA;;AAAA;;AAAA;AACA;AAAA;;AAAA;;AAAA;AACA;AAAA;;AAAA;AAEA;;AAAA;AAAiC;;AAAjC;AAtBH;AAAA;AA7DU;;AAAoB;AAAA;;AAAA;AAAA;AAApB;AAAP;AAKiB;AAAd;;AAAA;AAAA;AAAA;;AAAX;;;AACmB;AAAgB;;AAAhB;AAAA;AAAA;AAAA;AAA+B;AAA/B;AAAP;AACG;AAAP",
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AA8BQ;AAAsB;AAAtB;AANR;;AAAA;;;AAAA;;AAAA;AAAA;AAAA;;AAAA;AAAA;;;;;;;;;;;;;;;;;;;;;;AAAA;;;AAAA;;;;;;;;;;AAAA;AAAA;;AAAA;;;;;;AAAA;AAsBK;;AAAA;AANA;;AAAA;AAAA;AAGG;;AAAmB;;AAAnB;AACA;AAAsB;AAAtB;AAJH;AAAA;AA2BA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;AAAA;AAAA;AAAA;AAGU;;;AAAP;AACgB;;;AAAA;AAAA;;AACI;;;;;AAAjB;AAAX;;;AACY;AAAA;AAAA;AAA6B;AAA7B;AAAA;AANP;AAAA;AAQc;;AAAiB;;;;;;;;AAAjB;AAAP;AACA;AAAA;AAAA;AAA6B;AAA7B;AAAA;;;;AAEP;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;AAAA;AAAA;AAAA;AAAA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;AAAA;AAAA;AAAA;AAAA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;AAAA;AAAA;AAAA;AASU;;;AAAP;AACO;;AAAoB;;AAApB;AAAP;AAEyB;;AAAA;AAAA;AAAA;AAAA;;AAClB;AAAP;AAEgB;;AAAA;;;AACI;;AAAA;;;AACH;;AAAA;;;AACV;;AAAiB;;AAAjB;AAAP;AACO;;AAAqB;;AAArB;AAAP;AACO;AAAkB;;AAAlB;AAAP;AAEA;;AAAA;;AAAA;;AAAA;AACA;;AAAA;AAAA;;AAAA;AACA;;AAAA;;AAAA;;AAAA;AACA;;AAAA;;AAAA;;AAAA;AACA;AAA4B;AAA5B;AAEA;AAAA;AAAA;AAAA;AAAuB;AAAvB;AAAA;AAAA;AAAA;AA5BH;AAAA;;;AA8BA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAGU;;;AAAA;;;AAAoB;;;AAApB;;;;AAAP;AAC2B;;AAApB;;AAAA;AAAA;;AAAA;AAAP;AACO;AAAA;AAAW;AAAX;AAAA;;AAAP;AAEmB;AAAA;AAAA;AAAA;AAAA;;AACZ;;;AAAA;;AAAA;;;;AAAP;AACA;AAAA;AAA4B;AAA5B;AATH;AAAA;;;;;;;;;AAWA;;;AAAA;;AAAA;AAAA;AAAA;AAAA;AAAA;;;AAAA;AAAA;;AAAA;AAAA;AAAA;AAAA;AAAA;AAGU;;;AAAP;AAIO;;AAAuB;;AAAvB;AAAP;AACO;;AAAc;;;AAAd;AAAP;AACO;AAAc;;;AAAd;AAAP;AACO;;AAAuB;;AAAvB;AAAP;AACO;AAAuB;;AAAvB;AAAP;AACO;;AAAA;AAAc;AAAd;AAAA;AAAA;AAAA;;AAAA;;AAAP;AAEO;AAAkB;AAAlB;AAAA;;AAAA;AAAP;AAEiB;;AAAV;AAAP;AAEiB;AAAA;AAAA;;AAAA;AAAA;AAAA;;AAAA;AACP;AAAA;AAAA;;AAAA;AAAA;AAAA;;AAAA;AACa;AAAA;AAAA;AACb;AAAV;AACR;;;;;;;AAEQ;;AAAA;AAAA;;AAAA;;AAAA;AACA;AAAA;AAAA;;AAAA;AACA;AAAA;;AAAA;;AAAA;AACA;AAAA;;AAAA;;AAAA;AACA;AAAA;;AAAA;AAEA;;AAAA;AAAiC;;AAAjC;AA9BH;AAAA;AA7DU;;AAAoB;AAAA;;AAAA;AAAA;AAApB;AAAP;AAKiB;AAAd;;AAAA;AAAA;AAAA;;AAAX;;;AACmB;AAAgB;;AAAhB;AAAA;AAAA;AAAA;AAA+B;AAA/B;AAAP;AACG;AAAP",
   "op_pc_offset": 0,
   "pc_events": {
     "1": {
@@ -2581,21 +2581,10 @@
       ]
     },
     "506": {
-      "op": "dig 1",
-      "stack_out": [
-        "old_wallet#0",
-        "new_wallet#0",
-        "old_wallet#0",
-        "new_wallet#0",
-        "old_wallet#0 (copy)"
-      ]
-    },
-    "508": {
-      "op": "global CurrentApplicationID",
+      "op": "txn NumAccounts",
       "defined_out": [
         "new_wallet#0",
         "old_wallet#0",
-        "old_wallet#0 (copy)",
         "tmp%1#1"
       ],
       "stack_out": [
@@ -2603,12 +2592,28 @@
         "new_wallet#0",
         "old_wallet#0",
         "new_wallet#0",
-        "old_wallet#0 (copy)",
         "tmp%1#1"
       ]
     },
+    "508": {
+      "op": "pushint 3",
+      "defined_out": [
+        "3",
+        "new_wallet#0",
+        "old_wallet#0",
+        "tmp%1#1"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0",
+        "new_wallet#0",
+        "tmp%1#1",
+        "3"
+      ]
+    },
     "510": {
-      "op": "app_opted_in",
+      "op": ">=",
       "defined_out": [
         "new_wallet#0",
         "old_wallet#0",
@@ -2623,6 +2628,155 @@
       ]
     },
     "511": {
+      "error": "migrate_wallet: missing foreign accounts",
+      "op": "assert // migrate_wallet: missing foreign accounts",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0",
+        "new_wallet#0"
+      ]
+    },
+    "512": {
+      "op": "dig 1",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0 (copy)"
+      ]
+    },
+    "514": {
+      "op": "txna Accounts 1",
+      "defined_out": [
+        "new_wallet#0",
+        "old_wallet#0",
+        "old_wallet#0 (copy)",
+        "tmp%3#1"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0 (copy)",
+        "tmp%3#1"
+      ]
+    },
+    "517": {
+      "op": "==",
+      "defined_out": [
+        "new_wallet#0",
+        "old_wallet#0",
+        "tmp%4#0"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0",
+        "new_wallet#0",
+        "tmp%4#0"
+      ]
+    },
+    "518": {
+      "error": "migrate_wallet: accounts[1] must be W1",
+      "op": "assert // migrate_wallet: accounts[1] must be W1",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0",
+        "new_wallet#0"
+      ]
+    },
+    "519": {
+      "op": "dup"
+    },
+    "520": {
+      "op": "txna Accounts 2",
+      "defined_out": [
+        "new_wallet#0",
+        "new_wallet#0 (copy)",
+        "old_wallet#0",
+        "tmp%5#0"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0",
+        "new_wallet#0",
+        "new_wallet#0 (copy)",
+        "tmp%5#0"
+      ]
+    },
+    "523": {
+      "op": "==",
+      "defined_out": [
+        "new_wallet#0",
+        "old_wallet#0",
+        "tmp%6#0"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0",
+        "new_wallet#0",
+        "tmp%6#0"
+      ]
+    },
+    "524": {
+      "error": "migrate_wallet: accounts[2] must be W2",
+      "op": "assert // migrate_wallet: accounts[2] must be W2",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0",
+        "new_wallet#0"
+      ]
+    },
+    "525": {
+      "op": "dig 1",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0 (copy)"
+      ]
+    },
+    "527": {
+      "op": "global CurrentApplicationID",
+      "defined_out": [
+        "new_wallet#0",
+        "old_wallet#0",
+        "old_wallet#0 (copy)",
+        "tmp%7#0"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0 (copy)",
+        "tmp%7#0"
+      ]
+    },
+    "529": {
+      "op": "app_opted_in",
+      "defined_out": [
+        "new_wallet#0",
+        "old_wallet#0",
+        "tmp%8#0"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0",
+        "new_wallet#0",
+        "tmp%8#0"
+      ]
+    },
+    "530": {
       "error": "migrate_wallet: old wallet not opted in",
       "op": "assert // migrate_wallet: old wallet not opted in",
       "stack_out": [
@@ -2632,64 +2786,73 @@
         "new_wallet#0"
       ]
     },
-    "512": {
+    "531": {
+      "op": "dup"
+    },
+    "532": {
       "op": "global CurrentApplicationID",
       "defined_out": [
         "new_wallet#0",
+        "new_wallet#0 (copy)",
         "old_wallet#0",
-        "tmp%3#1"
+        "tmp%9#0"
       ],
       "stack_out": [
         "old_wallet#0",
         "new_wallet#0",
         "old_wallet#0",
         "new_wallet#0",
-        "tmp%3#1"
+        "new_wallet#0 (copy)",
+        "tmp%9#0"
       ]
     },
-    "514": {
+    "534": {
       "op": "app_opted_in",
       "defined_out": [
         "new_wallet#0",
         "old_wallet#0",
-        "tmp%4#0"
+        "tmp%10#0"
       ],
       "stack_out": [
         "old_wallet#0",
         "new_wallet#0",
         "old_wallet#0",
-        "tmp%4#0"
+        "new_wallet#0",
+        "tmp%10#0"
       ]
     },
-    "515": {
+    "535": {
       "error": "migrate_wallet: new wallet not opted in",
       "op": "assert // migrate_wallet: new wallet not opted in",
       "stack_out": [
         "old_wallet#0",
         "new_wallet#0",
-        "old_wallet#0"
+        "old_wallet#0",
+        "new_wallet#0"
       ]
     },
-    "516": {
-      "op": "dup",
+    "536": {
+      "op": "dig 1",
       "stack_out": [
         "old_wallet#0",
         "new_wallet#0",
         "old_wallet#0",
+        "new_wallet#0",
         "old_wallet#0 (copy)"
       ]
     },
-    "517": {
+    "538": {
       "op": "intc_0 // 0",
       "stack_out": [
         "old_wallet#0",
         "new_wallet#0",
         "old_wallet#0",
+        "new_wallet#0",
         "old_wallet#0 (copy)",
         "0"
       ]
     },
-    "518": {
+    "539": {
       "op": "bytec_0 // \"identity_hash\"",
       "defined_out": [
         "\"identity_hash\"",
@@ -2702,12 +2865,13 @@
         "old_wallet#0",
         "new_wallet#0",
         "old_wallet#0",
+        "new_wallet#0",
         "old_wallet#0 (copy)",
         "0",
         "\"identity_hash\""
       ]
     },
-    "519": {
+    "540": {
       "op": "app_local_get_ex",
       "defined_out": [
         "maybe_exists%0#0",
@@ -2719,44 +2883,48 @@
         "old_wallet#0",
         "new_wallet#0",
         "old_wallet#0",
+        "new_wallet#0",
         "old_id#0",
         "maybe_exists%0#0"
       ]
     },
-    "520": {
+    "541": {
       "op": "swap",
       "stack_out": [
         "old_wallet#0",
         "new_wallet#0",
         "old_wallet#0",
+        "new_wallet#0",
         "maybe_exists%0#0",
         "old_id#0"
       ]
     },
-    "521": {
+    "542": {
       "op": "dup",
       "stack_out": [
         "old_wallet#0",
         "new_wallet#0",
         "old_wallet#0",
+        "new_wallet#0",
         "maybe_exists%0#0",
         "old_id#0",
         "old_id#0 (copy)"
       ]
     },
-    "522": {
-      "op": "cover 2",
+    "543": {
+      "op": "cover 3",
       "stack_out": [
         "old_wallet#0",
         "new_wallet#0",
         "old_wallet#0",
         "old_id#0",
+        "new_wallet#0",
         "maybe_exists%0#0",
         "old_id#0"
       ]
     },
-    "524": {
-      "op": "cover 3",
+    "545": {
+      "op": "cover 4",
       "defined_out": [
         "maybe_exists%0#0",
         "new_wallet#0",
@@ -2769,12 +2937,97 @@
         "old_id#0",
         "old_wallet#0",
         "old_id#0",
+        "new_wallet#0",
         "maybe_exists%0#0"
       ]
     },
-    "526": {
+    "547": {
       "error": "migrate_wallet: old wallet not registered",
       "op": "assert // migrate_wallet: old wallet not registered",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_id#0",
+        "old_wallet#0",
+        "old_id#0",
+        "new_wallet#0"
+      ]
+    },
+    "548": {
+      "op": "intc_0 // 0",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_id#0",
+        "old_wallet#0",
+        "old_id#0",
+        "new_wallet#0",
+        "0"
+      ]
+    },
+    "549": {
+      "op": "bytec_0 // \"identity_hash\"",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_id#0",
+        "old_wallet#0",
+        "old_id#0",
+        "new_wallet#0",
+        "0",
+        "\"identity_hash\""
+      ]
+    },
+    "550": {
+      "op": "app_local_get_ex",
+      "defined_out": [
+        "_%1#0",
+        "maybe_exists%1#0",
+        "new_wallet#0",
+        "old_id#0",
+        "old_wallet#0"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_id#0",
+        "old_wallet#0",
+        "old_id#0",
+        "_%1#0",
+        "maybe_exists%1#0"
+      ]
+    },
+    "551": {
+      "op": "bury 1",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_id#0",
+        "old_wallet#0",
+        "old_id#0",
+        "maybe_exists%1#0"
+      ]
+    },
+    "553": {
+      "op": "!",
+      "defined_out": [
+        "new_wallet#0",
+        "old_id#0",
+        "old_wallet#0",
+        "tmp%11#0"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_id#0",
+        "old_wallet#0",
+        "old_id#0",
+        "tmp%11#0"
+      ]
+    },
+    "554": {
+      "error": "migrate_wallet: new wallet already registered",
+      "op": "assert // migrate_wallet: new wallet already registered",
       "stack_out": [
         "old_wallet#0",
         "new_wallet#0",
@@ -2783,7 +3036,7 @@
         "old_id#0"
       ]
     },
-    "527": {
+    "555": {
       "op": "bytec 8 // 0x4d49475241544544",
       "defined_out": [
         "0x4d49475241544544",
@@ -2800,23 +3053,23 @@
         "0x4d49475241544544"
       ]
     },
-    "529": {
+    "557": {
       "op": "!=",
       "defined_out": [
         "new_wallet#0",
         "old_id#0",
         "old_wallet#0",
-        "tmp%5#0"
+        "tmp%12#0"
       ],
       "stack_out": [
         "old_wallet#0",
         "new_wallet#0",
         "old_id#0",
         "old_wallet#0",
-        "tmp%5#0"
+        "tmp%12#0"
       ]
     },
-    "530": {
+    "558": {
       "error": "migrate_wallet: old wallet already migrated",
       "op": "assert // migrate_wallet: old wallet already migrated",
       "stack_out": [
@@ -2826,7 +3079,7 @@
         "old_wallet#0"
       ]
     },
-    "531": {
+    "559": {
       "op": "dup",
       "stack_out": [
         "old_wallet#0",
@@ -2836,7 +3089,7 @@
         "old_wallet#0 (copy)"
       ]
     },
-    "532": {
+    "560": {
       "op": "intc_0 // 0",
       "stack_out": [
         "old_wallet#0",
@@ -2847,7 +3100,7 @@
         "0"
       ]
     },
-    "533": {
+    "561": {
       "op": "bytec 4 // \"personhood_hash\"",
       "defined_out": [
         "\"personhood_hash\"",
@@ -2867,10 +3120,10 @@
         "\"personhood_hash\""
       ]
     },
-    "535": {
+    "563": {
       "op": "app_local_get_ex",
       "defined_out": [
-        "maybe_exists%2#0",
+        "maybe_exists%3#0",
         "new_wallet#0",
         "old_id#0",
         "old_personhood#0",
@@ -2882,24 +3135,24 @@
         "old_id#0",
         "old_wallet#0",
         "old_personhood#0",
-        "maybe_exists%2#0"
+        "maybe_exists%3#0"
       ]
     },
-    "536": {
+    "564": {
       "op": "swap",
       "stack_out": [
         "old_wallet#0",
         "new_wallet#0",
         "old_id#0",
         "old_wallet#0",
-        "maybe_exists%2#0",
+        "maybe_exists%3#0",
         "old_personhood#0"
       ]
     },
-    "537": {
+    "565": {
       "op": "cover 2",
       "defined_out": [
-        "maybe_exists%2#0",
+        "maybe_exists%3#0",
         "new_wallet#0",
         "old_id#0",
         "old_personhood#0",
@@ -2911,10 +3164,10 @@
         "old_id#0",
         "old_personhood#0",
         "old_wallet#0",
-        "maybe_exists%2#0"
+        "maybe_exists%3#0"
       ]
     },
-    "539": {
+    "567": {
       "error": "check self.personhood_hash exists for account",
       "op": "assert // check self.personhood_hash exists for account",
       "stack_out": [
@@ -2925,7 +3178,7 @@
         "old_wallet#0"
       ]
     },
-    "540": {
+    "568": {
       "op": "dup",
       "stack_out": [
         "old_wallet#0",
@@ -2936,7 +3189,7 @@
         "old_wallet#0 (copy)"
       ]
     },
-    "541": {
+    "569": {
       "op": "intc_0 // 0",
       "stack_out": [
         "old_wallet#0",
@@ -2948,7 +3201,7 @@
         "0"
       ]
     },
-    "542": {
+    "570": {
       "op": "bytec 5 // \"age_proof_hash\"",
       "defined_out": [
         "\"age_proof_hash\"",
@@ -2970,10 +3223,10 @@
         "\"age_proof_hash\""
       ]
     },
-    "544": {
+    "572": {
       "op": "app_local_get_ex",
       "defined_out": [
-        "maybe_exists%3#0",
+        "maybe_exists%4#0",
         "new_wallet#0",
         "old_age#0",
         "old_id#0",
@@ -2987,10 +3240,10 @@
         "old_personhood#0",
         "old_wallet#0",
         "old_age#0",
-        "maybe_exists%3#0"
+        "maybe_exists%4#0"
       ]
     },
-    "545": {
+    "573": {
       "op": "swap",
       "stack_out": [
         "old_wallet#0",
@@ -2998,14 +3251,14 @@
         "old_id#0",
         "old_personhood#0",
         "old_wallet#0",
-        "maybe_exists%3#0",
+        "maybe_exists%4#0",
         "old_age#0"
       ]
     },
-    "546": {
+    "574": {
       "op": "cover 2",
       "defined_out": [
-        "maybe_exists%3#0",
+        "maybe_exists%4#0",
         "new_wallet#0",
         "old_age#0",
         "old_id#0",
@@ -3019,10 +3272,10 @@
         "old_personhood#0",
         "old_age#0",
         "old_wallet#0",
-        "maybe_exists%3#0"
+        "maybe_exists%4#0"
       ]
     },
-    "548": {
+    "576": {
       "error": "check self.age_proof_hash exists for account",
       "op": "assert // check self.age_proof_hash exists for account",
       "stack_out": [
@@ -3034,7 +3287,7 @@
         "old_wallet#0"
       ]
     },
-    "549": {
+    "577": {
       "op": "intc_0 // 0",
       "stack_out": [
         "old_wallet#0",
@@ -3046,7 +3299,7 @@
         "0"
       ]
     },
-    "550": {
+    "578": {
       "op": "bytec_1 // \"aid_claimed\"",
       "defined_out": [
         "\"aid_claimed\"",
@@ -3068,7 +3321,7 @@
         "\"aid_claimed\""
       ]
     },
-    "551": {
+    "579": {
       "op": "app_local_get_ex",
       "defined_out": [
         "has_aid#0",
@@ -3089,7 +3342,7 @@
         "has_aid#0"
       ]
     },
-    "552": {
+    "580": {
       "op": "intc_0 // 0",
       "defined_out": [
         "has_aid#0",
@@ -3112,7 +3365,7 @@
         "old_aid#0"
       ]
     },
-    "553": {
+    "581": {
       "op": "swap",
       "stack_out": [
         "old_wallet#0",
@@ -3125,7 +3378,7 @@
         "has_aid#0"
       ]
     },
-    "554": {
+    "582": {
       "op": "bz migrate_wallet_after_if_else@3",
       "stack_out": [
         "old_wallet#0",
@@ -3137,7 +3390,7 @@
         "old_aid#0"
       ]
     },
-    "557": {
+    "585": {
       "op": "dig 1",
       "stack_out": [
         "old_wallet#0",
@@ -3150,7 +3403,7 @@
         "old_aid#0"
       ]
     },
-    "559": {
+    "587": {
       "op": "bury 1",
       "stack_out": [
         "old_wallet#0",
@@ -3162,7 +3415,7 @@
         "old_aid#0"
       ]
     },
-    "561": {
+    "589": {
       "block": "migrate_wallet_after_if_else@3",
       "stack_in": [
         "old_wallet#0",
@@ -3188,7 +3441,7 @@
         "new_wallet#0"
       ]
     },
-    "563": {
+    "591": {
       "op": "dup",
       "defined_out": [
         "new_wallet#0",
@@ -3206,7 +3459,7 @@
         "new_wallet#0 (copy)"
       ]
     },
-    "564": {
+    "592": {
       "op": "bytec 7 // \"wallet_address\"",
       "defined_out": [
         "\"wallet_address\"",
@@ -3226,7 +3479,7 @@
         "\"wallet_address\""
       ]
     },
-    "566": {
+    "594": {
       "op": "dig 2",
       "stack_out": [
         "old_wallet#0",
@@ -3242,7 +3495,7 @@
         "new_wallet#0 (copy)"
       ]
     },
-    "568": {
+    "596": {
       "op": "app_local_put",
       "stack_out": [
         "old_wallet#0",
@@ -3255,7 +3508,7 @@
         "new_wallet#0"
       ]
     },
-    "569": {
+    "597": {
       "op": "dup",
       "stack_out": [
         "old_wallet#0",
@@ -3269,7 +3522,7 @@
         "new_wallet#0 (copy)"
       ]
     },
-    "570": {
+    "598": {
       "op": "bytec_0 // \"identity_hash\"",
       "defined_out": [
         "\"identity_hash\"",
@@ -3289,7 +3542,7 @@
         "\"identity_hash\""
       ]
     },
-    "571": {
+    "599": {
       "op": "dig 7",
       "defined_out": [
         "\"identity_hash\"",
@@ -3311,7 +3564,7 @@
         "old_id#0"
       ]
     },
-    "573": {
+    "601": {
       "op": "app_local_put",
       "stack_out": [
         "old_wallet#0",
@@ -3324,7 +3577,7 @@
         "new_wallet#0"
       ]
     },
-    "574": {
+    "602": {
       "op": "dup",
       "stack_out": [
         "old_wallet#0",
@@ -3338,7 +3591,7 @@
         "new_wallet#0 (copy)"
       ]
     },
-    "575": {
+    "603": {
       "op": "bytec 4 // \"personhood_hash\"",
       "defined_out": [
         "\"personhood_hash\"",
@@ -3359,7 +3612,7 @@
         "\"personhood_hash\""
       ]
     },
-    "577": {
+    "605": {
       "op": "dig 6",
       "defined_out": [
         "\"personhood_hash\"",
@@ -3382,7 +3635,7 @@
         "old_personhood#0"
       ]
     },
-    "579": {
+    "607": {
       "op": "app_local_put",
       "stack_out": [
         "old_wallet#0",
@@ -3395,7 +3648,7 @@
         "new_wallet#0"
       ]
     },
-    "580": {
+    "608": {
       "op": "dup",
       "stack_out": [
         "old_wallet#0",
@@ -3409,7 +3662,7 @@
         "new_wallet#0 (copy)"
       ]
     },
-    "581": {
+    "609": {
       "op": "bytec 5 // \"age_proof_hash\"",
       "defined_out": [
         "\"age_proof_hash\"",
@@ -3431,7 +3684,7 @@
         "\"age_proof_hash\""
       ]
     },
-    "583": {
+    "611": {
       "op": "dig 5",
       "defined_out": [
         "\"age_proof_hash\"",
@@ -3455,7 +3708,7 @@
         "old_age#0"
       ]
     },
-    "585": {
+    "613": {
       "op": "app_local_put",
       "stack_out": [
         "old_wallet#0",
@@ -3468,7 +3721,7 @@
         "new_wallet#0"
       ]
     },
-    "586": {
+    "614": {
       "op": "bytec_1 // \"aid_claimed\"",
       "defined_out": [
         "\"aid_claimed\"",
@@ -3489,7 +3742,7 @@
         "\"aid_claimed\""
       ]
     },
-    "587": {
+    "615": {
       "op": "dig 2",
       "defined_out": [
         "\"aid_claimed\"",
@@ -3512,7 +3765,7 @@
         "old_aid#0"
       ]
     },
-    "589": {
+    "617": {
       "op": "app_local_put",
       "stack_out": [
         "old_wallet#0",
@@ -3524,7 +3777,7 @@
         "old_aid#0"
       ]
     },
-    "590": {
+    "618": {
       "op": "dig 6",
       "defined_out": [
         "new_wallet#0",
@@ -3545,7 +3798,7 @@
         "old_wallet#0"
       ]
     },
-    "592": {
+    "620": {
       "op": "bytec_0 // \"identity_hash\"",
       "stack_out": [
         "old_wallet#0",
@@ -3559,7 +3812,7 @@
         "\"identity_hash\""
       ]
     },
-    "593": {
+    "621": {
       "op": "bytec 8 // 0x4d49475241544544",
       "defined_out": [
         "\"identity_hash\"",
@@ -3584,7 +3837,7 @@
         "0x4d49475241544544"
       ]
     },
-    "595": {
+    "623": {
       "op": "app_local_put",
       "stack_out": [
         "old_wallet#0",
@@ -3596,7 +3849,7 @@
         "old_aid#0"
       ]
     },
-    "596": {
+    "624": {
       "op": "intc_1 // 1",
       "defined_out": [
         "1",
@@ -3618,7 +3871,7 @@
         "1"
       ]
     },
-    "597": {
+    "625": {
       "op": "return",
       "stack_out": [
         "old_wallet#0",
@@ -3630,7 +3883,7 @@
         "old_aid#0"
       ]
     },
-    "598": {
+    "626": {
       "subroutine": "Nexathon.blockchain.refugee_contract.contract.RefugeeContract._is_admin",
       "params": {},
       "block": "_is_admin",
@@ -3643,7 +3896,7 @@
         "tmp%0#0"
       ]
     },
-    "600": {
+    "628": {
       "op": "intc_0 // 0",
       "defined_out": [
         "0",
@@ -3654,7 +3907,7 @@
         "0"
       ]
     },
-    "601": {
+    "629": {
       "op": "bytec 6 // \"admin\"",
       "defined_out": [
         "\"admin\"",
@@ -3667,7 +3920,7 @@
         "\"admin\""
       ]
     },
-    "603": {
+    "631": {
       "op": "app_global_get_ex",
       "defined_out": [
         "maybe_exists%0#0",
@@ -3680,7 +3933,7 @@
         "maybe_exists%0#0"
       ]
     },
-    "604": {
+    "632": {
       "error": "check self.admin exists",
       "op": "assert // check self.admin exists",
       "stack_out": [
@@ -3688,7 +3941,7 @@
         "maybe_value%0#0"
       ]
     },
-    "605": {
+    "633": {
       "op": "==",
       "defined_out": [
         "tmp%1#0"
@@ -3697,11 +3950,11 @@
         "tmp%1#0"
       ]
     },
-    "606": {
+    "634": {
       "retsub": true,
       "op": "retsub"
     },
-    "607": {
+    "635": {
       "subroutine": "Nexathon.blockchain.refugee_contract.contract.RefugeeContract._is_authorized_registrar",
       "params": {},
       "block": "_is_authorized_registrar",
@@ -3714,7 +3967,7 @@
         "0x7265676973747261725f"
       ]
     },
-    "608": {
+    "636": {
       "op": "txn Sender",
       "defined_out": [
         "0x7265676973747261725f",
@@ -3725,7 +3978,7 @@
         "materialized_values%0#0"
       ]
     },
-    "610": {
+    "638": {
       "op": "concat",
       "defined_out": [
         "box_prefixed_key%0#0"
@@ -3734,7 +3987,7 @@
         "box_prefixed_key%0#0"
       ]
     },
-    "611": {
+    "639": {
       "op": "box_len",
       "defined_out": [
         "_%0#0",
@@ -3745,23 +3998,23 @@
         "maybe_exists%0#0"
       ]
     },
-    "612": {
+    "640": {
       "op": "bury 1",
       "stack_out": [
         "maybe_exists%0#0"
       ]
     },
-    "614": {
+    "642": {
       "op": "bz _is_authorized_registrar_after_if_else@2",
       "stack_out": []
     },
-    "617": {
+    "645": {
       "op": "bytec_3 // 0x7265676973747261725f",
       "stack_out": [
         "0x7265676973747261725f"
       ]
     },
-    "618": {
+    "646": {
       "op": "txn Sender",
       "defined_out": [
         "0x7265676973747261725f",
@@ -3772,7 +4025,7 @@
         "materialized_values%1#0"
       ]
     },
-    "620": {
+    "648": {
       "op": "concat",
       "defined_out": [
         "box_prefixed_key%1#0"
@@ -3781,7 +4034,7 @@
         "box_prefixed_key%1#0"
       ]
     },
-    "621": {
+    "649": {
       "op": "box_get",
       "defined_out": [
         "aggregate%box_get%0#0",
@@ -3792,14 +4045,14 @@
         "aggregate%box_get%1#0"
       ]
     },
-    "622": {
+    "650": {
       "error": "check self.registrars entry exists",
       "op": "assert // check self.registrars entry exists",
       "stack_out": [
         "aggregate%box_get%0#0"
       ]
     },
-    "623": {
+    "651": {
       "op": "btoi",
       "defined_out": [
         "maybe_value_converted%0#0"
@@ -3808,7 +4061,7 @@
         "maybe_value_converted%0#0"
       ]
     },
-    "624": {
+    "652": {
       "op": "intc_1 // 1",
       "defined_out": [
         "1",
@@ -3819,7 +4072,7 @@
         "1"
       ]
     },
-    "625": {
+    "653": {
       "op": "==",
       "defined_out": [
         "tmp%0#0"
@@ -3828,11 +4081,11 @@
         "tmp%0#0"
       ]
     },
-    "626": {
+    "654": {
       "retsub": true,
       "op": "retsub"
     },
-    "627": {
+    "655": {
       "block": "_is_authorized_registrar_after_if_else@2",
       "stack_in": [],
       "op": "intc_0 // 0",
@@ -3843,7 +4096,7 @@
         "0"
       ]
     },
-    "628": {
+    "656": {
       "retsub": true,
       "op": "retsub"
     }

@@ -9,6 +9,7 @@ import { useToast } from '../../context/ToastContext';
 import { useWallet } from '../../context/WalletContext';
 import { peraWallet } from '../../utils/wallet';
 import { api } from '../../utils/api';
+import { Scanner } from '@yudiel/react-qr-scanner';
 
 const WalletMigration = () => {
     const navigate = useNavigate();
@@ -29,38 +30,69 @@ const WalletMigration = () => {
 
     const shorten = (addr) => (addr ? `${addr.slice(0, 6)}…${addr.slice(-6)}` : '');
 
-    const tryParseQr = () => {
-        const raw = (migrationData.qrPayload || '').trim();
-        if (!raw) return;
+    const normalizeAlgoAddress = (value) => {
+        const raw = (value || '').trim();
+        if (!raw) return '';
+        // Extract first valid Algorand address found (base32, 58 chars). Accept lower-case by normalizing.
+        const upper = raw.toUpperCase();
+        const match = upper.match(/[A-Z2-7]{58}/);
+        return match ? match[0] : raw.trim();
+    };
+
+    const parseQrPayload = (rawInput) => {
+        const raw = (rawInput || '').trim();
+        if (!raw) return { identity_id: '', old_wallet: '' };
 
         // Accept either JSON ({ identity_id, old_wallet }) or query-string-ish payload.
         let identity_id = '';
         let old_wallet = '';
         try {
             const obj = JSON.parse(raw);
-            identity_id = obj.identity_id || obj.identityId || obj.identity || '';
-            old_wallet = obj.old_wallet || obj.oldWallet || obj.w1 || obj.custodial_wallet || '';
+            identity_id = obj.identity_id || obj.identityId || obj.identity || obj.id || '';
+            old_wallet = obj.old_wallet || obj.oldWallet || obj.w1 || obj.custodial_wallet || obj.address || '';
         } catch {
             try {
                 const s = raw.startsWith('http') ? new URL(raw).search : raw;
                 const params = new URLSearchParams(s.startsWith('?') ? s : `?${s}`);
-                identity_id = params.get('identity_id') || params.get('identityId') || params.get('identity') || '';
-                old_wallet = params.get('old_wallet') || params.get('oldWallet') || params.get('w1') || params.get('custodial_wallet') || '';
+                identity_id =
+                    params.get('identity_id') ||
+                    params.get('identityId') ||
+                    params.get('identity') ||
+                    params.get('id') ||
+                    '';
+                old_wallet =
+                    params.get('old_wallet') ||
+                    params.get('oldWallet') ||
+                    params.get('w1') ||
+                    params.get('custodial_wallet') ||
+                    params.get('address') ||
+                    '';
             } catch {
                 // Ignore parse errors; user can fill manually.
             }
         }
 
+        return { identity_id: (identity_id || '').trim(), old_wallet: normalizeAlgoAddress(old_wallet || '') };
+    };
+
+    const applyParsedQr = (raw) => {
+        const parsed = parseQrPayload(raw);
         setMigrationData((p) => ({
             ...p,
-            identityId: (identity_id || p.identityId || '').trim(),
-            custodialAddress: (old_wallet || p.custodialAddress || '').trim(),
+            qrPayload: raw,
+            identityId: parsed.identity_id || p.identityId || '',
+            custodialAddress: parsed.old_wallet || p.custodialAddress || '',
         }));
+        if (parsed.identity_id && parsed.old_wallet) {
+            showToast('success', 'QR scanned', 'identity_id and custodial wallet (W1) detected.');
+        } else {
+            showToast('warning', 'QR scanned', 'QR detected, but missing identity_id or W1. Please verify the QR content.');
+        }
     };
 
     const simulateScan = () => {
         const identityId = migrationData.identityId.trim();
-        const w1 = migrationData.custodialAddress.trim();
+        const w1 = normalizeAlgoAddress(migrationData.custodialAddress);
         if (!identityId) {
             showToast('error', 'Identity ID required', 'Scan your original camp QR code or enter the identity_id manually.');
             return;
@@ -69,6 +101,7 @@ const WalletMigration = () => {
             showToast('error', 'Custodial address required', 'Enter or paste the wallet address from your camp QR code (W1).');
             return;
         }
+        setMigrationData((p) => ({ ...p, custodialAddress: w1 }));
         setIsProcessing(true);
         setTimeout(() => {
             setIsProcessing(false);
@@ -102,8 +135,9 @@ const WalletMigration = () => {
     const finalSubmit = async () => {
         setIsProcessing(true);
         setSignatureStatus('Waiting for wallet approval...');
-        const newAddr = migrationData.newAddress === 'Awaiting Handshake...' ? account : migrationData.newAddress;
-        const oldAddr = migrationData.custodialAddress.trim();
+        const newAddrRaw = migrationData.newAddress === 'Awaiting Handshake...' ? account : migrationData.newAddress;
+        const newAddr = normalizeAlgoAddress(newAddrRaw);
+        const oldAddr = normalizeAlgoAddress(migrationData.custodialAddress);
         const identityId = migrationData.identityId.trim();
         if (!identityId || !oldAddr || !newAddr) {
             setIsProcessing(false);
@@ -111,6 +145,8 @@ const WalletMigration = () => {
             showToast('error', 'Missing required data', 'identity_id, custodial wallet (W1), and Pera wallet (W2) are required.');
             return;
         }
+        // Ensure normalized addresses are reflected in UI and requests.
+        setMigrationData((p) => ({ ...p, custodialAddress: oldAddr, newAddress: newAddr }));
 
         try {
             await peraWallet.reconnectSession();
@@ -202,7 +238,23 @@ By signing, you confirm ownership of this wallet.`;
                                     <p className="text-[#8b5cf6] font-mono text-[10px] uppercase font-bold tracking-[0.3em] animate-pulse">Scanning...</p>
                                 </>
                             ) : (
-                                <p className="text-[#3d5278] text-[9px] uppercase font-bold tracking-[0.2em]">Awaiting Scanner Interaction</p>
+                                <div className="absolute inset-0">
+                                    <Scanner
+                                        onScan={(result) => {
+                                            if (!result || !result[0] || !result[0].rawValue) return;
+                                            applyParsedQr(result[0].rawValue);
+                                        }}
+                                        onError={() => {}}
+                                        components={{ audio: false }}
+                                        styles={{
+                                            container: { width: '100%', height: '100%' },
+                                            video: { objectFit: 'cover' },
+                                        }}
+                                    />
+                                    <p className="absolute bottom-4 left-0 right-0 text-center text-[#3d5278] text-[9px] uppercase font-bold tracking-[0.2em] pointer-events-none">
+                                        Point camera at QR code
+                                    </p>
+                                </div>
                             )}
                         </div>
 
@@ -212,7 +264,7 @@ By signing, you confirm ownership of this wallet.`;
                         <textarea
                             value={migrationData.qrPayload}
                             onChange={(e) => setMigrationData((p) => ({ ...p, qrPayload: e.target.value }))}
-                            onBlur={tryParseQr}
+                            onBlur={() => applyParsedQr(migrationData.qrPayload)}
                             placeholder='Paste scanned QR content here (JSON or query params). Example: {"identity_id":"...","old_wallet":"..."}'
                             className="w-full mb-6 font-mono text-xs bg-[#060d1f] border border-[#1a2d4a] rounded-xl px-4 py-3 text-[#e2eaf8] placeholder:text-[#3d5278] min-h-[90px]"
                         />
@@ -234,7 +286,8 @@ By signing, you confirm ownership of this wallet.`;
                         <input
                             type="text"
                             value={migrationData.custodialAddress}
-                            onChange={(e) => setMigrationData((p) => ({ ...p, custodialAddress: e.target.value.trim() }))}
+                            onChange={(e) => setMigrationData((p) => ({ ...p, custodialAddress: e.target.value }))}
+                            onBlur={() => setMigrationData((p) => ({ ...p, custodialAddress: normalizeAlgoAddress(p.custodialAddress) }))}
                             placeholder="58-character Algorand address from your registration card"
                             className="w-full mb-6 font-mono text-xs bg-[#060d1f] border border-[#1a2d4a] rounded-xl px-4 py-3 text-[#e2eaf8] placeholder:text-[#3d5278]"
                         />

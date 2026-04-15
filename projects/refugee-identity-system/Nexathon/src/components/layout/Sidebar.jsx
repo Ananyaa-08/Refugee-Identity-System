@@ -56,12 +56,12 @@ export const Sidebar = ({ role, pendingRequests, pendingMigrations, walletAddres
                             <NavItem to="/aid-worker/search" icon={Search} label="Search Refugee" />
                             <NavItem to="/aid-worker/access" icon={Key} label="Request Access" amberDot={pendingRequests > 0} />
                             <NavItem to="/aid-worker/aid" icon={Package} label="Aid Distribution" />
+                            <NavItem to="/aid-worker/migration" icon={RefreshCw} label="Wallet Migration" />
                         </>
                     ) : role === 'refugee' ? (
                         <>
                             <NavItem to="/refugee/dashboard" icon={LayoutDashboard} label="Dashboard" />
                             <NavItem to="/refugee/requests" icon={ShieldCheck} label="Access Requests" badge={pendingRequests} />
-                            <NavItem to="/refugee/migration" icon={RefreshCw} label="Wallet Migration" />
                         </>
                     ) : (
                         <>

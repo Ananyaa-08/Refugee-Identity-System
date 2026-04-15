@@ -43,6 +43,7 @@ function App() {
                             <Route path="search" element={<SearchRefugee />} />
                             <Route path="access" element={<RequestAccess />} />
                             <Route path="aid" element={<AidDistribution />} />
+                            <Route path="migration" element={<WalletMigration />} />
                         </Route>
 
                         {/* Refugee Routes */}
@@ -50,7 +51,8 @@ function App() {
                             <Route index element={<Navigate to="/refugee/dashboard" replace />} />
                             <Route path="dashboard" element={<RefugeeDashboard />} />
                             <Route path="requests" element={<AccessRequests />} />
-                            <Route path="migration" element={<WalletMigration />} />
+                            {/* Wallet migration is handled from Aid Worker portal */}
+                            <Route path="migration" element={<Navigate to="/aid-worker/migration" replace />} />
                         </Route>
 
                         {/* Admin Routes */}

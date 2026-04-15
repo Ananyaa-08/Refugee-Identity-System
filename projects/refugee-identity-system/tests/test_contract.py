@@ -99,6 +99,9 @@ def refugee(algorand, deployer):
             receiver=account.address,
         )
     )
+    assert encoding.is_valid_address(account.address)
+    info = algorand.client.algod.account_info(account.address)
+    assert info.get("amount", 0) > 0
     return account
 
 
@@ -131,6 +134,9 @@ class TestRefugeeContract:
                 signer=refugee.signer,
             ),
         )
+        # Verify opt-in exists on-chain (local state allocated)
+        app_info = client.algorand.client.algod.account_application_info(refugee.address, client.app_id)
+        assert app_info and app_info.get("app-local-state") is not None
 
     @pytest.mark.order(3)
     def test_3_register_refugee(self, client, aid_worker, refugee):
@@ -211,6 +217,9 @@ class TestRefugeeContract:
                 receiver=new_wallet.address,
             )
         )
+        assert encoding.is_valid_address(new_wallet.address)
+        info = algorand.client.algod.account_info(new_wallet.address)
+        assert info.get("amount", 0) > 0
 
         # New wallet opts in
         client.send.opt_in.bare(
@@ -219,6 +228,8 @@ class TestRefugeeContract:
                 signer=new_wallet.signer,
             ),
         )
+        app_info = client.algorand.client.algod.account_application_info(new_wallet.address, client.app_id)
+        assert app_info and app_info.get("app-local-state") is not None
 
         # Admin migrates (foreign accounts: W1 at Accounts[1], W2 at Accounts[2]; slot 0 is sender)
         client.send.migrate_wallet(

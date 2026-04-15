@@ -8,6 +8,7 @@ import { useToast } from '../../context/ToastContext';
 import { LoadingSpinner } from '../../components/ui/Common';
 import { QRCodeSVG } from 'qrcode.react';
 import Webcam from "react-webcam";
+import { api } from '../../utils/api';
 
 // --- Form Components ---
 
@@ -48,6 +49,12 @@ const Register = () => {
         livenessVerified: false,
         walletType: null, // 'pera' | 'custodial'
         walletAddress: '',
+    });
+
+    const [custodial, setCustodial] = useState({
+        identityId: '',
+        qrPayload: '',
+        isProvisioning: false,
     });
 
     const [currentLang, setCurrentLang] = useState('');
@@ -112,6 +119,31 @@ const Register = () => {
 
     // --- Step Indicator ---
     const steps = ["Personal Info", "Liveness Check", "Wallet Setup", "Review & Submit"];
+
+    const provisionCustodialWallet = async () => {
+        setCustodial((p) => ({ ...p, isProvisioning: true }));
+        try {
+            const res = await api.generateCustodialWallet();
+            const payload = res?.data;
+            if (!payload?.address || !payload?.identity_id || !payload?.qr_payload) {
+                throw new Error('Backend did not return custodial wallet details.');
+            }
+            setFormData((p) => ({
+                ...p,
+                walletType: 'custodial',
+                walletAddress: payload.address,
+            }));
+            setCustodial({
+                identityId: payload.identity_id,
+                qrPayload: payload.qr_payload,
+                isProvisioning: false,
+            });
+            showToast('success', 'Custodial wallet created', 'A real Algorand account (W1) was funded, opted-in, and registered on-chain.');
+        } catch (e) {
+            setCustodial((p) => ({ ...p, isProvisioning: false }));
+            showToast('error', 'Custodial wallet failed', e?.message || 'Could not provision custodial wallet (W1).');
+        }
+    };
 
     return (
         <div className="page-enter pb-20">
@@ -316,7 +348,10 @@ const Register = () => {
                     <div className="space-y-8 animate-fadeIn">
                         <div className="grid grid-cols-2 gap-4">
                             <div
-                                onClick={() => setFormData({ ...formData, walletType: 'pera', walletAddress: 'PERA7J3KLMN8QRS2TUVA4WXY5ZAB6CDSPUB' })}
+                                onClick={() => {
+                                    setCustodial({ identityId: '', qrPayload: '', isProvisioning: false });
+                                    setFormData({ ...formData, walletType: 'pera', walletAddress: 'PERA7J3KLMN8QRS2TUVA4WXY5ZAB6CDSPUB' });
+                                }}
                                 className={clsx(
                                     "bg-[#0f1e38] border p-6 rounded-xl cursor-pointer transition-all duration-300 flex flex-col items-center text-center",
                                     formData.walletType === 'pera' ? "border-[#00c9b1] shadow-[0_0_20px_rgba(0,201,177,0.1)]" : "border-[#1a2d4a] hover:border-[#3d5278]"
@@ -331,7 +366,10 @@ const Register = () => {
                             </div>
 
                             <div
-                                onClick={() => setFormData({ ...formData, walletType: 'custodial', walletAddress: 'CUST9K4LMNO5PQRT6UVWX7YZA8BCDE1F2GH' })}
+                                onClick={() => {
+                                    if (custodial.isProvisioning) return;
+                                    provisionCustodialWallet();
+                                }}
                                 className={clsx(
                                     "bg-[#0f1e38] border p-6 rounded-xl cursor-pointer transition-all duration-300 flex flex-col items-center text-center",
                                     formData.walletType === 'custodial' ? "border-[#f59e0b] shadow-[0_0_20px_rgba(245,158,11,0.1)]" : "border-[#1a2d4a] hover:border-[#3d5278]"
@@ -342,7 +380,11 @@ const Register = () => {
                                 </div>
                                 <h3 className="text-white font-bold mb-2">No Smartphone</h3>
                                 <p className="text-[#7a94bb] text-[11px]">System generates custodial wallet. Refugee receives a printed QR card.</p>
-                                {formData.walletType === 'custodial' && <Check className="text-[#f59e0b] mt-4" size={20} />}
+                                {custodial.isProvisioning ? (
+                                    <Loader2 className="text-[#f59e0b] mt-4 animate-spin" size={20} />
+                                ) : (
+                                    formData.walletType === 'custodial' && <Check className="text-[#f59e0b] mt-4" size={20} />
+                                )}
                             </div>
                         </div>
 
@@ -486,7 +528,14 @@ const Register = () => {
                                 <div className="flex gap-6 mb-6">
                                     <div className="w-24 h-24 bg-gray-50 border border-gray-100 rounded-lg p-2 shrink-0">
                                         <QRCodeSVG
-                                            value={JSON.stringify({ id: "REF-2024-004", name: formData.fullName, address: formData.walletAddress })}
+                                            value={
+                                                custodial.qrPayload ||
+                                                JSON.stringify({
+                                                    identity_id: "REF-2024-004",
+                                                    old_wallet: formData.walletAddress,
+                                                    name: formData.fullName,
+                                                })
+                                            }
                                             size={100}
                                             level={"H"}
                                             className="w-full h-full"
@@ -499,7 +548,7 @@ const Register = () => {
                                         </div>
                                         <div>
                                             <label className="block text-[9px] text-gray-400 font-bold uppercase tracking-widest border-l border-gray-100 pl-2">Refugee ID</label>
-                                            <span className="block text-xs font-mono font-bold text-gray-600 ml-2">REF-2024-004</span>
+                                            <span className="block text-xs font-mono font-bold text-gray-600 ml-2">{custodial.identityId || 'REF-2024-004'}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -542,6 +591,7 @@ const Register = () => {
                                             walletType: null,
                                             walletAddress: '',
                                         });
+                                        setCustodial({ identityId: '', qrPayload: '', isProvisioning: false });
                                     }}
                                     className="bg-[#00c9b1] text-[#060d1f] font-bold py-4 rounded-xl hover:bg-[#00e0c5] transition-all"
                                 >

@@ -112,6 +112,7 @@ const Register = () => {
         blinkStart: 0,
         isEyesClosed: false,
         initialNoseX: null,
+        isTransitioning: false,
         challengeStartTime: 0,
         sequenceStart: 0,
         frames: [],
@@ -161,11 +162,12 @@ const Register = () => {
     }, [step]);
 
     const captureAndHashFrame = async (challengeKey) => {
+        const crypto = window.crypto || window.msCrypto;
         const dataStr = JSON.stringify({
             stage: challengeKey,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            uuid: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36)
         });
-        const crypto = window.crypto || window.msCrypto;
         const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(dataStr));
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
@@ -184,6 +186,11 @@ const Register = () => {
 
         const video = webcamRef.current.video;
         if (video.readyState !== 4) {
+            requestRef.current = requestAnimationFrame(processFrame);
+            return;
+        }
+
+        if (stateRef.current.isTransitioning) {
             requestRef.current = requestAnimationFrame(processFrame);
             return;
         }
@@ -229,7 +236,7 @@ const Register = () => {
                         stateRef.current.isEyesClosed = true;
                         setFeedback('Eyes closed... now open them.');
                     }
-                } else {
+                } else if (ear > 0.20) {
                     if (stateRef.current.isEyesClosed) {
                         stateRef.current.isEyesClosed = false;
                         advanceChallenge(challenge.type);
@@ -247,7 +254,7 @@ const Register = () => {
                     setFeedback(`Turn head ${targetLeft ? 'left' : 'right'}...`);
                 } else {
                     const diff = Math.abs(noseX - stateRef.current.initialNoseX);
-                    if (diff > 0.04) {
+                    if (diff > 0.06) {
                         advanceChallenge(challenge.type);
                     } else {
                         setFeedback(`Turn head ${targetLeft ? 'left' : 'right'}...`);
@@ -269,22 +276,24 @@ const Register = () => {
         
         stateRef.current.challengesCompleted.push(type);
         stateRef.current.confidenceScores.push(1.0);
-        
-        stateRef.current.challengeIndex += 1;
         stateRef.current.isEyesClosed = false;
         stateRef.current.initialNoseX = null;
         
-        if (stateRef.current.challengeIndex >= LIVENESS_CHALLENGES.length) {
+        if (stateRef.current.challengeIndex + 1 >= LIVENESS_CHALLENGES.length) {
+            stateRef.current.challengeIndex += 1;
             completeLivenessCheck();
         } else {
-            setCurrentChallenge(stateRef.current.challengeIndex);
-            stateRef.current.challengeStartTime = Date.now();
             setChallengeStatus('success');
+            stateRef.current.isTransitioning = true;
             setFeedback('Success! Next challenge starting...');
+            
             setTimeout(() => {
+                stateRef.current.challengeIndex += 1;
+                setCurrentChallenge(stateRef.current.challengeIndex);
+                stateRef.current.challengeStartTime = Date.now();
+                stateRef.current.isTransitioning = false;
                 setChallengeStatus('detecting');
                 stateRef.current.status = 'detecting';
-                requestRef.current = requestAnimationFrame(processFrame);
             }, 1500);
         }
     };
@@ -323,6 +332,8 @@ const Register = () => {
 
         setLivenessHash(compositeHash);
         
+        console.log("FINAL LIVENESS PAYLOAD FOR BACKEND:", JSON.stringify({ refugeeId: 'REF-TEMP', livenessData }, null, 2));
+
         let attempts = 0;
         let synced = false;
         while (attempts < 3 && !synced) {
@@ -366,6 +377,7 @@ const Register = () => {
             blinkStart: 0,
             isEyesClosed: false,
             initialNoseX: null,
+            isTransitioning: false,
             challengeStartTime: Date.now(),
             sequenceStart: Date.now(),
             frames: [],
@@ -651,16 +663,7 @@ const Register = () => {
                                 </button>
                             )}
 
-                            {challengeStatus === 'complete' && (
-                                <div className="w-full mt-6 flex flex-col gap-2">
-                                    <label className="block text-[#7a94bb] text-[10px] font-bold uppercase tracking-widest text-center">Composite Personhood Hash</label>
-                                    <div className="bg-[#060d1f] border border-[#1a2d4a] p-3 rounded-lg text-center">
-                                        <span className="font-mono text-[#00c9b1] text-xs break-all">
-                                            {livenessHash || 'Generating...'}
-                                        </span>
-                                    </div>
-                                </div>
-                            )}
+
 
                         </div>
 

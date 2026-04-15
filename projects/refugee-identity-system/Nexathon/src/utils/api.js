@@ -2,7 +2,7 @@
  * API client for RIMS blockchain backend.
  * Uses VITE_API_BASE_URL when set (e.g. ngrok), otherwise relative URLs (proxied to backend).
  */
-const BASE = import.meta.env.VITE_API_BASE_URL || '';
+const BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 async function request(method, path, body = null) {
     const url = `${BASE}${path}`;

@@ -1,6 +1,7 @@
 import { PeraWalletConnect } from "@perawallet/connect";
 
-export const peraWallet = new PeraWalletConnect();
+// Force TestNet (Pera chainId for Algorand TestNet is 416002)
+export const peraWallet = new PeraWalletConnect({ chainId: 416002 });
 
 export const reconnectSession = async () => {
   try {

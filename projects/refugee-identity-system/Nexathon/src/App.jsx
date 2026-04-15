@@ -28,47 +28,60 @@ import WalletMigration from './pages/refugee/WalletMigration';
 import AccessRequests from './pages/refugee/AccessRequests';
 
 const App = () => {
-    return (
-        <ToastProvider>
-            <WalletProvider>
-                <Router>
-                    <Routes>
-                        <Route path="/" element={<LoginPage />} />
-                        
-                        {/* Admin Routes */}
-                        <Route path="/admin" element={<AdminLayout />}>
-                            <Route index element={<Navigate to="dashboard" replace />} />
-                            <Route path="dashboard" element={<AdminDashboard />} />
-                            <Route path="audit" element={<AdminAudit />} />
-                            <Route path="migrations" element={<AdminMigrations />} />
-                            <Route path="refugees" element={<AdminRefugees />} />
-                            <Route path="status" element={<AdminStatus />} />
-                        </Route>
+  return (
+    <ToastProvider>
+      <WalletProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<LoginPage />} />
 
-                        {/* Aid Worker Routes */}
-                        <Route path="/aid-worker" element={<AidWorkerLayout />}>
-                            <Route index element={<Navigate to="search" replace />} />
-                            <Route path="search" element={<SearchRefugee />} />
-                            <Route path="register" element={<Register />} />
-                            <Route path="distribution" element={<AidDistribution />} />
-                            <Route path="scan" element={<ScanQR />} />
-                        </Route>
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="audit" element={<AdminAudit />} />
+              <Route path="migrations" element={<AdminMigrations />} />
+              <Route path="refugees" element={<AdminRefugees />} />
+              <Route path="status" element={<AdminStatus />} />
+            </Route>
 
-                        {/* Refugee Routes */}
-                        <Route path="/refugee" element={<RefugeeLayout />}>
-                            <Route index element={<Navigate to="dashboard" replace />} />
-                            <Route path="dashboard" element={<RefugeeDashboard />} />
-                            <Route path="migration" element={<WalletMigration />} />
-                            <Route path="requests" element={<AccessRequests />} />
-                        </Route>
+            {/* Aid Worker Routes */}
+            <Route path="/aid-worker" element={<AidWorkerLayout />}>
+              <Route index element={<Navigate to="search" replace />} />
+              <Route path="search" element={<SearchRefugee />} />
+              <Route path="register" element={<Register />} />
+              <Route path="distribution" element={<AidDistribution />} />
+              <Route path="scan" element={<ScanQR />} />
+              <Route path="search" element={<SearchRefugee />} />
+              <Route path="access" element={<RequestAccess />} />
+              <Route path="aid" element={<AidDistribution />} />
+            </Route>
 
-                        {/* Fallback */}
-                        <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
-                </Router>
-            </WalletProvider>
-        </ToastProvider>
-    );
+            {/* Refugee Routes */}
+            <Route path="/refugee" element={<RefugeeLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<RefugeeDashboard />} />
+              <Route path="requests" element={<AccessRequests />} />
+              <Route path="migration" element={<WalletMigration />} />
+            </Route>
+
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="migrations" element={<AdminMigrations />} />
+              <Route path="audit" element={<AdminAudit />} />
+              <Route path="refugees" element={<AdminRefugees />} />
+              <Route path="status" element={<AdminStatus />} />
+            </Route>
+
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+      </WalletProvider>
+    </ToastProvider>
+  );
 };
 
 export default App;

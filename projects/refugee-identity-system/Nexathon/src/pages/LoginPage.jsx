@@ -49,10 +49,11 @@ const LoginPage = () => {
                 if (res.success && res.data) {
                     navigate('/refugee');
                 } else {
-                    navigate('/refugee/migration');
+                    // Wallet migration is performed with an aid worker present
+                    navigate('/aid-worker/migration');
                 }
             })
-            .catch(() => navigate('/refugee/migration'));
+            .catch(() => navigate('/aid-worker/migration'));
     }, [account, navigate, showWorkerForm]);
 
     const handleRefugeeLogin = async () => {
@@ -61,9 +62,9 @@ const LoginPage = () => {
         } else {
             try {
                 const res = await api.getRefugeeByAddress(account);
-                navigate(res.success && res.data ? '/refugee' : '/refugee/migration');
+                navigate(res.success && res.data ? '/refugee' : '/aid-worker/migration');
             } catch {
-                navigate('/refugee/migration');
+                navigate('/aid-worker/migration');
             }
         }
     };

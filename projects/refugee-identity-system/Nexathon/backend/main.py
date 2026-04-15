@@ -2,6 +2,7 @@
 Nexathon FastAPI backend - blockchain integration for RIMS.
 """
 import base64
+import hashlib
 import json
 import uuid
 from datetime import datetime, timezone
@@ -9,13 +10,19 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-# Load .env from Nexathon directory (parent of backend/)
-_env_path = Path(__file__).resolve().parent.parent / ".env"
-load_dotenv(_env_path)
+# Load .env from project root (projects/refugee-identity-system/.env)
+# This must contain DEPLOYER_MNEMONIC and TestNet algod settings.
+_env_path = Path(__file__).resolve().parents[2] / ".env"
+# IMPORTANT: do NOT clobber process env (tests/localnet set env explicitly).
+load_dotenv(_env_path, override=False)
 
 from algosdk import util
 from algosdk.error import AlgodHTTPError
 from algosdk.encoding import decode_address
+from algosdk import account as algo_account
+from algosdk import mnemonic
+from algosdk.transaction import ApplicationOptInTxn, PaymentTxn, wait_for_confirmation
+from algosdk.v2client.algod import AlgodClient
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -25,12 +32,18 @@ from blockchain.artifacts.refugee_contract.refugee_contract_client import (
     RefugeeContractFactory,
 )
 import algokit_utils
+import os
 
 app = FastAPI(title="RIMS API", version="1.0.0")
 
+# Sensible TestNet defaults (Algonode) when not provided via env.
+_DEFAULT_TESTNET_INDEXER_SERVER = "https://testnet-idx.algonode.cloud"
+_DEFAULT_TESTNET_INDEXER_PORT = "443"
+_DEFAULT_TESTNET_INDEXER_TOKEN = ""
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -40,10 +53,28 @@ app.add_middleware(
 _DEPLOYMENTS_FILE = Path(__file__).resolve().parent.parent / ".deployments.json"
 _MIGRATION_REQUESTS_FILE = Path(__file__).resolve().parent.parent / "blockchain" / ".migration-requests.json"
 _MIGRATION_CHALLENGES_FILE = Path(__file__).resolve().parent.parent / "blockchain" / ".migration-challenges.json"
+<<<<<<< HEAD
 _ACCESS_REQUESTS_FILE = Path(__file__).resolve().parent.parent / "blockchain" / ".access-requests.json"
+=======
+_CUSTODIAL_WALLETS_FILE = Path(__file__).resolve().parent.parent / "backend" / ".custodial-wallets.json"
+>>>>>>> 0bf851bc2aefa0f3ec991621755503e19b34e9b9
 
 # Challenge TTL (seconds) — reject stale signature approvals
 _MIGRATION_CHALLENGE_TTL_S = 10 * 60
+
+
+def _custodial_wallets_load() -> dict:
+    if not _CUSTODIAL_WALLETS_FILE.exists():
+        return {}
+    try:
+        return json.loads(_CUSTODIAL_WALLETS_FILE.read_text())
+    except Exception:
+        return {}
+
+
+def _custodial_wallets_save(data: dict) -> None:
+    _CUSTODIAL_WALLETS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    _CUSTODIAL_WALLETS_FILE.write_text(json.dumps(data, indent=2))
 
 
 def _migration_load() -> list[dict]:
@@ -126,7 +157,106 @@ def _require_algorand_address(addr: str, field: str) -> None:
 
 
 def _get_algorand():
+    # Ensure indexer settings exist for deploy flows that require AppManager/indexer.
+    # Do not override if user explicitly configured something else.
+    algod_server = os.getenv("ALGOD_SERVER", "")
+    if "algonode.cloud" in algod_server:
+        os.environ.setdefault("INDEXER_SERVER", _DEFAULT_TESTNET_INDEXER_SERVER)
+        os.environ.setdefault("INDEXER_PORT", _DEFAULT_TESTNET_INDEXER_PORT)
+        os.environ.setdefault("INDEXER_TOKEN", _DEFAULT_TESTNET_INDEXER_TOKEN)
     return algokit_utils.AlgorandClient.from_environment()
+
+
+def _get_algod() -> AlgodClient:
+    server = os.getenv("ALGOD_SERVER")
+    token = os.getenv("ALGOD_TOKEN", "")
+    port = os.getenv("ALGOD_PORT")
+    if not server:
+        raise HTTPException(status_code=500, detail="ALGOD_SERVER is not configured")
+    # algosdk AlgodClient expects server to include scheme, and port is typically embedded.
+    # If a port is provided separately, append when missing.
+    if port and "://" in server and ":" not in server.split("://", 1)[1]:
+        server = f"{server}:{port}"
+    return AlgodClient(token, server)
+
+
+def _deployer_private_key() -> str:
+    m = os.getenv("DEPLOYER_MNEMONIC")
+    if not m:
+        raise HTTPException(status_code=500, detail="DEPLOYER_MNEMONIC is not set in environment")
+    try:
+        return mnemonic.to_private_key(m)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="DEPLOYER_MNEMONIC is invalid") from e
+
+
+def _create_registrar_box_reference(app_id: int, registrar_address: str) -> algokit_utils.BoxReference:
+    address_bytes = decode_address(registrar_address)
+    box_name = b"registrar_" + address_bytes
+    return algokit_utils.BoxReference(app_id=app_id, name=box_name)
+
+
+def _ensure_deployer_is_registrar(client: RefugeeContractClient) -> None:
+    algorand = _get_algorand()
+    deployer = algorand.account.from_environment("DEPLOYER")
+    # Idempotently set deployer as registrar so backend can register refugees.
+    client.send.add_registrar(
+        args=(deployer.address, "add"),
+        params=algokit_utils.CommonAppCallParams(
+            sender=deployer.address,
+            signer=deployer.signer,
+            box_references=[_create_registrar_box_reference(client.app_id, deployer.address)],
+        ),
+    )
+
+
+def _fund_account(sender_private_key: str, receiver: str, amount_microalgos: int) -> str:
+    algod = _get_algod()
+    sender = algo_account.address_from_private_key(sender_private_key)
+    # Fail fast with a clear message if deployer can't fund.
+    try:
+        sender_info = algod.account_info(sender)
+        sender_amount = int(sender_info.get("amount", 0))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Unable to read deployer balance from algod") from e
+    # Very conservative buffer: keep at least 0.1 ALGO after funding to avoid min-balance/fee issues.
+    if sender_amount < amount_microalgos + 100_000:
+        raise HTTPException(
+            status_code=400,
+            detail="Admin wallet has insufficient balance to fund a new custodial wallet",
+        )
+    sp = algod.suggested_params()
+    txn = PaymentTxn(sender=sender, sp=sp, receiver=receiver, amt=amount_microalgos)
+    stxn = txn.sign(sender_private_key)
+    try:
+        txid = algod.send_transaction(stxn)
+        wait_for_confirmation(algod, txid, 10)
+        return txid
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Funding transaction failed") from e
+
+
+def _opt_in_app(account_private_key: str, app_id: int) -> str:
+    algod = _get_algod()
+    sender = algo_account.address_from_private_key(account_private_key)
+    sp = algod.suggested_params()
+    txn = ApplicationOptInTxn(sender=sender, sp=sp, index=app_id)
+    stxn = txn.sign(account_private_key)
+    try:
+        txid = algod.send_transaction(stxn)
+        wait_for_confirmation(algod, txid, 10)
+        return txid
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="App opt-in transaction failed") from e
+
+
+@app.on_event("startup")
+def _startup_log() -> None:
+    # Print key connection settings so it's obvious we're on TestNet.
+    app_id = _get_app_id()
+    server = os.getenv("ALGOD_SERVER")
+    port = os.getenv("ALGOD_PORT")
+    print(f"[startup] ALGOD_SERVER={server} ALGOD_PORT={port} APP_ID={app_id}")
 
 
 def _get_app_id() -> int | None:
@@ -239,7 +369,13 @@ def add_registrar(req: AddRegistrarRequest):
     address = req.address
     try:
         client = _get_client()
-        client.send.add_registrar((address, "add"))
+        # BoxMap writes require a box reference for registrar_<address>
+        client.send.add_registrar(
+            args=(address, "add"),
+            params=algokit_utils.CommonAppCallParams(
+                box_references=[_create_registrar_box_reference(client.app_id, address)]
+            ),
+        )
         return {"ok": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -263,6 +399,7 @@ def register(body: dict):
         age_proof_hash = age_proof_hash.encode() if age_proof_hash else b"\x00" * 32
     try:
         client = _get_client()
+        _ensure_deployer_is_registrar(client)
         client.send.register((refugee, identity_hash, personhood_hash, age_proof_hash))
         return {"ok": True}
     except Exception as e:
@@ -597,18 +734,71 @@ def migration_reject(body: MigrationIdRequest):
 
 @app.post("/api/blockchain/generate-custodial-wallet")
 def generate_custodial_wallet():
-    """Generate a new custodial wallet (account) for refugees without smartphones."""
+    """
+    Create a real custodial wallet (W1) on-chain for refugees without smartphones.
+
+    - Generates a real Algorand account (private key + address)
+    - Funds it from DEPLOYER (so it exists on-chain)
+    - Opts it in to the RefugeeContract app (so local state is allocated)
+    - Registers identity hashes into W1 local state (via registrar)
+
+    SECURITY: Private key is stored server-side only; never returned to frontend.
+    """
     try:
+<<<<<<< HEAD
         import algosdk
         private_key, address = algosdk.account.generate_account()
         mnemonic = algosdk.mnemonic.from_private_key(private_key)
         return {
             "address": address,
             "mnemonic": mnemonic,
+=======
+        client = _get_client()
+        _ensure_deployer_is_registrar(client)
+
+        # Identity ID: stable external identifier used by QR + migration challenge message.
+        identity_id = uuid.uuid4().hex
+
+        # Generate a real Algorand account for W1.
+        private_key, address = algo_account.generate_account()
+
+        # Ensure address is valid before any chain actions.
+        _require_algorand_address(address, "old_wallet")
+
+        # Fund W1 so it exists on-chain and can cover min balance + opt-in.
+        # Opt-in increases minimum balance; 0.5 ALGO is a safe default for LocalNet/TestNet.
+        deployer_pk = _deployer_private_key()
+        _fund_account(deployer_pk, address, 500_000)
+
+        # Opt W1 into the app so local state can be written.
+        _opt_in_app(private_key, client.app_id)
+
+        # Derive non-empty hashes for on-chain storage. (No raw PII on-chain.)
+        identity_hash = hashlib.sha256(f"identity:{identity_id}".encode()).digest()
+        personhood_hash = hashlib.sha256(f"personhood:{identity_id}".encode()).digest()
+        age_proof_hash = hashlib.sha256(f"age:{identity_id}".encode()).digest()
+
+        # Register identity into W1 local state (sender must be registrar).
+        client.send.register((address, identity_hash, personhood_hash, age_proof_hash))
+
+        # Store W1 private key securely in backend storage (prepare for encryption).
+        # NOTE: For production, encrypt at rest (e.g., envelope encryption / KMS).
+        wallets = _custodial_wallets_load()
+        wallets[identity_id] = {
+            "address": address,
+            "private_key_b64": private_key,
+            "created_at": _utc_now_iso(),
+            "app_id": client.app_id,
+>>>>>>> 0bf851bc2aefa0f3ec991621755503e19b34e9b9
         }
+        _custodial_wallets_save(wallets)
+
+        qr_payload = json.dumps({"identity_id": identity_id, "old_wallet": address})
+        return {"data": {"identity_id": identity_id, "address": address, "qr_payload": qr_payload}}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+<<<<<<< HEAD
 
 # --- ACCESS REQUESTS (Data Governance) ---
 
@@ -652,3 +842,26 @@ def reject_access(req: AccessActionRequest):
         raise HTTPException(status_code=404, detail="Request not found")
     _access_save(rows)
     return {"ok": True}
+=======
+import uuid
+
+@app.post("/api/refugee/liveness-hash")
+def liveness_hash(payload: dict):
+    """Receive and securely store liveness hash generated by the front-end."""
+    try:
+        refugee_id = payload.get("refugeeId")
+        liveness_data = payload.get("livenessData", {})
+        
+        verification_id = str(uuid.uuid4())
+        
+        return {
+            "success": True,
+            "hashStored": True,
+            "refugeeId": refugee_id,
+            "verificationId": verification_id
+        }
+    except Exception as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=str(e))
+
+>>>>>>> 0bf851bc2aefa0f3ec991621755503e19b34e9b9

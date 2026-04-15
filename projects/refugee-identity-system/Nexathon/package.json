@@ -11,10 +11,14 @@
         "api": "cd .. && PYTHONPATH=Nexathon poetry run uvicorn Nexathon.backend.main:app --reload --host 0.0.0.0 --port 8000"
     },
     "dependencies": {
+        "@algorandfoundation/algokit-utils": "^7.1.0",
         "@perawallet/connect": "^1.5.1",
         "@yudiel/react-qr-scanner": "^2.5.1",
-        "algosdk": "^3.5.2",
+        "algosdk": "^2.11.0",
+        "axios": "^1.15.0",
         "clsx": "^2.1.0",
+        "crypto-js": "^4.2.0",
+        "ethers": "^6.16.0",
         "lucide-react": "^0.344.0",
         "qrcode.react": "^4.2.0",
         "react": "^18.2.0",

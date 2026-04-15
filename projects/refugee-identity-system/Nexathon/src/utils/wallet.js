@@ -11,3 +11,7 @@ export const reconnectSession = async () => {
     return [];
   }
 };
+
+export const signTransaction = async (txGroups) => {
+  return await peraWallet.signTransaction(txGroups);
+};

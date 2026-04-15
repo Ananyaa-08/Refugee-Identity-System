@@ -9,11 +9,15 @@ import { StatCard } from '../../components/ui/Common';
 import { clsx } from 'clsx';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../context/ToastContext';
+import algosdk from 'algosdk';
+import { RefugeeContractClient } from '../../contracts/RefugeeContractClient';
+import { REFUGEE_APP_ID, ALGOD_SERVER, ALGOD_PORT, ALGOD_TOKEN } from '../../contracts/config';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
     const { showToast } = useToast();
     const [pendingWorkers, setPendingWorkers] = useState([]);
+    const [totalRegistered, setTotalRegistered] = useState(0);
 
     // Load pending staff registrations from localStorage
     useEffect(() => {
@@ -22,6 +26,25 @@ const AdminDashboard = () => {
             setPendingWorkers(workers.filter(w => w.status === 'pending'));
         };
         loadPending();
+
+        const fetchBlockchainStats = async () => {
+            try {
+                const algodClient = new algosdk.Algodv2(ALGOD_TOKEN, ALGOD_SERVER, ALGOD_PORT);
+                const appClient = new RefugeeContractClient({
+                    resolveBy: 'id',
+                    id: Number(REFUGEE_APP_ID),
+                    algod: algodClient,
+                });
+
+                const globalState = await appClient.state.global.getAll();
+                if (globalState.totalRefugees !== undefined) {
+                    setTotalRegistered(Number(globalState.totalRefugees));
+                }
+            } catch (err) {
+                console.error('Failed to fetch blockchain stats:', err);
+            }
+        };
+        fetchBlockchainStats();
 
         // Polling for demo responsiveness
         const interval = setInterval(loadPending, 5000);
@@ -50,10 +73,10 @@ const AdminDashboard = () => {
                 <StatCard
                     icon={Users}
                     label="TOTAL REGISTERED"
-                    value={MOCK_STATS.totalRegistered.toLocaleString()}
+                    value={totalRegistered.toLocaleString()}
                     accentColor="#00c9b1"
-                    change="+127 this week"
-                    changeType="up"
+                    change="Verified on Algorand"
+                    changeType="neutral"
                 />
                 <StatCard
                     icon={Package}

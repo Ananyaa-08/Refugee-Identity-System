@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { peraWallet, reconnectSession } from "../utils/wallet";
+import { peraWallet, reconnectSession, signTransaction } from "../utils/wallet";
 
 const WalletContext = createContext(null);
 
@@ -49,7 +49,13 @@ export const WalletProvider = ({ children }) => {
   };
 
   return (
-    <WalletContext.Provider value={{ account, connectWallet, disconnectWallet, setManualAccount }}>
+    <WalletContext.Provider value={{ 
+        account, 
+        connectWallet, 
+        disconnectWallet, 
+        setManualAccount,
+        signTransactions: signTransaction
+    }}>
       {children}
     </WalletContext.Provider>
   );

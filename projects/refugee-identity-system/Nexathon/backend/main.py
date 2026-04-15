@@ -40,6 +40,7 @@ app.add_middleware(
 _DEPLOYMENTS_FILE = Path(__file__).resolve().parent.parent / ".deployments.json"
 _MIGRATION_REQUESTS_FILE = Path(__file__).resolve().parent.parent / "blockchain" / ".migration-requests.json"
 _MIGRATION_CHALLENGES_FILE = Path(__file__).resolve().parent.parent / "blockchain" / ".migration-challenges.json"
+_ACCESS_REQUESTS_FILE = Path(__file__).resolve().parent.parent / "blockchain" / ".access-requests.json"
 
 # Challenge TTL (seconds) — reject stale signature approvals
 _MIGRATION_CHALLENGE_TTL_S = 10 * 60
@@ -57,6 +58,30 @@ def _migration_load() -> list[dict]:
 def _migration_save(rows: list[dict]) -> None:
     _MIGRATION_REQUESTS_FILE.parent.mkdir(parents=True, exist_ok=True)
     _MIGRATION_REQUESTS_FILE.write_text(json.dumps(rows, indent=2))
+
+
+def _access_load() -> list[dict]:
+    if not _ACCESS_REQUESTS_FILE.exists():
+        # INITIAL DEMO DATA SEEDING
+        return [
+            {
+                "id": "REQ-001",
+                "name": "Aid Worker Maria Santos",
+                "requestedField": "Age Verification",
+                "requestedBy": "Border Control",
+                "requestedAt": datetime.now(timezone.utc).isoformat(),
+                "status": "pending"
+            }
+        ]
+    try:
+        return json.loads(_ACCESS_REQUESTS_FILE.read_text())
+    except Exception:
+        return []
+
+
+def _access_save(rows: list[dict]) -> None:
+    _ACCESS_REQUESTS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    _ACCESS_REQUESTS_FILE.write_text(json.dumps(rows, indent=2))
 
 
 def _migration_challenges_load() -> list[dict]:
@@ -134,6 +159,20 @@ def _get_client() -> RefugeeContractClient:
         default_sender=deployer.address,
         default_signer=deployer.signer,
     )
+
+
+@app.get("/")
+def root():
+    """System status for demo/hackathon display."""
+    app_id = _get_app_id()
+    return {
+        "system": "Refugee Identity Management System (RIMS)",
+        "status": "Operational",
+        "blockchain": "Algorand Testnet",
+        "app_id": app_id,
+        "api_docs": "/docs",
+        "ready": True
+    }
 
 
 @app.get("/api/testBlockchain")
@@ -247,11 +286,11 @@ def claim_aid(req: ClaimAidRequest):
 
 
 def _read_local_state(client, address: str) -> dict | None:
-    """Read local state for address; return None if not opted in or no identity."""
+    """Read local state for address; return None if not opted in or no data."""
     try:
         local = client.state.local_state(address)
         data = local.get_all()
-        if not data or not data.get("identity_hash"):
+        if not data:
             return None
         return data
     except Exception:
@@ -266,14 +305,18 @@ def get_refugee(address: str):
         data = _read_local_state(client, address)
         if not data:
             return {"success": False, "data": None}
+        wallet = data.get("wallet_address")
+        bio = data.get("biometric_hash")
         return {
             "success": True,
             "data": {
-                "wallet_address": data.get("wallet_address", b"").hex() if data.get("wallet_address") else None,
-                "identity_hash": data.get("identity_hash", b"").hex() if data.get("identity_hash") else None,
-                "personhood_hash": data.get("personhood_hash", b"").hex() if data.get("personhood_hash") else None,
-                "age_proof_hash": data.get("age_proof_hash", b"").hex() if data.get("age_proof_hash") else None,
+                "wallet_address": wallet.hex() if isinstance(wallet, (bytes, bytearray)) else wallet,
+                "did": data.get("did"),
+                "ipfs_cid": data.get("ipfs_cid"),
+                "biometric_hash": bio.hex() if isinstance(bio, (bytes, bytearray)) else bio,
+                "trust_tier": data.get("trust_tier", 0),
                 "aid_claimed": data.get("aid_claimed", 0),
+                "is_active": data.get("is_active", 0),
             },
         }
     except HTTPException:
@@ -556,11 +599,56 @@ def migration_reject(body: MigrationIdRequest):
 def generate_custodial_wallet():
     """Generate a new custodial wallet (account) for refugees without smartphones."""
     try:
-        algorand = _get_algorand()
-        account = algorand.account.random()
+        import algosdk
+        private_key, address = algosdk.account.generate_account()
+        mnemonic = algosdk.mnemonic.from_private_key(private_key)
         return {
-            "address": account.address,
-            "mnemonic": account.mnemonic,
+            "address": address,
+            "mnemonic": mnemonic,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# --- ACCESS REQUESTS (Data Governance) ---
+
+@app.get("/api/access/requests")
+def get_access_requests():
+    """Fetch all data access requests."""
+    return _access_load()
+
+
+class AccessActionRequest(BaseModel):
+    requestId: str
+
+
+@app.post("/api/access/approve")
+def approve_access(req: AccessActionRequest):
+    """Approve a data access request."""
+    rows = _access_load()
+    found = False
+    for r in rows:
+        if r["id"] == req.requestId:
+            r["status"] = "approved"
+            found = True
+            break
+    if not found:
+        raise HTTPException(status_code=404, detail="Request not found")
+    _access_save(rows)
+    return {"ok": True}
+
+
+@app.post("/api/access/reject")
+def reject_access(req: AccessActionRequest):
+    """Reject a data access request."""
+    rows = _access_load()
+    found = False
+    for r in rows:
+        if r["id"] == req.requestId:
+            r["status"] = "rejected"
+            found = True
+            break
+    if not found:
+        raise HTTPException(status_code=404, detail="Request not found")
+    _access_save(rows)
+    return {"ok": True}

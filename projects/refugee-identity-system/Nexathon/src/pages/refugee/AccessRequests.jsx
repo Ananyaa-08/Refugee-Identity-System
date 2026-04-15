@@ -6,7 +6,7 @@ import {
 import { clsx } from 'clsx';
 import { useToast } from '../../context/ToastContext';
 import { useWallet } from '../../context/WalletContext';
-import { peraWallet } from '../../utils/wallet';
+import { api } from '../../utils/api';
 
 const AccessRequests = () => {
     const { showToast } = useToast();
@@ -22,21 +22,9 @@ const AccessRequests = () => {
 
     const fetchRequests = async () => {
         try {
-            const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-            // Fetch all requests from the backend with Ngrok bypass and no-cache
-            const response = await fetch(`${BASE_URL}/access/requests`, {
-                cache: 'no-store',
-                headers: {
-                    'ngrok-skip-browser-warning': '69420'
-                }
-            });
-
-            if (!response.ok) throw new Error("Failed to fetch");
-
-            const data = await response.json();
-
-            // BYPASS FILTERING FOR DEMO: Show all requests regardless of wallet
-            setRequests(data);
+            const data = await api.getAccessRequests();
+            // Data is expected to be an array directly based on main.py implementation
+            setRequests(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error("Fetch error:", error);
             showToast('error', 'Sync Error', 'Could not sync with the blockchain ledger.');
@@ -47,8 +35,8 @@ const AccessRequests = () => {
 
     useEffect(() => {
         fetchRequests();
-        // Refresh every 10 seconds to catch new requests during the demo
-        const interval = setInterval(fetchRequests, 10000);
+        // Refresh every 30 seconds for the demo
+        const interval = setInterval(fetchRequests, 30000);
         return () => clearInterval(interval);
     }, []);
 
@@ -67,35 +55,19 @@ const AccessRequests = () => {
             }
 
             setSigningStage(2);
-            // Stage 2: Wake up Pera app for verification
-            await peraWallet.reconnectSession();
-
+            // In a real demo, we'd sign a challenge here. 
+            // For now, we simulate the signing delay then hit the backend.
+            await new Promise(r => setTimeout(r, 1500));
             setSigningStage(3);
-            // Stage 3: Brief delay for visual feedback
             await new Promise(r => setTimeout(r, 1000));
 
-            const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-            const response = await fetch(`${BASE_URL}/verify-signature`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "ngrok-skip-browser-warning": "69420"
-                },
-                body: JSON.stringify({
-                    requestId: req.id,
-                    walletAddress: account,
-                    signature: `SIG_${btoa(account || '').slice(0, 16)}`, // Simulated cryptographic signature data
-                    timestamp: Date.now()
-                })
-            });
-
-            if (!response.ok) throw new Error("Failed to approve on backend");
+            await api.approveAccessRequest(req.id);
 
             showToast('success', 'Consent Granted', `Access authorized for ${req.requestedField}.`);
             fetchRequests(); // Refresh the list immediately
         } catch (error) {
             console.error("Approve Error:", error);
-            showToast('error', 'Signature Failed', 'User rejected the request.');
+            showToast('error', 'Signature Failed', 'User rejected the request or backend error.');
         } finally {
             setIsSigning(false);
             setSigningStage(0);
@@ -105,18 +77,7 @@ const AccessRequests = () => {
     const handleReject = async (req) => {
         if (window.confirm("Reject this access request?")) {
             try {
-                const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-                const response = await fetch(`${BASE_URL}/access/reject`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "ngrok-skip-browser-warning": "69420"
-                    },
-                    body: JSON.stringify({ requestId: req.id })
-                });
-
-                if (!response.ok) throw new Error("Failed to reject");
-
+                await api.rejectAccessRequest(req.id);
                 showToast('info', 'Request Rejected', 'The requester has been notified.');
                 fetchRequests();
             } catch (error) {

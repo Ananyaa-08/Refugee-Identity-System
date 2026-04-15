@@ -3,6 +3,9 @@ import { Search, Check, FileText, Package } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useToast } from '../../context/ToastContext';
 import { Scanner } from '@yudiel/react-qr-scanner';
+import algosdk from 'algosdk';
+import { RefugeeContractClient } from '../../contracts/RefugeeContractClient';
+import { REFUGEE_APP_ID, ALGOD_SERVER, ALGOD_PORT, ALGOD_TOKEN } from '../../contracts/config';
 
 const ScanQR = () => {
     const { showToast } = useToast();
@@ -33,26 +36,36 @@ const ScanQR = () => {
         setResult(null);
 
         try {
-            const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-            const response = await fetch(`${BASE_URL}/verify-login`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "ngrok-skip-browser-warning": "69420"
-                },
-                body: JSON.stringify({ walletAddress: manualAddress.trim() })
+            const algodClient = new algosdk.Algodv2(ALGOD_TOKEN, ALGOD_SERVER, ALGOD_PORT);
+            const appClient = new RefugeeContractClient({
+                resolveBy: 'id',
+                id: REFUGEE_APP_ID,
+                algod: algodClient,
             });
 
-            if (!response.ok) throw new Error("Profile not found");
+            // Fetch local state for the provided address
+            const localState = await appClient.state.local.getAll(manualAddress.trim());
+            
+            if (!localState || localState.onChainId === undefined) {
+                throw new Error("Identity not found on-chain");
+            }
 
-            const profile = await response.json();
-            setResult(profile);
+            setResult({
+                id: `REF-${localState.onChainId.toString().padStart(3, '0')}`,
+                name: localState.metadataCid ? 'Registered Identity' : 'Protected Entity',
+                walletAddress: manualAddress.trim(),
+                campID: 'ZONE-A',
+                nationality: 'Verified',
+                trustTier: Number(localState.trustTier || 0),
+                aidBalance: Number(localState.aidBalance || 0)
+            });
+
             setIsScanning(false);
-            showToast('success', 'Address Resolved', 'Profile fetched from backend.');
+            showToast('success', 'On-Chain Search Success', 'Identity verified on Algorand.');
         } catch (error) {
+            console.error(error);
             setIsScanning(false);
-            showToast('error', 'Not Found', 'No identity found for this wallet address.');
+            showToast('error', 'Verification Failed', 'No identity found for this wallet address on-chain.');
         }
     };
 

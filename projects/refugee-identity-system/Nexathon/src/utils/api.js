@@ -32,4 +32,8 @@ export const api = {
     migrationRequests: () => request('GET', '/api/blockchain/migration-requests'),
     migrationApprove: (id) => request('POST', '/api/blockchain/migration-approve', { id }),
     migrationReject: (id) => request('POST', '/api/blockchain/migration-reject', { id }),
+    // Access Requests
+    getAccessRequests: () => request('GET', '/api/access/requests'),
+    approveAccessRequest: (requestId) => request('POST', '/api/access/approve', { requestId }),
+    rejectAccessRequest: (requestId) => request('POST', '/api/access/reject', { requestId }),
 };

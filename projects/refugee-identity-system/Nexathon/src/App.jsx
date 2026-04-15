@@ -1,75 +1,74 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ToastProvider } from './context/ToastContext';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { WalletProvider } from './context/WalletContext';
-
-// Layouts
-import AidWorkerLayout from './components/layout/AidWorkerLayout';
-import RefugeeLayout from './components/layout/RefugeeLayout';
-import AdminLayout from './components/layout/AdminLayout';
+import { ToastProvider } from './context/ToastContext';
 
 // Pages
 import LoginPage from './pages/LoginPage';
-import Register from './pages/aid-worker/Register';
-import ScanQR from './pages/aid-worker/ScanQR';
-import SearchRefugee from './pages/aid-worker/SearchRefugee';
-import RequestAccess from './pages/aid-worker/RequestAccess';
-import AidDistribution from './pages/aid-worker/AidDistribution';
-import RefugeeDashboard from './pages/refugee/RefugeeDashboard';
-import AccessRequests from './pages/refugee/AccessRequests';
-import WalletMigration from './pages/refugee/WalletMigration';
 
 // Admin Pages
+import AdminLayout from './components/layout/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminMigrations from './pages/admin/AdminMigrations';
 import AdminAudit from './pages/admin/AdminAudit';
-import AdminRefugees from './pages/admin/AdminRefugees';
+import AdminMigrations from './pages/admin/AdminMigrations';
 import AdminStatus from './pages/admin/AdminStatus';
+import AdminRefugees from './pages/admin/AdminRefugees';
 
-function App() {
+// Aid Worker Pages
+import AidWorkerLayout from './components/layout/AidWorkerLayout';
+import SearchRefugee from './pages/aid-worker/SearchRefugee';
+import Register from './pages/aid-worker/Register';
+import AidDistribution from './pages/aid-worker/AidDistribution';
+import ScanQR from './pages/aid-worker/ScanQR';
+
+// Refugee Pages
+import RefugeeLayout from './components/layout/RefugeeLayout';
+import RefugeeDashboard from './pages/refugee/RefugeeDashboard';
+import WalletMigration from './pages/refugee/WalletMigration';
+import AccessRequests from './pages/refugee/AccessRequests';
+
+const App = () => {
     return (
-        <WalletProvider>
-            <ToastProvider>
-                <BrowserRouter>
+        <ToastProvider>
+            <WalletProvider>
+                <Router>
                     <Routes>
-                        {/* Landing / Login */}
                         <Route path="/" element={<LoginPage />} />
+                        
+                        {/* Admin Routes */}
+                        <Route path="/admin" element={<AdminLayout />}>
+                            <Route index element={<Navigate to="dashboard" replace />} />
+                            <Route path="dashboard" element={<AdminDashboard />} />
+                            <Route path="audit" element={<AdminAudit />} />
+                            <Route path="migrations" element={<AdminMigrations />} />
+                            <Route path="refugees" element={<AdminRefugees />} />
+                            <Route path="status" element={<AdminStatus />} />
+                        </Route>
 
                         {/* Aid Worker Routes */}
                         <Route path="/aid-worker" element={<AidWorkerLayout />}>
-                            <Route index element={<Navigate to="/aid-worker/register" replace />} />
-                            <Route path="register" element={<Register />} />
-                            <Route path="scan" element={<ScanQR />} />
+                            <Route index element={<Navigate to="search" replace />} />
                             <Route path="search" element={<SearchRefugee />} />
-                            <Route path="access" element={<RequestAccess />} />
-                            <Route path="aid" element={<AidDistribution />} />
+                            <Route path="register" element={<Register />} />
+                            <Route path="distribution" element={<AidDistribution />} />
+                            <Route path="scan" element={<ScanQR />} />
                         </Route>
 
                         {/* Refugee Routes */}
                         <Route path="/refugee" element={<RefugeeLayout />}>
-                            <Route index element={<Navigate to="/refugee/dashboard" replace />} />
+                            <Route index element={<Navigate to="dashboard" replace />} />
                             <Route path="dashboard" element={<RefugeeDashboard />} />
-                            <Route path="requests" element={<AccessRequests />} />
                             <Route path="migration" element={<WalletMigration />} />
-                        </Route>
-
-                        {/* Admin Routes */}
-                        <Route path="/admin" element={<AdminLayout />}>
-                            <Route index element={<Navigate to="/admin/dashboard" replace />} />
-                            <Route path="dashboard" element={<AdminDashboard />} />
-                            <Route path="migrations" element={<AdminMigrations />} />
-                            <Route path="audit" element={<AdminAudit />} />
-                            <Route path="refugees" element={<AdminRefugees />} />
-                            <Route path="status" element={<AdminStatus />} />
+                            <Route path="requests" element={<AccessRequests />} />
                         </Route>
 
                         {/* Fallback */}
                         <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
-                </BrowserRouter>
-            </ToastProvider>
-        </WalletProvider>
+                </Router>
+            </WalletProvider>
+        </ToastProvider>
     );
-}
+};
 
 export default App;

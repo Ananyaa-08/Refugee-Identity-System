@@ -8,13 +8,23 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
+import os
 from dotenv import load_dotenv
 
-# Load .env from project root (projects/refugee-identity-system/.env)
-# This must contain DEPLOYER_MNEMONIC and TestNet algod settings.
-_env_path = Path(__file__).resolve().parents[2] / ".env"
+# Load env files from project root (projects/refugee-identity-system/).
+# Default to `.env` (TestNet) to match the Pera Wallet UX.
+# Opt into LocalNet explicitly by setting RIMS_NETWORK=localnet (or by providing ALGOD_SERVER in env).
 # IMPORTANT: do NOT clobber process env (tests/localnet set env explicitly).
-load_dotenv(_env_path, override=False)
+_project_root = Path(__file__).resolve().parents[2]
+_env_default = _project_root / ".env"
+_env_localnet = _project_root / ".env.localnet"
+
+# Always load .env first (if present) without overriding process env.
+load_dotenv(_env_default, override=False)
+
+# Only load .env.localnet when explicitly requested and still don't override process env.
+if os.getenv("RIMS_NETWORK", "").lower() == "localnet" and _env_localnet.exists():
+    load_dotenv(_env_localnet, override=False)
 
 from algosdk import util
 from algosdk.error import AlgodHTTPError
@@ -32,7 +42,6 @@ from blockchain.artifacts.refugee_contract.refugee_contract_client import (
     RefugeeContractFactory,
 )
 import algokit_utils
-import os
 
 app = FastAPI(title="RIMS API", version="1.0.0")
 
@@ -53,11 +62,8 @@ app.add_middleware(
 _DEPLOYMENTS_FILE = Path(__file__).resolve().parent.parent / ".deployments.json"
 _MIGRATION_REQUESTS_FILE = Path(__file__).resolve().parent.parent / "blockchain" / ".migration-requests.json"
 _MIGRATION_CHALLENGES_FILE = Path(__file__).resolve().parent.parent / "blockchain" / ".migration-challenges.json"
-<<<<<<< HEAD
 _ACCESS_REQUESTS_FILE = Path(__file__).resolve().parent.parent / "blockchain" / ".access-requests.json"
-=======
 _CUSTODIAL_WALLETS_FILE = Path(__file__).resolve().parent.parent / "backend" / ".custodial-wallets.json"
->>>>>>> 0bf851bc2aefa0f3ec991621755503e19b34e9b9
 
 # Challenge TTL (seconds) — reject stale signature approvals
 _MIGRATION_CHALLENGE_TTL_S = 10 * 60
@@ -196,8 +202,35 @@ def _create_registrar_box_reference(app_id: int, registrar_address: str) -> algo
     return algokit_utils.BoxReference(app_id=app_id, name=box_name)
 
 
+def _ensure_deployer_funded_for_localnet(algorand: algokit_utils.AlgorandClient) -> None:
+    """
+    When using AlgoKit LocalNet, a DEPLOYER mnemonic from `.env` may have 0 balance on the local chain.
+    Fund it from the LocalNet dispenser so deploy/calls don't fail with overspend.
+    """
+    try:
+        if not algorand.client.is_localnet():
+            return
+        deployer = algorand.account.from_environment("DEPLOYER")
+        info = algorand.client.algod.account_info(deployer.address)
+        if int(info.get("amount", 0)) >= 2_000_000:
+            return
+        faucet = algorand.account.localnet_dispenser()
+        algorand.send.payment(
+            algokit_utils.PaymentParams(
+                sender=faucet.address,
+                signer=faucet.signer,
+                receiver=deployer.address,
+                amount=algokit_utils.AlgoAmount(algo=5),
+            )
+        )
+    except Exception:
+        # Best-effort. If funding fails, downstream calls will raise a clear overspend error.
+        return
+
+
 def _ensure_deployer_is_registrar(client: RefugeeContractClient) -> None:
     algorand = _get_algorand()
+    _ensure_deployer_funded_for_localnet(algorand)
     deployer = algorand.account.from_environment("DEPLOYER")
     # Idempotently set deployer as registrar so backend can register refugees.
     client.send.add_registrar(
@@ -329,11 +362,153 @@ def get_app_info():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/blockchain/custodial-identities")
+def custodial_identities():
+    """
+    List identities created for the "no smartphone" (custodial W1) flow.
+
+    SECURITY: never return private keys.
+    """
+    wallets = _custodial_wallets_load()
+    out = []
+    for identity_id, row in (wallets or {}).items():
+        try:
+            address = row.get("address")
+            created_at = row.get("created_at")
+            app_id = row.get("app_id")
+            qr_payload = json.dumps({"identity_id": identity_id, "old_wallet": address})
+            out.append(
+                {
+                    "identity_id": identity_id,
+                    "address": address,
+                    "created_at": created_at,
+                    "app_id": app_id,
+                    "qr_payload": qr_payload,
+                }
+            )
+        except Exception:
+            continue
+    out.sort(key=lambda r: (r.get("created_at") or ""), reverse=True)
+    return {"success": True, "data": out}
+
+
+class IdentityIdRequest(BaseModel):
+    identity_id: str
+
+
+def _get_custodial_identity(identity_id: str) -> dict | None:
+    wallets = _custodial_wallets_load()
+    row = (wallets or {}).get(identity_id)
+    if not isinstance(row, dict):
+        return None
+    return row
+
+
+@app.post("/api/blockchain/verify-identity")
+def verify_identity(body: IdentityIdRequest):
+    """
+    Strictly verify that a refugee identity exists and is linked to a real custodial wallet (W1).
+
+    Requirements:
+    - identity_id must exist in backend custodial storage
+    - W1 address must be a valid Algorand address
+    - W1 must be opted into the app (local state exists) and not migrated
+    """
+    identity_id = (body.identity_id or "").strip()
+    if not identity_id:
+        raise HTTPException(status_code=400, detail="identity_id is required")
+
+    row = _get_custodial_identity(identity_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Identity not found")
+
+    address = (row.get("address") or "").strip()
+    _require_algorand_address(address, "old_wallet")
+
+    client = _get_client()
+    state = _read_local_state(client, address)
+    if not state:
+        raise HTTPException(status_code=400, detail="Identity wallet is not registered on-chain")
+    if state.get("identity_hash") == b"MIGRATED":
+        raise HTTPException(status_code=400, detail="Identity has already been migrated")
+
+    return {"success": True, "data": {"identity_id": identity_id, "old_wallet": address, "app_id": client.app_id}}
+
+
+@app.post("/api/blockchain/get-identity")
+def get_identity(body: IdentityIdRequest):
+    """
+    Get identity + on-chain status for a custodial (no smartphone) refugee identity.
+
+    SECURITY: private keys are never returned.
+    """
+    identity_id = (body.identity_id or "").strip()
+    if not identity_id:
+        raise HTTPException(status_code=400, detail="identity_id is required")
+
+    row = _get_custodial_identity(identity_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Identity not found")
+
+    address = (row.get("address") or "").strip()
+    _require_algorand_address(address, "old_wallet")
+
+    client = _get_client()
+    algod = _get_algorand().client.algod
+    app_id = client.app_id
+
+    funded = False
+    algo_amount = 0
+    try:
+        info = algod.account_info(address)
+        algo_amount = int(info.get("amount", 0) or 0)
+        funded = algo_amount > 0
+    except Exception:
+        funded = False
+
+    opted_in = False
+    local_state = {}
+    local_state_exists = False
+    migrated = False
+    try:
+        algod.account_application_info(address, app_id)
+        opted_in = True
+        local_state = _read_local_state(client, address) or {}
+        local_state_exists = bool(local_state)
+        migrated = local_state.get("identity_hash") == b"MIGRATED"
+    except AlgodHTTPError as e:
+        if getattr(e, "code", None) == 404:
+            opted_in = False
+        else:
+            raise
+
+    qr_payload = json.dumps({"identity_id": identity_id, "old_wallet": address})
+    return {
+        "success": True,
+        "data": {
+            "identity_id": identity_id,
+            "name": row.get("name") or "Registered Refugee",
+            "old_wallet": address,
+            "status": "migrated" if migrated else "active",
+            "created_at": row.get("created_at"),
+            "app_id": app_id,
+            "blockchain": {
+                "funded": funded,
+                "amount_microalgos": algo_amount,
+                "opted_in": opted_in,
+                "local_state_exists": local_state_exists,
+            },
+            "qr_payload": qr_payload,
+        },
+    }
+
+
 @app.post("/api/blockchain/deploy")
 def deploy():
     """Deploy RefugeeContract and persist app_id."""
     try:
         algorand = _get_algorand()
+        _ensure_deployer_funded_for_localnet(algorand)
         deployer = algorand.account.from_environment("DEPLOYER")
         factory = algorand.client.get_typed_app_factory(
             RefugeeContractFactory, default_sender=deployer.address
@@ -390,13 +565,35 @@ def register(body: dict):
     age_proof_hash = body.get("age_proof_hash", b"")
     if not refugee:
         raise HTTPException(status_code=400, detail="refugee address required")
-    # Ensure bytes
-    if isinstance(identity_hash, str):
-        identity_hash = identity_hash.encode() if identity_hash else b"\x00" * 32
-    if isinstance(personhood_hash, str):
-        personhood_hash = personhood_hash.encode() if personhood_hash else b"\x00" * 32
-    if isinstance(age_proof_hash, str):
-        age_proof_hash = age_proof_hash.encode() if age_proof_hash else b"\x00" * 32
+
+    def _hash_bytes(v: object) -> bytes:
+        # Accept:
+        # - bytes
+        # - hex string (64 chars) => 32 bytes
+        # - base64 string (optional) => bytes
+        # - fallback: utf-8 bytes (prototype/dev)
+        if isinstance(v, (bytes, bytearray)):
+            return bytes(v)
+        if isinstance(v, str):
+            s = v.strip()
+            if not s:
+                return b"\x00" * 32
+            # Hex (preferred)
+            try:
+                if len(s) == 64:
+                    return bytes.fromhex(s)
+            except Exception:
+                pass
+            # Base64
+            try:
+                return base64.b64decode(s, validate=True)
+            except Exception:
+                return s.encode()
+        return b"\x00" * 32
+
+    identity_hash = _hash_bytes(identity_hash)
+    personhood_hash = _hash_bytes(personhood_hash)
+    age_proof_hash = _hash_bytes(age_proof_hash)
     try:
         client = _get_client()
         _ensure_deployer_is_registrar(client)
@@ -443,17 +640,23 @@ def get_refugee(address: str):
         if not data:
             return {"success": False, "data": None}
         wallet = data.get("wallet_address")
-        bio = data.get("biometric_hash")
+        id_h = data.get("identity_hash")
+        ph_h = data.get("personhood_hash")
+        age_h = data.get("age_proof_hash")
+
+        def _hex_if_bytes(v):
+            if isinstance(v, (bytes, bytearray)):
+                return v.hex()
+            return v
+
         return {
             "success": True,
             "data": {
                 "wallet_address": wallet.hex() if isinstance(wallet, (bytes, bytearray)) else wallet,
-                "did": data.get("did"),
-                "ipfs_cid": data.get("ipfs_cid"),
-                "biometric_hash": bio.hex() if isinstance(bio, (bytes, bytearray)) else bio,
-                "trust_tier": data.get("trust_tier", 0),
-                "aid_claimed": data.get("aid_claimed", 0),
-                "is_active": data.get("is_active", 0),
+                "identity_hash": _hex_if_bytes(id_h),
+                "personhood_hash": _hex_if_bytes(ph_h),
+                "age_proof_hash": _hex_if_bytes(age_h),
+                "aid_claimed": int(data.get("aid_claimed", 0) or 0),
             },
         }
     except HTTPException:
@@ -660,11 +863,19 @@ def migration_request_submit(body: MigrationRequestSubmitRequest):
 
 
 @app.get("/api/blockchain/migration-requests")
-def migration_requests_list():
-    """Pending wallet migrations for the admin portal."""
+def migration_requests_list(status: str | None = None):
+    """
+    List wallet migration requests.
+
+    - If `status` is provided (e.g. pending/approved/rejected), filter by status.
+    - Otherwise return all requests.
+    """
     rows = _migration_load()
-    out = [r for r in rows if r.get("status") == "pending"]
-    return {"success": True, "data": out}
+    if status:
+        st = status.strip().lower()
+        rows = [r for r in rows if (r.get("status") or "").lower() == st]
+    rows.sort(key=lambda r: (r.get("requestedAt") or r.get("requested_at") or ""), reverse=True)
+    return {"success": True, "data": rows}
 
 
 class MigrationIdRequest(BaseModel):
@@ -732,8 +943,12 @@ def migration_reject(body: MigrationIdRequest):
     return {"ok": True}
 
 
+class GenerateCustodialWalletRequest(BaseModel):
+    name: str | None = None
+
+
 @app.post("/api/blockchain/generate-custodial-wallet")
-def generate_custodial_wallet():
+def generate_custodial_wallet(body: GenerateCustodialWalletRequest | None = None):
     """
     Create a real custodial wallet (W1) on-chain for refugees without smartphones.
 
@@ -745,14 +960,6 @@ def generate_custodial_wallet():
     SECURITY: Private key is stored server-side only; never returned to frontend.
     """
     try:
-<<<<<<< HEAD
-        import algosdk
-        private_key, address = algosdk.account.generate_account()
-        mnemonic = algosdk.mnemonic.from_private_key(private_key)
-        return {
-            "address": address,
-            "mnemonic": mnemonic,
-=======
         client = _get_client()
         _ensure_deployer_is_registrar(client)
 
@@ -774,6 +981,7 @@ def generate_custodial_wallet():
         _opt_in_app(private_key, client.app_id)
 
         # Derive non-empty hashes for on-chain storage. (No raw PII on-chain.)
+        # Contract ABI expects: register(address, byte[], byte[], byte[])void
         identity_hash = hashlib.sha256(f"identity:{identity_id}".encode()).digest()
         personhood_hash = hashlib.sha256(f"personhood:{identity_id}".encode()).digest()
         age_proof_hash = hashlib.sha256(f"age:{identity_id}".encode()).digest()
@@ -784,12 +992,17 @@ def generate_custodial_wallet():
         # Store W1 private key securely in backend storage (prepare for encryption).
         # NOTE: For production, encrypt at rest (e.g., envelope encryption / KMS).
         wallets = _custodial_wallets_load()
+        private_key_b64 = (
+            base64.b64encode(private_key).decode()
+            if isinstance(private_key, (bytes, bytearray))
+            else str(private_key)
+        )
         wallets[identity_id] = {
             "address": address,
-            "private_key_b64": private_key,
+            "private_key_b64": private_key_b64,
             "created_at": _utc_now_iso(),
             "app_id": client.app_id,
->>>>>>> 0bf851bc2aefa0f3ec991621755503e19b34e9b9
+            "name": (body.name.strip() if body and body.name and body.name.strip() else None),
         }
         _custodial_wallets_save(wallets)
 
@@ -797,8 +1010,6 @@ def generate_custodial_wallet():
         return {"data": {"identity_id": identity_id, "address": address, "qr_payload": qr_payload}}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-<<<<<<< HEAD
 
 # --- ACCESS REQUESTS (Data Governance) ---
 
@@ -842,8 +1053,6 @@ def reject_access(req: AccessActionRequest):
         raise HTTPException(status_code=404, detail="Request not found")
     _access_save(rows)
     return {"ok": True}
-=======
-import uuid
 
 @app.post("/api/refugee/liveness-hash")
 def liveness_hash(payload: dict):
@@ -863,5 +1072,3 @@ def liveness_hash(payload: dict):
     except Exception as e:
         from fastapi import HTTPException
         raise HTTPException(status_code=500, detail=str(e))
-
->>>>>>> 0bf851bc2aefa0f3ec991621755503e19b34e9b9

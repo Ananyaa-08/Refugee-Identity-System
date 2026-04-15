@@ -10,6 +10,8 @@ import { useWallet } from '../../context/WalletContext';
 import { peraWallet } from '../../utils/wallet';
 import { api } from '../../utils/api';
 import { Scanner } from '@yudiel/react-qr-scanner';
+import algosdk from 'algosdk';
+import { ALGOD_SERVER, ALGOD_PORT, ALGOD_TOKEN } from '../../contracts/config';
 
 const WalletMigration = () => {
     const navigate = useNavigate();
@@ -150,6 +152,34 @@ const WalletMigration = () => {
 
         try {
             await peraWallet.reconnectSession();
+            // Ensure W2 is opted in (required by contract + backend approval)
+            setSignatureStatus('Opting in your new wallet (W2)...');
+            const appInfo = await api.getAppInfo();
+            let appId = Number(appInfo?.data?.app_id);
+            if (!Number.isFinite(appId)) {
+                const deployed = await api.deploy();
+                appId = Number(deployed?.data?.app_id);
+            }
+            if (!Number.isFinite(appId)) throw new Error('Contract not deployed (missing app_id)');
+
+            try {
+                const algod = new algosdk.Algodv2(ALGOD_TOKEN, ALGOD_SERVER, ALGOD_PORT);
+                const sp = await algod.getTransactionParams().do();
+                const optInTxn = algosdk.makeApplicationOptInTxnFromObject({
+                    from: newAddr,
+                    appIndex: appId,
+                    suggestedParams: sp,
+                });
+                const txnsToSign = [{ txn: optInTxn, signers: [newAddr] }];
+                const signed = await peraWallet.signTransaction([txnsToSign]);
+                const blobs = signed.map((s) => s.blob);
+                const { txId } = await algod.sendRawTransaction(blobs).do();
+                await algosdk.waitForConfirmation(algod, txId, 10);
+            } catch (optErr) {
+                // If already opted in, a second opt-in fails; allow the flow to continue.
+                console.log('Opt-in skipped/failed (may already be opted-in):', optErr);
+            }
+
             setSignatureStatus('Waiting for wallet approval...');
             const { data } = await api.migrationMessage({
                 identity_id: identityId,

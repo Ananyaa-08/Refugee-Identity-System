@@ -179,3 +179,8 @@ node_modules
 debug_traces/
 .algokit/static-analysis/ # Replace with .algokit/static-analysis/tealer/ to enable snapshot checks in CI
 .algokit/sources
+
+# Nexathon backend runtime state (contains private keys / PII-adjacent metadata)
+Nexathon/backend/.custodial-wallets.json
+Nexathon/blockchain/.migration-requests.json
+Nexathon/blockchain/.migration-challenges.json

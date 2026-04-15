@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, HardHat, User, ArrowRight, X } from 'lucide-react';
 import { MOCK_STATS } from '../utils/mockData';
-import { useWallet } from '../context/WalletContext';
 import { useToast } from '../context/ToastContext';
 import { api } from '../utils/api';
 
@@ -29,7 +28,6 @@ const LoginCard = ({ icon: Icon, title, description, badgeColor, buttonColor, on
 
 const LoginPage = () => {
     const navigate = useNavigate();
-    const { connectWallet, account } = useWallet();
     const { showToast } = useToast();
 
     // Aid Worker State
@@ -39,33 +37,28 @@ const LoginPage = () => {
     const [workerId, setWorkerId] = useState('');
     const [workerPass, setWorkerPass] = useState('');
 
-    // Refugee Login Logic (Pera Wallet Integration)
-    // Redirect only when wallet is connected AND user is not in aid worker form
-    useEffect(() => {
-        if (!account || showWorkerForm) return;
-        localStorage.setItem('walletAddress', account);
-        api.getRefugeeByAddress(account)
-            .then((res) => {
-                if (res.success && res.data) {
-                    navigate('/refugee');
-                } else {
-                    // Wallet migration is performed with an aid worker present
-                    navigate('/aid-worker/migration');
-                }
-            })
-            .catch(() => navigate('/aid-worker/migration'));
-    }, [account, navigate, showWorkerForm]);
+    // Refugee login is ID-only and must be verified via backend (no manual wallet entry).
+    const [showRefugeeForm, setShowRefugeeForm] = useState(false);
+    const [refugeeId, setRefugeeId] = useState('');
+    const [isVerifyingRefugee, setIsVerifyingRefugee] = useState(false);
 
-    const handleRefugeeLogin = async () => {
-        if (!account) {
-            await connectWallet();
-        } else {
-            try {
-                const res = await api.getRefugeeByAddress(account);
-                navigate(res.success && res.data ? '/refugee' : '/aid-worker/migration');
-            } catch {
-                navigate('/aid-worker/migration');
-            }
+    const handleRefugeeLogin = async (e) => {
+        if (e) e.preventDefault();
+        const id = refugeeId.trim();
+        if (!id) {
+            showToast('error', 'Missing ID', 'Please enter your refugee ID.');
+            return;
+        }
+        setIsVerifyingRefugee(true);
+        try {
+            await api.verifyIdentity(id);
+            localStorage.setItem('refugee_identity_id', id);
+            setShowRefugeeForm(false);
+            navigate('/refugee/dashboard');
+        } catch (err) {
+            showToast('error', 'Access denied', err.message || 'Invalid or unregistered ID.');
+        } finally {
+            setIsVerifyingRefugee(false);
         }
     };
 
@@ -190,7 +183,7 @@ const LoginPage = () => {
                         description="Access your digital identity, manage data consents, and migrate to self-sovereign wallets."
                         badgeColor="bg-[#00c9b120] text-[#00c9b1]"
                         buttonColor="bg-[#00c9b1] text-[#060d1f] hover:bg-[#00e0c5]"
-                        onEnter={handleRefugeeLogin}
+                        onEnter={() => setShowRefugeeForm(true)}
                     />
                     <LoginCard
                         icon={Shield}
@@ -251,6 +244,41 @@ const LoginPage = () => {
                                 CANCEL
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Refugee ID Login Overlay */}
+            {showRefugeeForm && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#000000dd] backdrop-blur-sm px-6">
+                    <div className="bg-[#0f1e38] border border-[#1a2d4a] rounded-2xl p-8 max-w-sm w-full shadow-2xl animate-fadeSlideUp relative">
+                        <button
+                            onClick={() => setShowRefugeeForm(false)}
+                            className="absolute top-4 right-4 text-[#3d5278] hover:text-white transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
+
+                        <h3 className="text-[#e2eaf8] text-xl font-bold mb-2 text-center">Refugee Portal</h3>
+                        <p className="text-[#7a94bb] text-sm text-center mb-6">
+                            Enter the refugee ID issued during registration. Wallet entry is not allowed.
+                        </p>
+
+                        <form onSubmit={handleRefugeeLogin} className="space-y-4">
+                            <input
+                                placeholder="Refugee ID"
+                                className="w-full bg-[#060d1f] border border-[#1a2d4a] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#00c9b1] font-mono"
+                                value={refugeeId}
+                                onChange={(e) => setRefugeeId(e.target.value)}
+                            />
+                            <button
+                                type="submit"
+                                disabled={isVerifyingRefugee}
+                                className="w-full py-3 bg-[#00c9b1] text-[#060d1f] text-sm font-bold uppercase tracking-widest rounded-lg hover:bg-[#00e0c5] transition-all disabled:opacity-60"
+                            >
+                                {isVerifyingRefugee ? 'VERIFYING…' : 'ENTER'}
+                            </button>
+                        </form>
                     </div>
                 </div>
             )}

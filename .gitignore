@@ -168,3 +168,8 @@ cython_debug/
 # NPM
 node_modules
 
+# Nexathon backend runtime state (contains private keys / PII-adjacent metadata)
+projects/refugee-identity-system/Nexathon/backend/.custodial-wallets.json
+projects/refugee-identity-system/Nexathon/blockchain/.migration-requests.json
+projects/refugee-identity-system/Nexathon/blockchain/.migration-challenges.json
+

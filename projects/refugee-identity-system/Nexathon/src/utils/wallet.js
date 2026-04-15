@@ -7,7 +7,7 @@ export const reconnectSession = async () => {
   try {
     const accounts = await peraWallet.reconnectSession();
     return accounts;
-  } catch (error) {
+  } catch {
     console.log("No existing session found");
     return [];
   }

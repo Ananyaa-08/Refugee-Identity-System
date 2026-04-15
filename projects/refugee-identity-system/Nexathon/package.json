@@ -11,14 +11,11 @@
         "api": "cd .. && PYTHONPATH=Nexathon poetry run uvicorn Nexathon.backend.main:app --reload --host 0.0.0.0 --port 8000"
     },
     "dependencies": {
-<<<<<<< HEAD
-        "@algorandfoundation/algokit-utils": "^7.1.0",
-=======
+    "@algorandfoundation/algokit-utils": "^9.2.0",
         "@mediapipe/tasks-vision": "^0.10.34",
->>>>>>> 0bf851bc2aefa0f3ec991621755503e19b34e9b9
         "@perawallet/connect": "^1.5.1",
         "@yudiel/react-qr-scanner": "^2.5.1",
-        "algosdk": "^2.11.0",
+    "algosdk": "^3.5.2",
         "axios": "^1.15.0",
         "clsx": "^2.1.0",
         "crypto-js": "^4.2.0",
@@ -33,15 +30,15 @@
         "tailwind-merge": "^2.2.1"
     },
     "devDependencies": {
-        "@eslint/js": "^10.0.1",
+    "@eslint/js": "^9.39.4",
         "@types/react": "^18.2.56",
         "@types/react-dom": "^18.2.19",
         "@vitejs/plugin-react-swc": "^3.5.0",
         "autoprefixer": "^10.4.17",
-        "eslint": "^8.57.1",
+    "eslint": "^9.39.4",
         "eslint-plugin-react": "^7.37.5",
-        "eslint-plugin-react-hooks": "^4.6.0",
-        "eslint-plugin-react-refresh": "^0.4.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
         "globals": "^17.5.0",
         "postcss": "^8.4.35",
         "tailwindcss": "^3.4.1",

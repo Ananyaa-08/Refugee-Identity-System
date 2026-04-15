@@ -1,26 +1,22 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-    Check, Camera, Smartphone, QrCode, User,
-    Trash2, Plus, Info, Lock, Loader2, Printer, Shield, ArrowRight, ArrowLeft, Eye
+    Check, Camera, Smartphone, QrCode,
+    Trash2, Plus, Info, Lock, Loader2, Printer, Shield,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useToast } from '../../context/ToastContext';
 import { LoadingSpinner } from '../../components/ui/Common';
 import { QRCodeSVG } from 'qrcode.react';
 import Webcam from "react-webcam";
-<<<<<<< HEAD
 import algosdk from 'algosdk';
 import CryptoJS from 'crypto-js';
-import { RefugeeContractClient } from '../../contracts/RefugeeContractClient';
 import { REFUGEE_APP_ID, ALGOD_SERVER, ALGOD_PORT, ALGOD_TOKEN } from '../../contracts/config';
 import { useWallet } from '../../context/WalletContext';
-=======
 import { FaceLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
->>>>>>> 0bf851bc2aefa0f3ec991621755503e19b34e9b9
 import { api } from '../../utils/api';
 
-// --- Form Components ---
-
+// --- Form Components (PropTypes omitted for local helpers) ---
+/* eslint-disable react/prop-types */
 const Input = ({ label, ...props }) => (
     <div className="w-full">
         <label className="block text-[#7a94bb] text-xs font-medium uppercase tracking-widest mb-2">{label}</label>
@@ -42,6 +38,7 @@ const Select = ({ label, options, ...props }) => (
         </select>
     </div>
 );
+/* eslint-enable react/prop-types */
 
 // --- Liveness Constants & Helpers ---
 
@@ -69,6 +66,52 @@ const calculateEAR = (landmarks) => {
     return (leftEAR + rightEAR) / 2.0;
 };
 
+const hexToBytes = (hex) => {
+    const clean = (hex || '').toString().trim().toLowerCase();
+    if (!clean || clean.length % 2 !== 0) return new Uint8Array();
+    const out = new Uint8Array(clean.length / 2);
+    for (let i = 0; i < clean.length; i += 2) {
+        out[i / 2] = parseInt(clean.slice(i, i + 2), 16);
+    }
+    return out;
+};
+
+/** 32-byte SHA-256 digest as Uint8Array (matches contract byte[] commitments). */
+const sha256Bytes32 = (utf8String) => hexToBytes(CryptoJS.SHA256(utf8String).toString());
+
+const bytesToHex = (u8) =>
+    Array.from(u8 || [])
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
+
+async function getOrDeployAppId() {
+    const info = await api.getAppInfo();
+    const appId = info?.data?.app_id;
+    if (appId) return Number(appId);
+    const deployed = await api.deploy();
+    return Number(deployed?.data?.app_id);
+}
+
+async function peraOptInApp({ algodClient, appId, address, signTransactions }) {
+    const sp = await algodClient.getTransactionParams().do();
+    const txn = algosdk.makeApplicationOptInTxnFromObject({
+        from: address,
+        appIndex: appId,
+        suggestedParams: sp,
+    });
+    const txnsToSign = [
+        {
+            txn,
+            signers: [address],
+        },
+    ];
+    const signed = await signTransactions([txnsToSign]);
+    const blobs = signed.map((s) => s.blob);
+    const { txId } = await algodClient.sendRawTransaction(blobs).do();
+    await algosdk.waitForConfirmation(algodClient, txId, 10);
+    return txId;
+}
+
 
 
 async function generateSHA256Hash(imageData) {
@@ -90,8 +133,6 @@ const Register = () => {
     const [submitStage, setSubmitStage] = useState(0);
     const [showSuccess, setShowSuccess] = useState(false);
     const [currentLang, setCurrentLang] = useState('');
-    const [isLivenessChecking, setIsLivenessChecking] = useState(false);
-    const [livenessStage, setLivenessStage] = useState(0);
 
     const [formData, setFormData] = useState({
         fullName: '',
@@ -101,23 +142,7 @@ const Register = () => {
         languages: [],
         familyMembers: [],
         livenessVerified: false,
-<<<<<<< HEAD
         walletType: null,
-        walletAddress: '',
-    });
-
-    const startLiveness = () => {
-        setIsLivenessChecking(true);
-        setLivenessStage(1);
-        setTimeout(() => setLivenessStage(2), 1500);
-        setTimeout(() => setLivenessStage(3), 3000);
-        setTimeout(() => {
-            setLivenessStage(4);
-            setIsLivenessChecking(false);
-            setFormData(prev => ({ ...prev, livenessVerified: true }));
-        }, 4500);
-=======
-        walletType: null, 
         walletAddress: '',
     });
 
@@ -126,14 +151,12 @@ const Register = () => {
         qrPayload: '',
         isProvisioning: false,
     });
-
-    const [currentLang, setCurrentLang] = useState('');
     
     // Liveness State
     const [isLivenessChecking, setIsLivenessChecking] = useState(false);
     const [currentChallenge, setCurrentChallenge] = useState(0);
     const [challengeStatus, setChallengeStatus] = useState('idle'); // idle, loading, detecting, success, failed, complete
-    const [capturedFrames, setCapturedFrames] = useState([]);
+    const [, setCapturedFrames] = useState([]);
     const [livenessHash, setLivenessHash] = useState(null);
     const [feedback, setFeedback] = useState('Loading Models...');
     const [confidence, setConfidence] = useState(0);
@@ -158,10 +181,6 @@ const Register = () => {
         confidenceScores: [],
         challengesCompleted: []
     });
-
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [submitStage, setSubmitStage] = useState(0);
-    const [showSuccess, setShowSuccess] = useState(false);
 
     // Initialize FaceLandmarker
     useEffect(() => {
@@ -371,31 +390,21 @@ const Register = () => {
 
         setLivenessHash(compositeHash);
         
-        console.log("FINAL LIVENESS PAYLOAD FOR BACKEND:", JSON.stringify({ refugeeId: 'REF-TEMP', livenessData }, null, 2));
-
         let attempts = 0;
         let synced = false;
         while (attempts < 3 && !synced) {
             try {
-                const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/refugee/liveness-hash`, {
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ refugeeId: 'REF-TEMP', livenessData })
-                });
-                if (res.ok) {
-                    synced = true;
-                    setFormData(prev => ({ ...prev, livenessVerified: true }));
-                    showToast('success', 'Liveness Verified', 'Biometric liveness detection successful.');
-                    setFeedback('Liveness Verified Successfully!');
-                } else {
-                    throw new Error('Invalid response');
-                }
-            } catch (e) {
+                await api.postLivenessHash({ refugeeId: 'REF-TEMP', livenessData });
+                synced = true;
+                setFormData(prev => ({ ...prev, livenessVerified: true }));
+                showToast('success', 'Liveness Verified', 'Biometric liveness detection successful.');
+                setFeedback('Liveness Verified Successfully!');
+            } catch {
                 attempts++;
                 if (attempts >= 3) {
                     showToast('error', 'Sync Failed', 'Network error tracking hash. Please check connection.');
                     setFeedback('Network error. Hash stored locally.');
-                    setFormData(prev => ({ ...prev, livenessVerified: true })); // Fail open for the prototype to proceed
+                    setFormData(prev => ({ ...prev, livenessVerified: false }));
                 }
             }
         }
@@ -428,10 +437,27 @@ const Register = () => {
         setFeedback('Detecting face...');
         
         requestRef.current = requestAnimationFrame(processFrame);
->>>>>>> 0bf851bc2aefa0f3ec991621755503e19b34e9b9
     };
 
     const handleRegister = async () => {
+        // Custodial ("no smartphone") flow:
+        // The backend already generated W1 + identity_id + QR AND registered on-chain during provisioning.
+        // Final submit must NOT attempt to register again (would fail with "refugee already registered").
+        if (formData.walletType === 'custodial') {
+            if (!custodial?.identityId || !custodial?.qrPayload || !formData.walletAddress) {
+                showToast('error', 'Missing custodial identity', 'Provision the custodial wallet (W1) first to generate the refugee ID + QR payload.');
+                return;
+            }
+            setIsSubmitting(true);
+            setSubmitStage(7);
+            setTimeout(() => {
+                setShowSuccess(true);
+                setIsSubmitting(false);
+                showToast('success', 'Registration Complete', 'Custodial identity (W1) has been created and recorded. Refugee ID + QR payload are ready.');
+            }, 300);
+            return;
+        }
+
         if (!account) {
             showToast('info', 'Wallet Required', 'Please connect your Pera Wallet first.');
             await connectWallet();
@@ -442,81 +468,45 @@ const Register = () => {
         setSubmitStage(1);
 
         try {
-            // 1. Authorize current wallet as a registrar (via Backend/Admin)
-            // This ensures the demo works regardless of which wallet you connect
+            // 0. Ensure app is deployed (backend persists app_id)
             setSubmitStage(1);
-            try {
-                await api.addRegistrar(account);
-            } catch (authErr) {
-                console.warn("Authorization might have failed or already exist:", authErr);
-                // Continue anyway, it might already be authorized
-            }
+            const appId = await getOrDeployAppId();
+            if (!Number.isFinite(appId)) throw new Error("App is not deployed (missing app_id)");
 
-            // 2. Generate Biometric DID & Hash
+            // 2–3. Identity commitments (32-byte hashes; align with backend/custodial register pattern)
             setSubmitStage(2);
             const biometricData = formData.fullName + formData.dob + formData.nationality;
-            const didHash = CryptoJS.SHA256(biometricData).toString();
-            // Convert SHA256 hex string to Uint8Array for the contract
-            const biometricBin = new Uint8Array(Buffer.from(didHash, 'hex'));
-            
-            // 3. Simulated IPFS CID
+            const identityHash = sha256Bytes32(`identity:${biometricData}`);
+            const personhoodHash =
+                livenessHash && /^[0-9a-fA-F]{64}$/.test(livenessHash)
+                    ? hexToBytes(livenessHash)
+                    : sha256Bytes32(`personhood:${biometricData}`);
+            const ageProofHash = sha256Bytes32(`age:${formData.dob}|${formData.campId}`);
             setSubmitStage(3);
-            const mockCid = "ba" + CryptoJS.MD5(didHash).toString();
-            
-            // 4. Initialize Contract Client
-            setSubmitStage(4);
-            const algodClient = new algosdk.Algodv2(ALGOD_TOKEN, ALGOD_SERVER, ALGOD_PORT);
-            const appClient = new RefugeeContractClient({
-                resolveBy: 'id',
-                id: Number(REFUGEE_APP_ID),
-                algod: algodClient,
-            });
 
-            // 5. Mandatory Opt-In for Refugee Account
-            // Refugees must be opted-in to store local state on-chain
+            // 4. Opt-in (must be signed by the refugee wallet)
+            const algodClient = new algosdk.Algodv2(ALGOD_TOKEN, ALGOD_SERVER, ALGOD_PORT);
             const targetRefugee = formData.walletAddress || account;
-            setSubmitStage(5);
+
+            setSubmitStage(4);
             try {
-                await appClient.optIn.bare({
-                    sender: {
-                        addr: targetRefugee,
-                        signer: async (txnGroup, indexesToSign) => {
-                            const txnsToSign = txnGroup.map((txn, i) => ({
-                                txn,
-                                signers: indexesToSign.includes(i) ? [targetRefugee] : [],
-                            }));
-                            const signed = await signTransactions([txnsToSign]);
-                            return signed.map(s => s.blob);
-                        }
-                    }
-                });
+                await peraOptInApp({ algodClient, appId, address: targetRefugee, signTransactions });
             } catch (optErr) {
-                console.log("Already opted in or opt-in skipped:", optErr);
+                // If already opted in, algod will reject the second opt-in; treat as ok.
+                console.log("Opt-in skipped/failed (may already be opted-in):", optErr);
             }
 
-            // 6. Send Registration Transaction
-            setSubmitStage(6);
-            await appClient.register({
+            // 5. Register local-state hashes (authorized registrar is backend deployer)
+            setSubmitStage(5);
+            await api.registerRefugee({
                 refugee: targetRefugee,
-                did: didHash.substring(0, 32),
-                ipfsCid: mockCid,
-                biometricHash: biometricBin
-            }, {
-                sender: {
-                    addr: account,
-                    signer: async (txnGroup, indexesToSign) => {
-                        const txnsToSign = txnGroup.map((txn, i) => ({
-                            txn,
-                            signers: indexesToSign.includes(i) ? [account] : [],
-                        }));
-                        const signed = await signTransactions([txnsToSign]);
-                        return signed.map(s => s.blob);
-                    }
-                }
+                identity_hash: bytesToHex(identityHash),
+                personhood_hash: bytesToHex(personhoodHash),
+                age_proof_hash: bytesToHex(ageProofHash),
             });
 
             // 7. Success
-            setSubmitStage(7);
+            setSubmitStage(6);
             setTimeout(() => {
                 setShowSuccess(true);
                 setIsSubmitting(false);
@@ -555,7 +545,7 @@ const Register = () => {
     const provisionCustodialWallet = async () => {
         setCustodial((p) => ({ ...p, isProvisioning: true }));
         try {
-            const res = await api.generateCustodialWallet();
+            const res = await api.generateCustodialWallet({ name: formData.fullName });
             const payload = res?.data;
             if (!payload?.address || !payload?.identity_id || !payload?.qr_payload) {
                 throw new Error('Backend did not return custodial wallet details.');
@@ -956,22 +946,13 @@ const Register = () => {
 
                                 <div className="w-full space-y-4">
                                     {[
-<<<<<<< HEAD
                                         { label: 'Authorizing registrar credentials', done: submitStage >= 1 },
                                         { label: 'Generating identity hashes', done: submitStage >= 2 },
                                         { label: 'Preparing metadata', done: submitStage >= 3 },
-                                        { label: 'Connecting to Algorand Testnet', done: submitStage >= 4, extra: 'App #758854828' },
+                                        { label: 'Connecting to Algorand network', done: submitStage >= 4, extra: `App #${REFUGEE_APP_ID}` },
                                         { label: 'Refugee Opt-In (Mandatory Status)', done: submitStage >= 5 },
                                         { label: 'Writing to Blockchain Ledger', done: submitStage >= 6, extra: 'Block Committing...' },
                                         { label: 'Identity Secured successfully ✓', done: submitStage >= 7 },
-=======
-                                        { label: 'Validating form data', done: submitStage >= 1 },
-                                        { label: 'Generating identity hashes', done: submitStage >= 2, extra: livenessHash ? livenessHash.substring(0, 10) + '...' : 'a3f8c...' },
-                                        { label: 'Liveness verification confirmed', done: submitStage >= 3 },
-                                        { label: 'Linking wallet address', done: submitStage >= 4, extra: 'PERA7...SPUB' },
-                                        { label: 'Writing to Algorand blockchain', done: submitStage >= 5, extra: 'Block #4521893' },
-                                        { label: 'Registration complete ✓', done: submitStage >= 6 },
->>>>>>> 0bf851bc2aefa0f3ec991621755503e19b34e9b9
                                     ].map((s, i) => (
                                         <div key={i} className="flex items-center justify-between text-left">
                                             <div className="flex items-center gap-3">

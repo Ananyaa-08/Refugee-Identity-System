@@ -38,9 +38,26 @@ def algorand():
 def deployer(algorand):
     """Deployer account (from LocalNet or env)."""
     try:
-        return algorand.account.from_environment("DEPLOYER")
+        dep = algorand.account.from_environment("DEPLOYER")
     except Exception:
-        return algorand.account.from_kmd("unencrypted-default-wallet", "")
+        dep = algorand.account.from_kmd("unencrypted-default-wallet", "")
+
+    # Ensure deployer is funded on LocalNet (env mnemonic may be unfunded).
+    if algorand.client.is_localnet():
+        info = algorand.client.algod.account_info(dep.address)
+        # Suite funds multiple accounts and app MBR; keep a generous buffer.
+        if int(info.get("amount", 0)) < 15_000_000:
+            faucet = algorand.account.localnet_dispenser()
+            algorand.send.payment(
+                algokit_utils.PaymentParams(
+                    sender=faucet.address,
+                    signer=faucet.signer,
+                    receiver=dep.address,
+                    amount=algokit_utils.AlgoAmount(algo=25),
+                )
+            )
+
+    return dep
 
 
 @pytest.fixture(scope="module")

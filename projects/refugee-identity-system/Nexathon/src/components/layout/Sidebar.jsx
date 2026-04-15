@@ -3,7 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import {
     UserPlus, QrCode, Search, Key, Package, ArrowLeftRight,
     LayoutDashboard, ShieldCheck, RefreshCw, Link as LinkIcon,
-    ClipboardList, Users, Settings, Shield
+    ClipboardList, Users, Settings, Shield, Fingerprint, Activity
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -55,13 +55,16 @@ export const Sidebar = ({ role, pendingRequests, pendingMigrations, walletAddres
                             <NavItem to="/aid-worker/scan" icon={QrCode} label="Scan QR" />
                             <NavItem to="/aid-worker/search" icon={Search} label="Search Refugee" />
                             <NavItem to="/aid-worker/access" icon={Key} label="Request Access" amberDot={pendingRequests > 0} />
-                            <NavItem to="/aid-worker/aid" icon={Package} label="Aid Distribution" />
-                            <NavItem to="/aid-worker/migration" icon={RefreshCw} label="Wallet Migration" />
+                            <NavItem to="/aid-worker/distribution" icon={Package} label="Aid Distribution" />
+                            <NavItem to="/aid-worker/migration-requests" icon={ArrowLeftRight} label="Migration Requests" />
+                            <NavItem to="/aid-worker/migration" icon={RefreshCw} label="Wallet Migration Tools" />
                         </>
                     ) : role === 'refugee' ? (
                         <>
                             <NavItem to="/refugee/dashboard" icon={LayoutDashboard} label="Dashboard" />
-                            <NavItem to="/refugee/requests" icon={ShieldCheck} label="Access Requests" badge={pendingRequests} />
+                            <NavItem to="/refugee/identity" icon={Fingerprint} label="Identity Details" />
+                            <NavItem to="/refugee/blockchain" icon={Activity} label="Blockchain Status" />
+                            <NavItem to="/refugee/migration" icon={RefreshCw} label="Request Wallet Migration" />
                         </>
                     ) : (
                         <>

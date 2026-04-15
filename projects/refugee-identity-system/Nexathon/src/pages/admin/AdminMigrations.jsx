@@ -10,6 +10,7 @@ import { api } from '../../utils/api';
 const AdminMigrations = () => {
     const { showToast } = useToast();
     const [migrations, setMigrations] = useState([]);
+    const [custodial, setCustodial] = useState([]);
     const [loading, setLoading] = useState(true);
     const [processingMig, setProcessingMig] = useState(null);
     const [submitStage, setSubmitStage] = useState(0);
@@ -19,10 +20,15 @@ const AdminMigrations = () => {
     const refresh = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await api.migrationRequests();
-            setMigrations(res.data || []);
+            const [migRes, custRes] = await Promise.all([
+                api.migrationRequests('pending'),
+                api.custodialIdentities(),
+            ]);
+            setMigrations(migRes.data || []);
+            setCustodial(custRes.data || []);
         } catch {
             setMigrations([]);
+            setCustodial([]);
             showToast('error', 'API Error', 'Could not load migration requests.');
         } finally {
             setLoading(false);
@@ -98,6 +104,49 @@ const AdminMigrations = () => {
                 </div>
             ) : (
             <div className="space-y-6">
+                {/* Custodial (no smartphone) identities */}
+                <div className="bg-[#0f1e38] border border-[#1a2d4a] rounded-2xl p-6">
+                    <div className="flex items-center justify-between gap-4 mb-4">
+                        <div>
+                            <h3 className="text-[#e2eaf8] font-bold text-sm uppercase tracking-wider">Custodial identities (no smartphone)</h3>
+                            <p className="text-[#7a94bb] text-xs mt-1">
+                                These are W1 wallets created by the backend. Share the QR payload with the refugee when they migrate to a phone.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={refresh}
+                            className="px-4 py-2 bg-[#152342] border border-[#1a2d4a] rounded-lg text-[#e2eaf8] text-[11px] font-bold uppercase tracking-widest hover:border-[#8b5cf640] transition-colors"
+                        >
+                            Refresh
+                        </button>
+                    </div>
+
+                    {custodial.length === 0 ? (
+                        <div className="text-[#3d5278] text-sm italic">No custodial identities found yet.</div>
+                    ) : (
+                        <div className="grid md:grid-cols-2 gap-4">
+                            {custodial.slice(0, 6).map((c) => (
+                                <div key={c.identity_id} className="bg-[#060d1f] border border-[#1a2d4a] rounded-xl p-4">
+                                    <div className="flex items-center justify-between gap-3 mb-2">
+                                        <div className="text-[#7a94bb] text-[10px] font-bold uppercase tracking-widest">identity_id</div>
+                                        <div className="text-[#3d5278] text-[10px] font-mono">{c.created_at ? new Date(c.created_at).toLocaleString() : ''}</div>
+                                    </div>
+                                    <div className="font-mono text-[#e2eaf8] text-xs break-all mb-3 select-all">{c.identity_id}</div>
+                                    <div className="text-[#7a94bb] text-[10px] font-bold uppercase tracking-widest mb-1">W1 address</div>
+                                    <div className="font-mono text-[#00c9b1] text-xs break-all mb-3 select-all">{c.address}</div>
+                                    <div className="text-[#7a94bb] text-[10px] font-bold uppercase tracking-widest mb-1">QR payload</div>
+                                    <textarea
+                                        readOnly
+                                        value={c.qr_payload || ''}
+                                        className="w-full min-h-[80px] bg-[#0f1e38] border border-[#1a2d4a] rounded-lg p-2 font-mono text-[10px] text-[#e2eaf8]"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
                 {migrations.length === 0 ? (
                     <div className="bg-[#0f1e38] border border-[#1a2d4a] rounded-3xl py-32 flex flex-col items-center justify-center text-center animate-fadeIn">
                         <ArrowLeftRight size={64} className="text-[#3d5278] mb-6 opacity-20" />

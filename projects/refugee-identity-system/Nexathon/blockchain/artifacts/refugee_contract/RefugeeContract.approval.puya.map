@@ -3,7 +3,7 @@
   "sources": [
     "../../refugee_contract/contract.py"
   ],
-  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AA8BQ;AAAsB;AAAtB;AANR;;AAAA;;;AAAA;;AAAA;AAAA;AAAA;;AAAA;AAAA;;;;;;;;;;;;;;;;;;;;;;AAAA;;;AAAA;;;;;;;;;;AAAA;AAAA;;AAAA;;;;;;AAAA;AAyBK;;AAAA;AANA;;AAAA;AAAA;AAGG;;AAAmB;;AAAnB;AACA;AAAsB;AAAtB;AAJH;AAAA;AA2BA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;AAAA;AAAA;AAAA;AAGU;;;AAAP;AACgB;;;AAAA;AAAA;;AACI;;;;;AAAjB;AAAX;;;AACY;AAAA;AAAA;AAA6B;AAA7B;AAAA;AANP;AAAA;AAQc;;AAAiB;;;;;;;;AAAjB;AAAP;AACA;AAAA;AAAA;AAA6B;AAA7B;AAAA;;;;AAEP;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;;AAAA;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;;AAAA;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;;AAAA;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AASU;;;AAAA;;;AAAmC;;;AAAnC;;;;AAAP;AAC2B;;AAApB;;AAAA;AAAA;;AAAA;AAAP;AAGiB;AAAA;AAAA;;AAAA;AAAA;;AACV;AAAP;AAGA;AAAA;;;;;;;;;;;;;;;;AAAA;;AAAA;AACoB;;AAAA;;;AAApB;;AAAA;;;;;AAAA;;AAAA;AACyB;;AAAA;;;AAAzB;;AAAA;;AAAA;;AAAA;AAC+B;;AAAA;;;AAA/B;;AAAA;;;;;;;;;;;;;;;;AAAA;;AAAA;AACA;AAAA;AAA2B;AAA3B;AACA;AAAA;AAA4B;AAA5B;AACA;;;;;;;;;;;AAA0B;AAA1B;AAGA;AAAA;AAAA;AAAA;AAAuB;AAAvB;AAAA;AAAA;AAAA;AA1BH;AAAA;;;;;AA4BA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;;AAAA;AAAA;AAAA;;AAAA;AAAA;AAAA;AAGU;;;AAAA;;;AAAmC;;;AAAnC;;;;AAAP;AAC2B;;AAApB;;AAAA;AAAA;;AAAA;AAAP;AACe;AAAA;AAAA;AAAA;AAAA;AACR;;AAAA;AAAA;;AAAA;AAAP;AACA;AAAA;AAAA;AAPH;AAAA;;;;;;;AASA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAGU;;;AAAA;;;AAAmC;;;AAAnC;;;;AAAP;AAC2B;;AAApB;;AAAA;AAAA;;AAAA;AAAP;AAGmB;AAAA;AAAA;AAAA;AAAA;;AACZ;;;AAAA;;AAAA;;;;AAAP;AACA;AAAA;AAA4B;AAA5B;AATH;AAAA;;;;;;;;;AAzDU;;AAAoB;AAAA;;AAAA;AAAA;AAApB;AAAP;AAKiB;AAAd;;AAAA;AAAA;AAAA;;AAAX;;;AACmB;AAAgB;;AAAhB;AAAA;AAAA;AAAA;AAA+B;AAA/B;AAAP;AACG;AAAP",
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AA6BA;;AAAA;;;AAAA;;AAAA;AAAA;AAAA;;AAAA;AAAA;;;;;;;;;;;;;;;;;;;;;;AAAA;;;AAAA;;;;;;;;;;AAAA;AAAA;;AAAA;;;;;;AAAA;AAmBK;;AAAA;AAJA;;AAAA;AAAA;AAEG;;AAAmB;;AAAnB;AAFH;AAAA;AAwBA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;AAAA;AAAA;AAAA;AAEU;;;AAAP;AACM;;;AAAA;AAAA;;AACI;;;;;AAAP;AAAX;;;AACY;AAAA;AAAA;AAA6B;AAA7B;AAAA;AALP;AAAA;AAOc;;AAAO;;;;;;;;AAAP;AAAP;AACA;AAAA;AAAA;AAA6B;AAA7B;AAAA;;;;AAEP;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;AAAA;AAAA;AAAA;AAAA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;AAAA;AAAA;AAAA;AAAA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;AAAA;AAAA;AAAA;AAQU;;;AAAP;AACO;;AAAoB;;AAApB;AAAP;AAG+B;;AAAA;AAAA;AAAA;AAAA;;AACxB;AAAP;AAEA;;AAAA;;AAAA;;AAAA;AAC8B;;AAAA;;;AAA9B;;AAAA;AAAA;;AAAA;AACgC;AAAA;;;AAAhC;;AAAA;AAAA;;AAAA;AAC+B;;;AAA/B;;AAAA;;AAAA;;AAAA;AACA;AAA4B;AAA5B;AAnBH;AAAA;AAqBA;;;AAAA;;AAAA;AAAA;AAAA;AAAA;AAEU;;;AAAP;AACO;AAAoB;;AAApB;AAAP;AAEe;AAAA;AAAA;AACR;;;AAAA;AAAA;;;;AAAP;AACA;;AAAA;AAA4B;AAA5B;AAPH;AAAA;;;;;AASA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAQU;;;AAAP;AACO;;AAAuB;;AAAvB;AAAP;AACO;AAAuB;;AAAvB;AAAP;AAEe;;AAAA;AAAA;AAAA;AAAA;AACR;AAAgB;;AAAhB;AAAP;AAGA;;AAAA;AAAA;;AAAA;AACmC;;AAAA;AAAA;AAAA;AAAA;AAAnC;;AAAA;AAAA;;AAAA;AACkC;;AAAA;AAAA;;AAAA;AAAA;AAAlC;;AAAA;;AAAA;;AAAA;AAC+B;;AAAA;AAAA;AAAA;AAAA;AAA/B;;AAAA;AAAA;;AAAA;AACA;AAAA;;AAAA;;AAAA;AAGA;AAAiC;;AAAjC;AAvBH;AAAA;AAlDU;;AAAoB;AAAA;;AAAA;AAAA;AAApB;AAAP;AAIG;;;AAAX;;;AACmB;AAAP;AACa;AAAd;;AAAA;AAAA;AAAA;;AAAX;;;AACmB;AAAgB;;AAAhB;AAAA;AAAA;AAAA;AAA+B;AAA/B;AAAP;AACG;AAAP",
   "op_pc_offset": 0,
   "pc_events": {
     "1": {
@@ -14,48 +14,9 @@
       "op": "intcblock 0 1 32 2"
     },
     "7": {
-      "op": "bytecblock \"total_refugees\" 0x7265676973747261725f \"trust_tier\" \"aid_claimed\" \"admin\" \"ipfs_cid\""
+      "op": "bytecblock \"identity_hash\" \"aid_claimed\" 0x7265676973747261725f \"personhood_hash\" \"age_proof_hash\" \"admin\" \"wallet_address\" 0x4d49475241544544"
     },
-    "73": {
-      "op": "txn ApplicationID",
-      "defined_out": [
-        "tmp%0#0"
-      ],
-      "stack_out": [
-        "tmp%0#0"
-      ]
-    },
-    "75": {
-      "op": "bnz main_after_if_else@2",
-      "stack_out": []
-    },
-    "78": {
-      "op": "bytec_0 // \"total_refugees\"",
-      "defined_out": [
-        "\"total_refugees\""
-      ],
-      "stack_out": [
-        "\"total_refugees\""
-      ]
-    },
-    "79": {
-      "op": "intc_0 // 0",
-      "defined_out": [
-        "\"total_refugees\"",
-        "0"
-      ],
-      "stack_out": [
-        "\"total_refugees\"",
-        "0"
-      ]
-    },
-    "80": {
-      "op": "app_global_put",
-      "stack_out": []
-    },
-    "81": {
-      "block": "main_after_if_else@2",
-      "stack_in": [],
+    "107": {
       "op": "txn NumAppArgs",
       "defined_out": [
         "tmp%0#1"
@@ -64,11 +25,11 @@
         "tmp%0#1"
       ]
     },
-    "83": {
+    "109": {
       "op": "bz main_bare_routing@13",
       "stack_out": []
     },
-    "86": {
+    "112": {
       "op": "txn OnCompletion",
       "defined_out": [
         "tmp%2#0"
@@ -77,7 +38,7 @@
         "tmp%2#0"
       ]
     },
-    "88": {
+    "114": {
       "op": "!",
       "defined_out": [
         "tmp%3#0"
@@ -86,11 +47,11 @@
         "tmp%3#0"
       ]
     },
-    "89": {
+    "115": {
       "op": "assert",
       "stack_out": []
     },
-    "90": {
+    "116": {
       "op": "txn ApplicationID",
       "defined_out": [
         "tmp%4#0"
@@ -99,50 +60,50 @@
         "tmp%4#0"
       ]
     },
-    "92": {
+    "118": {
       "op": "assert",
       "stack_out": []
     },
-    "93": {
-      "op": "pushbytess 0xa6ed480f 0xbb6981be 0x1ef8740d 0x9f9c8dbc // method \"add_registrar(address,string)void\", method \"register(address,string,string,byte[])void\", method \"upgrade_tier(address,uint64)void\", method \"issue_aid(address)void\"",
+    "119": {
+      "op": "pushbytess 0xa6ed480f 0x7bfcace9 0x79b8c4ee 0xa38b785d // method \"add_registrar(address,string)void\", method \"register(address,byte[],byte[],byte[])void\", method \"claim_aid(address)void\", method \"migrate_wallet(address,address)void\"",
       "defined_out": [
         "Method(add_registrar(address,string)void)",
-        "Method(issue_aid(address)void)",
-        "Method(register(address,string,string,byte[])void)",
-        "Method(upgrade_tier(address,uint64)void)"
+        "Method(claim_aid(address)void)",
+        "Method(migrate_wallet(address,address)void)",
+        "Method(register(address,byte[],byte[],byte[])void)"
       ],
       "stack_out": [
         "Method(add_registrar(address,string)void)",
-        "Method(register(address,string,string,byte[])void)",
-        "Method(upgrade_tier(address,uint64)void)",
-        "Method(issue_aid(address)void)"
+        "Method(register(address,byte[],byte[],byte[])void)",
+        "Method(claim_aid(address)void)",
+        "Method(migrate_wallet(address,address)void)"
       ]
     },
-    "115": {
+    "141": {
       "op": "txna ApplicationArgs 0",
       "defined_out": [
         "Method(add_registrar(address,string)void)",
-        "Method(issue_aid(address)void)",
-        "Method(register(address,string,string,byte[])void)",
-        "Method(upgrade_tier(address,uint64)void)",
+        "Method(claim_aid(address)void)",
+        "Method(migrate_wallet(address,address)void)",
+        "Method(register(address,byte[],byte[],byte[])void)",
         "tmp%6#0"
       ],
       "stack_out": [
         "Method(add_registrar(address,string)void)",
-        "Method(register(address,string,string,byte[])void)",
-        "Method(upgrade_tier(address,uint64)void)",
-        "Method(issue_aid(address)void)",
+        "Method(register(address,byte[],byte[],byte[])void)",
+        "Method(claim_aid(address)void)",
+        "Method(migrate_wallet(address,address)void)",
         "tmp%6#0"
       ]
     },
-    "118": {
-      "op": "match add_registrar register upgrade_tier issue_aid",
+    "144": {
+      "op": "match add_registrar register claim_aid migrate_wallet",
       "stack_out": []
     },
-    "128": {
+    "154": {
       "op": "err"
     },
-    "129": {
+    "155": {
       "block": "main_bare_routing@13",
       "stack_in": [],
       "op": "txn OnCompletion",
@@ -153,14 +114,14 @@
         "tmp%7#0"
       ]
     },
-    "131": {
+    "157": {
       "op": "switch main_create@14 main_opt_in@15",
       "stack_out": []
     },
-    "137": {
+    "163": {
       "op": "err"
     },
-    "138": {
+    "164": {
       "block": "main_opt_in@15",
       "stack_in": [],
       "op": "txn ApplicationID",
@@ -171,12 +132,12 @@
         "tmp%10#0"
       ]
     },
-    "140": {
+    "166": {
       "op": "return",
       "defined_out": [],
       "stack_out": []
     },
-    "141": {
+    "167": {
       "block": "main_create@14",
       "stack_in": [],
       "op": "txn ApplicationID",
@@ -187,7 +148,7 @@
         "tmp%8#0"
       ]
     },
-    "143": {
+    "169": {
       "op": "!",
       "defined_out": [
         "tmp%9#0"
@@ -196,12 +157,12 @@
         "tmp%9#0"
       ]
     },
-    "144": {
+    "170": {
       "op": "assert",
       "stack_out": []
     },
-    "145": {
-      "op": "bytec 4 // \"admin\"",
+    "171": {
+      "op": "bytec 5 // \"admin\"",
       "defined_out": [
         "\"admin\""
       ],
@@ -209,7 +170,7 @@
         "\"admin\""
       ]
     },
-    "147": {
+    "173": {
       "op": "txn Sender",
       "defined_out": [
         "\"admin\"",
@@ -220,35 +181,11 @@
         "tmp%0#2"
       ]
     },
-    "149": {
+    "175": {
       "op": "app_global_put",
       "stack_out": []
     },
-    "150": {
-      "op": "bytec_0 // \"total_refugees\"",
-      "defined_out": [
-        "\"total_refugees\""
-      ],
-      "stack_out": [
-        "\"total_refugees\""
-      ]
-    },
-    "151": {
-      "op": "intc_0 // 0",
-      "defined_out": [
-        "\"total_refugees\"",
-        "0"
-      ],
-      "stack_out": [
-        "\"total_refugees\"",
-        "0"
-      ]
-    },
-    "152": {
-      "op": "app_global_put",
-      "stack_out": []
-    },
-    "153": {
+    "176": {
       "op": "intc_1 // 1",
       "defined_out": [
         "1"
@@ -257,18 +194,18 @@
         "1"
       ]
     },
-    "154": {
+    "177": {
       "op": "return",
       "stack_out": []
     },
-    "155": {
+    "178": {
       "subroutine": "Nexathon.blockchain.refugee_contract.contract.RefugeeContract.add_registrar[routing]",
       "params": {},
       "block": "add_registrar",
       "stack_in": [],
       "op": "txna ApplicationArgs 1"
     },
-    "158": {
+    "181": {
       "op": "dup",
       "defined_out": [
         "registrar#0"
@@ -278,7 +215,7 @@
         "registrar#0"
       ]
     },
-    "159": {
+    "182": {
       "op": "len",
       "defined_out": [
         "len%0#0",
@@ -289,7 +226,7 @@
         "len%0#0"
       ]
     },
-    "160": {
+    "183": {
       "op": "intc_2 // 32",
       "defined_out": [
         "32",
@@ -302,7 +239,7 @@
         "32"
       ]
     },
-    "161": {
+    "184": {
       "op": "==",
       "defined_out": [
         "eq%0#0",
@@ -313,14 +250,14 @@
         "eq%0#0"
       ]
     },
-    "162": {
+    "185": {
       "error": "invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
       "op": "assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
       "stack_out": [
         "registrar#0"
       ]
     },
-    "163": {
+    "186": {
       "op": "txna ApplicationArgs 2",
       "defined_out": [
         "action#0",
@@ -331,7 +268,7 @@
         "action#0"
       ]
     },
-    "166": {
+    "189": {
       "op": "dup",
       "defined_out": [
         "action#0",
@@ -344,7 +281,7 @@
         "action#0 (copy)"
       ]
     },
-    "167": {
+    "190": {
       "op": "intc_0 // 0",
       "stack_out": [
         "registrar#0",
@@ -353,7 +290,7 @@
         "0"
       ]
     },
-    "168": {
+    "191": {
       "error": "invalid array length header",
       "op": "extract_uint16 // on error: invalid array length header",
       "defined_out": [
@@ -367,7 +304,7 @@
         "aggregate%array_length%0#0"
       ]
     },
-    "169": {
+    "192": {
       "op": "intc_3 // 2",
       "defined_out": [
         "2",
@@ -382,7 +319,7 @@
         "2"
       ]
     },
-    "170": {
+    "193": {
       "op": "+",
       "defined_out": [
         "action#0",
@@ -395,7 +332,7 @@
         "add%0#0"
       ]
     },
-    "171": {
+    "194": {
       "op": "dig 1",
       "stack_out": [
         "registrar#0",
@@ -404,7 +341,7 @@
         "action#0 (copy)"
       ]
     },
-    "173": {
+    "196": {
       "op": "len",
       "defined_out": [
         "action#0",
@@ -419,7 +356,7 @@
         "len%1#0"
       ]
     },
-    "174": {
+    "197": {
       "op": "==",
       "defined_out": [
         "action#0",
@@ -432,7 +369,7 @@
         "eq%1#0"
       ]
     },
-    "175": {
+    "198": {
       "error": "invalid number of bytes for arc4.dynamic_array<arc4.uint8>",
       "op": "assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>",
       "stack_out": [
@@ -440,7 +377,7 @@
         "action#0"
       ]
     },
-    "176": {
+    "199": {
       "callsub": "Nexathon.blockchain.refugee_contract.contract.RefugeeContract._is_admin",
       "op": "callsub _is_admin",
       "defined_out": [
@@ -454,7 +391,7 @@
         "tmp%0#1"
       ]
     },
-    "179": {
+    "202": {
       "error": "add_registrar: sender not admin",
       "op": "assert // add_registrar: sender not admin",
       "stack_out": [
@@ -462,293 +399,300 @@
         "action#0"
       ]
     },
-    "180": {
+    "203": {
       "op": "extract 2 0",
       "defined_out": [
-        "action_native#0",
+        "act#0",
         "registrar#0"
       ],
       "stack_out": [
         "registrar#0",
-        "action_native#0"
+        "act#0"
       ]
     },
-    "183": {
+    "206": {
       "op": "dup",
       "stack_out": [
         "registrar#0",
-        "action_native#0",
-        "action_native#0"
+        "act#0",
+        "act#0"
       ]
     },
-    "184": {
+    "207": {
       "op": "cover 2",
       "defined_out": [
-        "action_native#0",
+        "act#0",
         "registrar#0"
       ],
       "stack_out": [
-        "action_native#0",
+        "act#0",
         "registrar#0",
-        "action_native#0"
+        "act#0"
       ]
     },
-    "186": {
+    "209": {
       "op": "pushbytes \"add\"",
       "defined_out": [
         "\"add\"",
-        "action_native#0",
+        "act#0",
         "registrar#0"
       ],
       "stack_out": [
-        "action_native#0",
+        "act#0",
         "registrar#0",
-        "action_native#0",
+        "act#0",
         "\"add\""
       ]
     },
-    "191": {
+    "214": {
       "op": "==",
       "defined_out": [
-        "action_native#0",
+        "act#0",
         "registrar#0",
         "tmp%2#1"
       ],
       "stack_out": [
-        "action_native#0",
+        "act#0",
         "registrar#0",
         "tmp%2#1"
       ]
     },
-    "192": {
+    "215": {
       "op": "bz add_registrar_else_body@3",
       "stack_out": [
-        "action_native#0",
+        "act#0",
         "registrar#0"
       ]
     },
-    "195": {
-      "op": "bytec_1 // 0x7265676973747261725f",
+    "218": {
+      "op": "bytec_2 // 0x7265676973747261725f",
       "defined_out": [
         "0x7265676973747261725f",
-        "action_native#0",
+        "act#0",
         "registrar#0"
       ],
       "stack_out": [
-        "action_native#0",
+        "act#0",
         "registrar#0",
         "0x7265676973747261725f"
       ]
     },
-    "196": {
+    "219": {
       "op": "swap",
       "stack_out": [
-        "action_native#0",
+        "act#0",
         "0x7265676973747261725f",
         "registrar#0"
       ]
     },
-    "197": {
+    "220": {
       "op": "concat",
       "defined_out": [
-        "action_native#0",
+        "act#0",
         "box_prefixed_key%0#0"
       ],
       "stack_out": [
-        "action_native#0",
+        "act#0",
         "box_prefixed_key%0#0"
       ]
     },
-    "198": {
+    "221": {
       "op": "intc_1 // 1",
       "defined_out": [
         "1",
-        "action_native#0",
+        "act#0",
         "box_prefixed_key%0#0"
       ],
       "stack_out": [
-        "action_native#0",
+        "act#0",
         "box_prefixed_key%0#0",
         "1"
       ]
     },
-    "199": {
+    "222": {
       "op": "itob",
       "defined_out": [
-        "action_native#0",
+        "act#0",
         "box_prefixed_key%0#0",
         "encoded_value%0#0"
       ],
       "stack_out": [
-        "action_native#0",
+        "act#0",
         "box_prefixed_key%0#0",
         "encoded_value%0#0"
       ]
     },
-    "200": {
+    "223": {
       "op": "box_put",
       "stack_out": [
-        "action_native#0"
+        "act#0"
       ]
     },
-    "201": {
+    "224": {
       "block": "add_registrar_after_if_else@4",
       "stack_in": [
-        "action_native#0"
+        "act#0"
       ],
       "op": "intc_1 // 1",
       "defined_out": [
         "1"
       ],
       "stack_out": [
-        "action_native#0",
+        "act#0",
         "1"
       ]
     },
-    "202": {
+    "225": {
       "op": "return",
       "stack_out": [
-        "action_native#0"
+        "act#0"
       ]
     },
-    "203": {
+    "226": {
       "block": "add_registrar_else_body@3",
       "stack_in": [
-        "action_native#0",
+        "act#0",
         "registrar#0"
       ],
       "op": "dig 1",
       "defined_out": [
-        "action_native#0"
+        "act#0"
       ],
       "stack_out": [
-        "action_native#0",
+        "act#0",
         "registrar#0",
-        "action_native#0"
+        "act#0"
       ]
     },
-    "205": {
+    "228": {
       "op": "pushbytes \"remove\"",
       "defined_out": [
         "\"remove\"",
-        "action_native#0"
+        "act#0"
       ],
       "stack_out": [
-        "action_native#0",
+        "act#0",
         "registrar#0",
-        "action_native#0",
+        "act#0",
         "\"remove\""
       ]
     },
-    "213": {
+    "236": {
       "op": "==",
       "defined_out": [
-        "action_native#0",
+        "act#0",
         "tmp%3#0"
       ],
       "stack_out": [
-        "action_native#0",
+        "act#0",
         "registrar#0",
         "tmp%3#0"
       ]
     },
-    "214": {
+    "237": {
       "error": "add_registrar: invalid action",
       "op": "assert // add_registrar: invalid action",
       "stack_out": [
-        "action_native#0",
+        "act#0",
         "registrar#0"
       ]
     },
-    "215": {
-      "op": "bytec_1 // 0x7265676973747261725f",
+    "238": {
+      "op": "bytec_2 // 0x7265676973747261725f",
       "defined_out": [
         "0x7265676973747261725f",
-        "action_native#0"
+        "act#0"
       ],
       "stack_out": [
-        "action_native#0",
+        "act#0",
         "registrar#0",
         "0x7265676973747261725f"
       ]
     },
-    "216": {
+    "239": {
       "op": "swap",
       "defined_out": [
         "0x7265676973747261725f",
-        "action_native#0",
+        "act#0",
         "registrar#0"
       ],
       "stack_out": [
-        "action_native#0",
+        "act#0",
         "0x7265676973747261725f",
         "registrar#0"
       ]
     },
-    "217": {
+    "240": {
       "op": "concat",
       "defined_out": [
-        "action_native#0",
+        "act#0",
         "box_prefixed_key%1#0"
       ],
       "stack_out": [
-        "action_native#0",
+        "act#0",
         "box_prefixed_key%1#0"
       ]
     },
-    "218": {
+    "241": {
       "op": "intc_0 // 0",
       "defined_out": [
         "0",
-        "action_native#0",
+        "act#0",
         "box_prefixed_key%1#0"
       ],
       "stack_out": [
-        "action_native#0",
+        "act#0",
         "box_prefixed_key%1#0",
         "0"
       ]
     },
-    "219": {
+    "242": {
       "op": "itob",
       "defined_out": [
-        "action_native#0",
+        "act#0",
         "box_prefixed_key%1#0",
         "encoded_value%1#0"
       ],
       "stack_out": [
-        "action_native#0",
+        "act#0",
         "box_prefixed_key%1#0",
         "encoded_value%1#0"
       ]
     },
-    "220": {
+    "243": {
       "op": "box_put",
       "stack_out": [
-        "action_native#0"
+        "act#0"
       ]
     },
-    "221": {
+    "244": {
       "op": "b add_registrar_after_if_else@4"
     },
-    "224": {
+    "247": {
       "subroutine": "Nexathon.blockchain.refugee_contract.contract.RefugeeContract.register[routing]",
       "params": {},
       "block": "register",
       "stack_in": [],
-      "op": "txna ApplicationArgs 1"
-    },
-    "227": {
-      "op": "dup",
+      "op": "txna ApplicationArgs 1",
       "defined_out": [
         "refugee#0"
       ],
       "stack_out": [
-        "refugee#0",
         "refugee#0"
       ]
     },
-    "228": {
+    "250": {
+      "op": "dup",
+      "defined_out": [
+        "refugee#0",
+        "refugee#0 (copy)"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "refugee#0 (copy)"
+      ]
+    },
+    "251": {
       "op": "len",
       "defined_out": [
         "len%0#0",
@@ -759,7 +703,7 @@
         "len%0#0"
       ]
     },
-    "229": {
+    "252": {
       "op": "intc_2 // 32",
       "defined_out": [
         "32",
@@ -772,7 +716,7 @@
         "32"
       ]
     },
-    "230": {
+    "253": {
       "op": "==",
       "defined_out": [
         "eq%0#0",
@@ -783,2174 +727,1898 @@
         "eq%0#0"
       ]
     },
-    "231": {
+    "254": {
       "error": "invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
       "op": "assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
       "stack_out": [
         "refugee#0"
       ]
     },
-    "232": {
-      "op": "txna ApplicationArgs 2"
-    },
-    "235": {
-      "op": "dupn 2",
+    "255": {
+      "op": "txna ApplicationArgs 2",
       "defined_out": [
-        "did#0",
-        "did#0 (copy)",
+        "identity_hash#0",
         "refugee#0"
       ],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "did#0",
-        "did#0 (copy)"
+        "identity_hash#0"
       ]
     },
-    "237": {
-      "op": "intc_0 // 0",
+    "258": {
+      "op": "dup",
+      "defined_out": [
+        "identity_hash#0",
+        "identity_hash#0 (copy)",
+        "refugee#0"
+      ],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "did#0",
-        "did#0 (copy)",
+        "identity_hash#0",
+        "identity_hash#0 (copy)"
+      ]
+    },
+    "259": {
+      "op": "intc_0 // 0",
+      "defined_out": [
+        "0",
+        "identity_hash#0",
+        "identity_hash#0 (copy)",
+        "refugee#0"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "identity_hash#0",
+        "identity_hash#0 (copy)",
         "0"
       ]
     },
-    "238": {
+    "260": {
       "error": "invalid array length header",
       "op": "extract_uint16 // on error: invalid array length header",
       "defined_out": [
         "aggregate%array_length%0#0",
-        "did#0",
+        "identity_hash#0",
         "refugee#0"
       ],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "did#0",
+        "identity_hash#0",
         "aggregate%array_length%0#0"
       ]
     },
-    "239": {
+    "261": {
       "op": "intc_3 // 2",
       "defined_out": [
         "2",
         "aggregate%array_length%0#0",
-        "did#0",
+        "identity_hash#0",
         "refugee#0"
       ],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "did#0",
+        "identity_hash#0",
         "aggregate%array_length%0#0",
         "2"
       ]
     },
-    "240": {
+    "262": {
       "op": "+",
       "defined_out": [
         "add%0#0",
-        "did#0",
+        "identity_hash#0",
         "refugee#0"
       ],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "did#0",
+        "identity_hash#0",
         "add%0#0"
       ]
     },
-    "241": {
-      "op": "swap",
+    "263": {
+      "op": "dig 1",
       "stack_out": [
         "refugee#0",
-        "did#0",
+        "identity_hash#0",
         "add%0#0",
-        "did#0"
+        "identity_hash#0 (copy)"
       ]
     },
-    "242": {
+    "265": {
       "op": "len",
       "defined_out": [
         "add%0#0",
-        "did#0",
+        "identity_hash#0",
         "len%1#0",
         "refugee#0"
       ],
       "stack_out": [
         "refugee#0",
-        "did#0",
+        "identity_hash#0",
         "add%0#0",
         "len%1#0"
       ]
     },
-    "243": {
+    "266": {
       "op": "==",
       "defined_out": [
-        "did#0",
         "eq%1#0",
+        "identity_hash#0",
         "refugee#0"
       ],
       "stack_out": [
         "refugee#0",
-        "did#0",
+        "identity_hash#0",
         "eq%1#0"
       ]
     },
-    "244": {
+    "267": {
       "error": "invalid number of bytes for arc4.dynamic_array<arc4.uint8>",
       "op": "assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>",
       "stack_out": [
         "refugee#0",
-        "did#0"
+        "identity_hash#0"
       ]
     },
-    "245": {
-      "op": "txna ApplicationArgs 3"
-    },
-    "248": {
-      "op": "dupn 2",
+    "268": {
+      "op": "txna ApplicationArgs 3",
       "defined_out": [
-        "did#0",
-        "ipfs_cid#0",
-        "ipfs_cid#0 (copy)",
+        "identity_hash#0",
+        "personhood_hash#0",
         "refugee#0"
       ],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "ipfs_cid#0",
-        "ipfs_cid#0 (copy)"
+        "identity_hash#0",
+        "personhood_hash#0"
       ]
     },
-    "250": {
+    "271": {
+      "op": "dup",
+      "defined_out": [
+        "identity_hash#0",
+        "personhood_hash#0",
+        "personhood_hash#0 (copy)",
+        "refugee#0"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "personhood_hash#0 (copy)"
+      ]
+    },
+    "272": {
       "op": "intc_0 // 0",
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "ipfs_cid#0",
-        "ipfs_cid#0 (copy)",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "personhood_hash#0 (copy)",
         "0"
       ]
     },
-    "251": {
+    "273": {
       "error": "invalid array length header",
       "op": "extract_uint16 // on error: invalid array length header",
       "defined_out": [
         "aggregate%array_length%1#0",
-        "did#0",
-        "ipfs_cid#0",
+        "identity_hash#0",
+        "personhood_hash#0",
         "refugee#0"
       ],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "ipfs_cid#0",
+        "identity_hash#0",
+        "personhood_hash#0",
         "aggregate%array_length%1#0"
       ]
     },
-    "252": {
+    "274": {
       "op": "intc_3 // 2",
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "ipfs_cid#0",
+        "identity_hash#0",
+        "personhood_hash#0",
         "aggregate%array_length%1#0",
         "2"
       ]
     },
-    "253": {
+    "275": {
       "op": "+",
       "defined_out": [
         "add%1#0",
-        "did#0",
-        "ipfs_cid#0",
+        "identity_hash#0",
+        "personhood_hash#0",
         "refugee#0"
       ],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "ipfs_cid#0",
+        "identity_hash#0",
+        "personhood_hash#0",
         "add%1#0"
       ]
     },
-    "254": {
-      "op": "swap",
+    "276": {
+      "op": "dig 1",
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
+        "identity_hash#0",
+        "personhood_hash#0",
         "add%1#0",
-        "ipfs_cid#0"
+        "personhood_hash#0 (copy)"
       ]
     },
-    "255": {
+    "278": {
       "op": "len",
       "defined_out": [
         "add%1#0",
-        "did#0",
-        "ipfs_cid#0",
+        "identity_hash#0",
         "len%2#0",
+        "personhood_hash#0",
         "refugee#0"
       ],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
+        "identity_hash#0",
+        "personhood_hash#0",
         "add%1#0",
         "len%2#0"
       ]
     },
-    "256": {
+    "279": {
       "op": "==",
       "defined_out": [
-        "did#0",
         "eq%2#0",
-        "ipfs_cid#0",
+        "identity_hash#0",
+        "personhood_hash#0",
         "refugee#0"
       ],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
+        "identity_hash#0",
+        "personhood_hash#0",
         "eq%2#0"
       ]
     },
-    "257": {
+    "280": {
       "error": "invalid number of bytes for arc4.dynamic_array<arc4.uint8>",
       "op": "assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>",
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0"
+        "identity_hash#0",
+        "personhood_hash#0"
       ]
     },
-    "258": {
-      "op": "txna ApplicationArgs 4"
-    },
-    "261": {
-      "op": "dupn 2",
+    "281": {
+      "op": "txna ApplicationArgs 4",
       "defined_out": [
-        "biometric_hash#0",
-        "biometric_hash#0 (copy)",
-        "did#0",
-        "ipfs_cid#0",
+        "age_proof_hash#0",
+        "identity_hash#0",
+        "personhood_hash#0",
         "refugee#0"
       ],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "biometric_hash#0",
-        "biometric_hash#0 (copy)"
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0"
       ]
     },
-    "263": {
+    "284": {
+      "op": "dup",
+      "defined_out": [
+        "age_proof_hash#0",
+        "age_proof_hash#0 (copy)",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "refugee#0"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
+        "age_proof_hash#0 (copy)"
+      ]
+    },
+    "285": {
       "op": "intc_0 // 0",
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "biometric_hash#0",
-        "biometric_hash#0 (copy)",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
+        "age_proof_hash#0 (copy)",
         "0"
       ]
     },
-    "264": {
+    "286": {
       "error": "invalid array length header",
       "op": "extract_uint16 // on error: invalid array length header",
       "defined_out": [
+        "age_proof_hash#0",
         "aggregate%array_length%2#0",
-        "biometric_hash#0",
-        "did#0",
-        "ipfs_cid#0",
+        "identity_hash#0",
+        "personhood_hash#0",
         "refugee#0"
       ],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "biometric_hash#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
         "aggregate%array_length%2#0"
       ]
     },
-    "265": {
+    "287": {
       "op": "intc_3 // 2",
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "biometric_hash#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
         "aggregate%array_length%2#0",
         "2"
       ]
     },
-    "266": {
+    "288": {
       "op": "+",
       "defined_out": [
         "add%2#0",
-        "biometric_hash#0",
-        "did#0",
-        "ipfs_cid#0",
+        "age_proof_hash#0",
+        "identity_hash#0",
+        "personhood_hash#0",
         "refugee#0"
       ],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "biometric_hash#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
         "add%2#0"
       ]
     },
-    "267": {
-      "op": "swap",
+    "289": {
+      "op": "dig 1",
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
         "add%2#0",
-        "biometric_hash#0"
+        "age_proof_hash#0 (copy)"
       ]
     },
-    "268": {
+    "291": {
       "op": "len",
       "defined_out": [
         "add%2#0",
-        "biometric_hash#0",
-        "did#0",
-        "ipfs_cid#0",
+        "age_proof_hash#0",
+        "identity_hash#0",
         "len%3#0",
+        "personhood_hash#0",
         "refugee#0"
       ],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
         "add%2#0",
         "len%3#0"
       ]
     },
-    "269": {
+    "292": {
       "op": "==",
       "defined_out": [
-        "biometric_hash#0",
-        "did#0",
+        "age_proof_hash#0",
         "eq%3#0",
-        "ipfs_cid#0",
+        "identity_hash#0",
+        "personhood_hash#0",
         "refugee#0"
       ],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
         "eq%3#0"
       ]
     },
-    "270": {
+    "293": {
       "error": "invalid number of bytes for arc4.dynamic_array<arc4.uint8>",
       "op": "assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>",
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0"
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0"
       ]
     },
-    "271": {
-      "callsub": "Nexathon.blockchain.refugee_contract.contract.RefugeeContract._is_authorized_registrar",
-      "op": "callsub _is_authorized_registrar",
+    "294": {
+      "callsub": "Nexathon.blockchain.refugee_contract.contract.RefugeeContract._is_authorized",
+      "op": "callsub _is_authorized",
       "defined_out": [
-        "biometric_hash#0",
-        "did#0",
-        "ipfs_cid#0",
+        "age_proof_hash#0",
+        "identity_hash#0",
+        "personhood_hash#0",
         "refugee#0",
         "tmp%0#1"
       ],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
         "tmp%0#1"
       ]
     },
-    "274": {
-      "op": "bnz register_bool_true@3",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0"
-      ]
-    },
-    "277": {
-      "callsub": "Nexathon.blockchain.refugee_contract.contract.RefugeeContract._is_admin",
-      "op": "callsub _is_admin",
-      "defined_out": [
-        "biometric_hash#0",
-        "did#0",
-        "ipfs_cid#0",
-        "refugee#0",
-        "tmp%1#1"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "tmp%1#1"
-      ]
-    },
-    "280": {
-      "op": "bz register_bool_false@4",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0"
-      ]
-    },
-    "283": {
-      "block": "register_bool_true@3",
-      "stack_in": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0"
-      ],
-      "op": "intc_1 // 1",
-      "defined_out": [
-        "or_result%0#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "or_result%0#0"
-      ]
-    },
-    "284": {
+    "297": {
       "error": "register: sender not authorized",
-      "block": "register_bool_merge@5",
-      "stack_in": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "or_result%0#0"
-      ],
       "op": "assert // register: sender not authorized",
-      "defined_out": [],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0"
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0"
       ]
     },
-    "285": {
+    "298": {
+      "op": "dig 3",
+      "stack_out": [
+        "refugee#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
+        "refugee#0 (copy)"
+      ]
+    },
+    "300": {
       "op": "global CurrentApplicationID",
       "defined_out": [
-        "tmp%2#1"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "tmp%2#1"
-      ]
-    },
-    "287": {
-      "op": "dig 4",
-      "defined_out": [
-        "refugee#0",
-        "tmp%2#1"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "tmp%2#1",
-        "refugee#0"
-      ]
-    },
-    "289": {
-      "op": "dup"
-    },
-    "290": {
-      "op": "uncover 2",
-      "defined_out": [
+        "age_proof_hash#0",
+        "identity_hash#0",
+        "personhood_hash#0",
         "refugee#0",
         "refugee#0 (copy)",
-        "tmp%2#1"
+        "tmp%1#1"
       ],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
         "refugee#0 (copy)",
-        "tmp%2#1"
+        "tmp%1#1"
       ]
     },
-    "292": {
+    "302": {
       "op": "app_opted_in",
       "defined_out": [
+        "age_proof_hash#0",
+        "identity_hash#0",
+        "personhood_hash#0",
         "refugee#0",
-        "tmp%3#1"
+        "tmp%2#1"
       ],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "tmp%3#1"
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
+        "tmp%2#1"
       ]
     },
-    "293": {
+    "303": {
       "error": "register: refugee not opted in",
       "op": "assert // register: refugee not opted in",
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0"
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0"
       ]
     },
-    "294": {
-      "op": "dup",
+    "304": {
+      "op": "dig 3",
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
         "refugee#0 (copy)"
       ]
     },
-    "295": {
+    "306": {
       "op": "intc_0 // 0",
-      "defined_out": [
-        "0",
-        "refugee#0",
-        "refugee#0 (copy)"
-      ],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
         "refugee#0 (copy)",
         "0"
       ]
     },
-    "296": {
-      "op": "bytec 5 // \"ipfs_cid\"",
+    "307": {
+      "op": "bytec_0 // \"identity_hash\"",
       "defined_out": [
-        "\"ipfs_cid\"",
+        "\"identity_hash\"",
         "0",
+        "age_proof_hash#0",
+        "identity_hash#0",
+        "personhood_hash#0",
         "refugee#0",
         "refugee#0 (copy)"
       ],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
         "refugee#0 (copy)",
         "0",
-        "\"ipfs_cid\""
+        "\"identity_hash\""
       ]
     },
-    "298": {
+    "308": {
       "op": "app_local_get_ex",
       "defined_out": [
+        "age_proof_hash#0",
+        "existing_identity#0",
         "has_value#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "refugee#0"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
+        "existing_identity#0",
+        "has_value#0"
+      ]
+    },
+    "309": {
+      "op": "bury 1",
+      "stack_out": [
+        "refugee#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
+        "has_value#0"
+      ]
+    },
+    "311": {
+      "op": "!",
+      "defined_out": [
+        "age_proof_hash#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "refugee#0",
+        "tmp%3#1"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
+        "tmp%3#1"
+      ]
+    },
+    "312": {
+      "error": "register: refugee already registered",
+      "op": "assert // register: refugee already registered",
+      "stack_out": [
+        "refugee#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0"
+      ]
+    },
+    "313": {
+      "op": "dig 3",
+      "stack_out": [
+        "refugee#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
+        "refugee#0 (copy)"
+      ]
+    },
+    "315": {
+      "op": "bytec 6 // \"wallet_address\"",
+      "defined_out": [
+        "\"wallet_address\"",
+        "age_proof_hash#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "refugee#0",
+        "refugee#0 (copy)"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
+        "refugee#0 (copy)",
+        "\"wallet_address\""
+      ]
+    },
+    "317": {
+      "op": "dig 5",
+      "stack_out": [
+        "refugee#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
+        "refugee#0 (copy)",
+        "\"wallet_address\"",
+        "refugee#0 (copy)"
+      ]
+    },
+    "319": {
+      "op": "app_local_put",
+      "stack_out": [
+        "refugee#0",
+        "identity_hash#0",
+        "personhood_hash#0",
+        "age_proof_hash#0"
+      ]
+    },
+    "320": {
+      "op": "uncover 2",
+      "stack_out": [
+        "refugee#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
+        "identity_hash#0"
+      ]
+    },
+    "322": {
+      "op": "extract 2 0",
+      "defined_out": [
+        "age_proof_hash#0",
+        "personhood_hash#0",
+        "refugee#0",
+        "tmp%4#1"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
+        "tmp%4#1"
+      ]
+    },
+    "325": {
+      "op": "dig 3",
+      "stack_out": [
+        "refugee#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
+        "tmp%4#1",
+        "refugee#0 (copy)"
+      ]
+    },
+    "327": {
+      "op": "bytec_0 // \"identity_hash\"",
+      "stack_out": [
+        "refugee#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
+        "tmp%4#1",
+        "refugee#0 (copy)",
+        "\"identity_hash\""
+      ]
+    },
+    "328": {
+      "op": "uncover 2",
+      "stack_out": [
+        "refugee#0",
+        "personhood_hash#0",
+        "age_proof_hash#0",
+        "refugee#0 (copy)",
+        "\"identity_hash\"",
+        "tmp%4#1"
+      ]
+    },
+    "330": {
+      "op": "app_local_put",
+      "stack_out": [
+        "refugee#0",
+        "personhood_hash#0",
+        "age_proof_hash#0"
+      ]
+    },
+    "331": {
+      "op": "swap",
+      "stack_out": [
+        "refugee#0",
+        "age_proof_hash#0",
+        "personhood_hash#0"
+      ]
+    },
+    "332": {
+      "op": "extract 2 0",
+      "defined_out": [
+        "age_proof_hash#0",
+        "refugee#0",
+        "tmp%5#0"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "age_proof_hash#0",
+        "tmp%5#0"
+      ]
+    },
+    "335": {
+      "op": "dig 2",
+      "stack_out": [
+        "refugee#0",
+        "age_proof_hash#0",
+        "tmp%5#0",
+        "refugee#0 (copy)"
+      ]
+    },
+    "337": {
+      "op": "bytec_3 // \"personhood_hash\"",
+      "defined_out": [
+        "\"personhood_hash\"",
+        "age_proof_hash#0",
+        "refugee#0",
+        "refugee#0 (copy)",
+        "tmp%5#0"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "age_proof_hash#0",
+        "tmp%5#0",
+        "refugee#0 (copy)",
+        "\"personhood_hash\""
+      ]
+    },
+    "338": {
+      "op": "uncover 2",
+      "stack_out": [
+        "refugee#0",
+        "age_proof_hash#0",
+        "refugee#0 (copy)",
+        "\"personhood_hash\"",
+        "tmp%5#0"
+      ]
+    },
+    "340": {
+      "op": "app_local_put",
+      "stack_out": [
+        "refugee#0",
+        "age_proof_hash#0"
+      ]
+    },
+    "341": {
+      "op": "extract 2 0",
+      "defined_out": [
+        "refugee#0",
+        "tmp%6#0"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "tmp%6#0"
+      ]
+    },
+    "344": {
+      "op": "dig 1",
+      "stack_out": [
+        "refugee#0",
+        "tmp%6#0",
+        "refugee#0 (copy)"
+      ]
+    },
+    "346": {
+      "op": "bytec 4 // \"age_proof_hash\"",
+      "defined_out": [
+        "\"age_proof_hash\"",
+        "refugee#0",
+        "refugee#0 (copy)",
+        "tmp%6#0"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "tmp%6#0",
+        "refugee#0 (copy)",
+        "\"age_proof_hash\""
+      ]
+    },
+    "348": {
+      "op": "uncover 2",
+      "stack_out": [
+        "refugee#0",
+        "refugee#0 (copy)",
+        "\"age_proof_hash\"",
+        "tmp%6#0"
+      ]
+    },
+    "350": {
+      "op": "app_local_put",
+      "stack_out": [
+        "refugee#0"
+      ]
+    },
+    "351": {
+      "op": "bytec_1 // \"aid_claimed\"",
+      "defined_out": [
+        "\"aid_claimed\"",
+        "refugee#0"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "\"aid_claimed\""
+      ]
+    },
+    "352": {
+      "op": "intc_0 // 0",
+      "stack_out": [
+        "refugee#0",
+        "\"aid_claimed\"",
+        "0"
+      ]
+    },
+    "353": {
+      "op": "app_local_put",
+      "stack_out": []
+    },
+    "354": {
+      "op": "intc_1 // 1",
+      "defined_out": [
+        "1"
+      ],
+      "stack_out": [
+        "1"
+      ]
+    },
+    "355": {
+      "op": "return",
+      "stack_out": []
+    },
+    "356": {
+      "subroutine": "Nexathon.blockchain.refugee_contract.contract.RefugeeContract.claim_aid[routing]",
+      "params": {},
+      "block": "claim_aid",
+      "stack_in": [],
+      "op": "txna ApplicationArgs 1"
+    },
+    "359": {
+      "op": "dupn 2",
+      "defined_out": [
+        "refugee#0",
+        "refugee#0 (copy)"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "refugee#0",
+        "refugee#0 (copy)"
+      ]
+    },
+    "361": {
+      "op": "len",
+      "defined_out": [
+        "len%0#0",
+        "refugee#0"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "refugee#0",
+        "len%0#0"
+      ]
+    },
+    "362": {
+      "op": "intc_2 // 32",
+      "defined_out": [
+        "32",
+        "len%0#0",
+        "refugee#0"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "refugee#0",
+        "len%0#0",
+        "32"
+      ]
+    },
+    "363": {
+      "op": "==",
+      "defined_out": [
+        "eq%0#0",
+        "refugee#0"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "refugee#0",
+        "eq%0#0"
+      ]
+    },
+    "364": {
+      "error": "invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
+      "op": "assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
+      "stack_out": [
+        "refugee#0",
+        "refugee#0"
+      ]
+    },
+    "365": {
+      "callsub": "Nexathon.blockchain.refugee_contract.contract.RefugeeContract._is_authorized",
+      "op": "callsub _is_authorized",
+      "defined_out": [
+        "refugee#0",
+        "tmp%0#1"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "refugee#0",
+        "tmp%0#1"
+      ]
+    },
+    "368": {
+      "error": "claim_aid: sender not authorized",
+      "op": "assert // claim_aid: sender not authorized",
+      "stack_out": [
+        "refugee#0",
+        "refugee#0"
+      ]
+    },
+    "369": {
+      "op": "dup"
+    },
+    "370": {
+      "op": "global CurrentApplicationID",
+      "defined_out": [
+        "refugee#0",
+        "refugee#0 (copy)",
+        "tmp%1#1"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "refugee#0",
+        "refugee#0 (copy)",
+        "tmp%1#1"
+      ]
+    },
+    "372": {
+      "op": "app_opted_in",
+      "defined_out": [
+        "refugee#0",
+        "tmp%2#0"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "refugee#0",
+        "tmp%2#0"
+      ]
+    },
+    "373": {
+      "error": "claim_aid: refugee not opted in",
+      "op": "assert // claim_aid: refugee not opted in",
+      "stack_out": [
+        "refugee#0",
+        "refugee#0"
+      ]
+    },
+    "374": {
+      "op": "intc_0 // 0",
+      "stack_out": [
+        "refugee#0",
+        "refugee#0",
+        "0"
+      ]
+    },
+    "375": {
+      "op": "bytec_1 // \"aid_claimed\"",
+      "defined_out": [
+        "\"aid_claimed\"",
+        "0",
+        "refugee#0"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "refugee#0",
+        "0",
+        "\"aid_claimed\""
+      ]
+    },
+    "376": {
+      "op": "app_local_get_ex",
+      "defined_out": [
+        "has_val#0",
         "refugee#0",
         "val#0"
       ],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
         "val#0",
-        "has_value#0"
-      ]
-    },
-    "299": {
-      "op": "bury 1",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "has_value#0"
-      ]
-    },
-    "301": {
-      "op": "!",
-      "defined_out": [
-        "refugee#0",
-        "tmp%4#1"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "tmp%4#1"
-      ]
-    },
-    "302": {
-      "error": "register: refugee already registered",
-      "op": "assert // register: refugee already registered",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0"
-      ]
-    },
-    "303": {
-      "op": "dup",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "refugee#0 (copy)"
-      ]
-    },
-    "304": {
-      "op": "pushbytes \"wallet_address\"",
-      "defined_out": [
-        "\"wallet_address\"",
-        "refugee#0",
-        "refugee#0 (copy)"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "refugee#0 (copy)",
-        "\"wallet_address\""
-      ]
-    },
-    "320": {
-      "op": "dig 2",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "refugee#0 (copy)",
-        "\"wallet_address\"",
-        "refugee#0 (copy)"
-      ]
-    },
-    "322": {
-      "op": "app_local_put",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0"
-      ]
-    },
-    "323": {
-      "op": "dig 3",
-      "defined_out": [
-        "did#0",
-        "refugee#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "did#0"
-      ]
-    },
-    "325": {
-      "op": "extract 2 0",
-      "defined_out": [
-        "did#0",
-        "refugee#0",
-        "tmp%5#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "tmp%5#0"
-      ]
-    },
-    "328": {
-      "op": "dig 1",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "tmp%5#0",
-        "refugee#0 (copy)"
-      ]
-    },
-    "330": {
-      "op": "pushbytes \"did\"",
-      "defined_out": [
-        "\"did\"",
-        "did#0",
-        "refugee#0",
-        "refugee#0 (copy)",
-        "tmp%5#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "tmp%5#0",
-        "refugee#0 (copy)",
-        "\"did\""
-      ]
-    },
-    "335": {
-      "op": "uncover 2",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "refugee#0 (copy)",
-        "\"did\"",
-        "tmp%5#0"
-      ]
-    },
-    "337": {
-      "op": "app_local_put",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0"
-      ]
-    },
-    "338": {
-      "op": "dig 2",
-      "defined_out": [
-        "did#0",
-        "ipfs_cid#0",
-        "refugee#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "ipfs_cid#0"
-      ]
-    },
-    "340": {
-      "op": "extract 2 0",
-      "defined_out": [
-        "did#0",
-        "ipfs_cid#0",
-        "refugee#0",
-        "tmp%6#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "tmp%6#0"
-      ]
-    },
-    "343": {
-      "op": "dig 1",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "tmp%6#0",
-        "refugee#0 (copy)"
-      ]
-    },
-    "345": {
-      "op": "bytec 5 // \"ipfs_cid\"",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "tmp%6#0",
-        "refugee#0 (copy)",
-        "\"ipfs_cid\""
-      ]
-    },
-    "347": {
-      "op": "uncover 2",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "refugee#0 (copy)",
-        "\"ipfs_cid\"",
-        "tmp%6#0"
-      ]
-    },
-    "349": {
-      "op": "app_local_put",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0"
-      ]
-    },
-    "350": {
-      "op": "dig 1",
-      "defined_out": [
-        "biometric_hash#0",
-        "did#0",
-        "ipfs_cid#0",
-        "refugee#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "biometric_hash#0"
-      ]
-    },
-    "352": {
-      "op": "extract 2 0",
-      "defined_out": [
-        "biometric_hash#0",
-        "did#0",
-        "ipfs_cid#0",
-        "refugee#0",
-        "tmp%7#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "tmp%7#0"
-      ]
-    },
-    "355": {
-      "op": "dig 1",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "tmp%7#0",
-        "refugee#0 (copy)"
-      ]
-    },
-    "357": {
-      "op": "pushbytes \"biometric_hash\"",
-      "defined_out": [
-        "\"biometric_hash\"",
-        "biometric_hash#0",
-        "did#0",
-        "ipfs_cid#0",
-        "refugee#0",
-        "refugee#0 (copy)",
-        "tmp%7#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "tmp%7#0",
-        "refugee#0 (copy)",
-        "\"biometric_hash\""
-      ]
-    },
-    "373": {
-      "op": "uncover 2",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "refugee#0 (copy)",
-        "\"biometric_hash\"",
-        "tmp%7#0"
-      ]
-    },
-    "375": {
-      "op": "app_local_put",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0"
-      ]
-    },
-    "376": {
-      "op": "dup",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "refugee#0 (copy)"
+        "has_val#0"
       ]
     },
     "377": {
-      "op": "bytec_2 // \"trust_tier\"",
-      "defined_out": [
-        "\"trust_tier\"",
-        "biometric_hash#0",
-        "did#0",
-        "ipfs_cid#0",
-        "refugee#0",
-        "refugee#0 (copy)"
-      ],
+      "op": "bz claim_aid_bool_true@3",
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "refugee#0 (copy)",
-        "\"trust_tier\""
-      ]
-    },
-    "378": {
-      "op": "intc_0 // 0",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "refugee#0 (copy)",
-        "\"trust_tier\"",
-        "0"
-      ]
-    },
-    "379": {
-      "op": "app_local_put",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0"
+        "val#0"
       ]
     },
     "380": {
       "op": "dup",
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "refugee#0 (copy)"
+        "val#0",
+        "val#0"
       ]
     },
     "381": {
-      "op": "bytec_3 // \"aid_claimed\"",
-      "defined_out": [
-        "\"aid_claimed\"",
-        "biometric_hash#0",
-        "did#0",
-        "ipfs_cid#0",
-        "refugee#0",
-        "refugee#0 (copy)"
-      ],
+      "op": "bnz claim_aid_bool_false@4",
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "refugee#0 (copy)",
-        "\"aid_claimed\""
-      ]
-    },
-    "382": {
-      "op": "intc_0 // 0",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "refugee#0 (copy)",
-        "\"aid_claimed\"",
-        "0"
-      ]
-    },
-    "383": {
-      "op": "app_local_put",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0"
+        "val#0"
       ]
     },
     "384": {
-      "op": "pushbytes \"is_active\"",
-      "defined_out": [
-        "\"is_active\"",
-        "biometric_hash#0",
-        "did#0",
-        "ipfs_cid#0",
-        "refugee#0"
+      "block": "claim_aid_bool_true@3",
+      "stack_in": [
+        "refugee#0",
+        "val#0"
       ],
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "refugee#0",
-        "\"is_active\""
-      ]
-    },
-    "395": {
       "op": "intc_1 // 1",
       "defined_out": [
-        "\"is_active\"",
-        "1",
-        "biometric_hash#0",
-        "did#0",
-        "ipfs_cid#0",
+        "or_result%0#0"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "val#0",
+        "or_result%0#0"
+      ]
+    },
+    "385": {
+      "error": "claim_aid: already claimed",
+      "block": "claim_aid_bool_merge@5",
+      "stack_in": [
+        "refugee#0",
+        "val#0",
+        "or_result%0#0"
+      ],
+      "op": "assert // claim_aid: already claimed",
+      "defined_out": [],
+      "stack_out": [
+        "refugee#0",
+        "val#0"
+      ]
+    },
+    "386": {
+      "op": "dig 1",
+      "defined_out": [
         "refugee#0"
       ],
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
+        "val#0",
+        "refugee#0"
+      ]
+    },
+    "388": {
+      "op": "bytec_1 // \"aid_claimed\"",
+      "defined_out": [
+        "\"aid_claimed\"",
+        "refugee#0"
+      ],
+      "stack_out": [
         "refugee#0",
-        "\"is_active\"",
+        "val#0",
+        "refugee#0",
+        "\"aid_claimed\""
+      ]
+    },
+    "389": {
+      "op": "intc_1 // 1",
+      "defined_out": [
+        "\"aid_claimed\"",
+        "1",
+        "refugee#0"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "val#0",
+        "refugee#0",
+        "\"aid_claimed\"",
         "1"
       ]
     },
-    "396": {
+    "390": {
       "op": "app_local_put",
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0"
+        "val#0"
       ]
     },
-    "397": {
-      "op": "intc_0 // 0",
+    "391": {
+      "op": "intc_1 // 1",
       "stack_out": [
         "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
+        "val#0",
+        "1"
+      ]
+    },
+    "392": {
+      "op": "return",
+      "stack_out": [
+        "refugee#0",
+        "val#0"
+      ]
+    },
+    "393": {
+      "block": "claim_aid_bool_false@4",
+      "stack_in": [
+        "refugee#0",
+        "val#0"
+      ],
+      "op": "intc_0 // 0",
+      "defined_out": [
+        "or_result%0#0"
+      ],
+      "stack_out": [
+        "refugee#0",
+        "val#0",
+        "or_result%0#0"
+      ]
+    },
+    "394": {
+      "op": "b claim_aid_bool_merge@5"
+    },
+    "397": {
+      "subroutine": "Nexathon.blockchain.refugee_contract.contract.RefugeeContract.migrate_wallet[routing]",
+      "params": {},
+      "block": "migrate_wallet",
+      "stack_in": [],
+      "op": "txna ApplicationArgs 1",
+      "defined_out": [
+        "old_wallet#0"
+      ],
+      "stack_out": [
+        "old_wallet#0"
+      ]
+    },
+    "400": {
+      "op": "dup",
+      "defined_out": [
+        "old_wallet#0",
+        "old_wallet#0 (copy)"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "old_wallet#0 (copy)"
+      ]
+    },
+    "401": {
+      "op": "len",
+      "defined_out": [
+        "len%0#0",
+        "old_wallet#0"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "len%0#0"
+      ]
+    },
+    "402": {
+      "op": "intc_2 // 32",
+      "defined_out": [
+        "32",
+        "len%0#0",
+        "old_wallet#0"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "len%0#0",
+        "32"
+      ]
+    },
+    "403": {
+      "op": "==",
+      "defined_out": [
+        "eq%0#0",
+        "old_wallet#0"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "eq%0#0"
+      ]
+    },
+    "404": {
+      "error": "invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
+      "op": "assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
+      "stack_out": [
+        "old_wallet#0"
+      ]
+    },
+    "405": {
+      "op": "txna ApplicationArgs 2",
+      "defined_out": [
+        "new_wallet#0",
+        "old_wallet#0"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0"
+      ]
+    },
+    "408": {
+      "op": "dup",
+      "defined_out": [
+        "new_wallet#0",
+        "new_wallet#0 (copy)",
+        "old_wallet#0"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "new_wallet#0 (copy)"
+      ]
+    },
+    "409": {
+      "op": "len",
+      "defined_out": [
+        "len%1#0",
+        "new_wallet#0",
+        "old_wallet#0"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "len%1#0"
+      ]
+    },
+    "410": {
+      "op": "intc_2 // 32",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "len%1#0",
+        "32"
+      ]
+    },
+    "411": {
+      "op": "==",
+      "defined_out": [
+        "eq%1#0",
+        "new_wallet#0",
+        "old_wallet#0"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "eq%1#0"
+      ]
+    },
+    "412": {
+      "error": "invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
+      "op": "assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0"
+      ]
+    },
+    "413": {
+      "callsub": "Nexathon.blockchain.refugee_contract.contract.RefugeeContract._is_admin",
+      "op": "callsub _is_admin",
+      "defined_out": [
+        "new_wallet#0",
+        "old_wallet#0",
+        "tmp%0#1"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "tmp%0#1"
+      ]
+    },
+    "416": {
+      "error": "migrate_wallet: sender not admin",
+      "op": "assert // migrate_wallet: sender not admin",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0"
+      ]
+    },
+    "417": {
+      "op": "dig 1",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0 (copy)"
+      ]
+    },
+    "419": {
+      "op": "global CurrentApplicationID",
+      "defined_out": [
+        "new_wallet#0",
+        "old_wallet#0",
+        "old_wallet#0 (copy)",
+        "tmp%1#1"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0 (copy)",
+        "tmp%1#1"
+      ]
+    },
+    "421": {
+      "op": "app_opted_in",
+      "defined_out": [
+        "new_wallet#0",
+        "old_wallet#0",
+        "tmp%2#1"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "tmp%2#1"
+      ]
+    },
+    "422": {
+      "error": "migrate_wallet: old not opted in",
+      "op": "assert // migrate_wallet: old not opted in",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0"
+      ]
+    },
+    "423": {
+      "op": "dup"
+    },
+    "424": {
+      "op": "global CurrentApplicationID",
+      "defined_out": [
+        "new_wallet#0",
+        "new_wallet#0 (copy)",
+        "old_wallet#0",
+        "tmp%3#1"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "new_wallet#0 (copy)",
+        "tmp%3#1"
+      ]
+    },
+    "426": {
+      "op": "app_opted_in",
+      "defined_out": [
+        "new_wallet#0",
+        "old_wallet#0",
+        "tmp%4#0"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "tmp%4#0"
+      ]
+    },
+    "427": {
+      "error": "migrate_wallet: new not opted in",
+      "op": "assert // migrate_wallet: new not opted in",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0"
+      ]
+    },
+    "428": {
+      "op": "dig 1",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0 (copy)"
+      ]
+    },
+    "430": {
+      "op": "intc_0 // 0",
+      "defined_out": [
+        "0",
+        "new_wallet#0",
+        "old_wallet#0",
+        "old_wallet#0 (copy)"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0 (copy)",
         "0"
       ]
     },
-    "398": {
-      "op": "bytec_0 // \"total_refugees\"",
+    "431": {
+      "op": "bytec_0 // \"identity_hash\"",
       "defined_out": [
-        "\"total_refugees\"",
+        "\"identity_hash\"",
         "0",
-        "biometric_hash#0",
-        "did#0",
-        "ipfs_cid#0",
-        "refugee#0"
+        "new_wallet#0",
+        "old_wallet#0",
+        "old_wallet#0 (copy)"
       ],
       "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0 (copy)",
         "0",
-        "\"total_refugees\""
+        "\"identity_hash\""
       ]
     },
-    "399": {
-      "op": "app_global_get_ex",
+    "432": {
+      "op": "app_local_get_ex",
       "defined_out": [
-        "biometric_hash#0",
-        "did#0",
-        "ipfs_cid#0",
-        "maybe_exists%1#0",
-        "maybe_value%1#0",
-        "refugee#0"
+        "maybe_exists%0#0",
+        "new_wallet#0",
+        "old_identity#0",
+        "old_wallet#0"
       ],
       "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_identity#0",
+        "maybe_exists%0#0"
+      ]
+    },
+    "433": {
+      "error": "check self.identity_hash exists for account",
+      "op": "assert // check self.identity_hash exists for account",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_identity#0"
+      ]
+    },
+    "434": {
+      "op": "dup",
+      "defined_out": [
+        "new_wallet#0",
+        "old_identity#0",
+        "old_identity#0 (copy)",
+        "old_wallet#0"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_identity#0",
+        "old_identity#0 (copy)"
+      ]
+    },
+    "435": {
+      "op": "bytec 7 // 0x4d49475241544544",
+      "defined_out": [
+        "0x4d49475241544544",
+        "new_wallet#0",
+        "old_identity#0",
+        "old_identity#0 (copy)",
+        "old_wallet#0"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_identity#0",
+        "old_identity#0 (copy)",
+        "0x4d49475241544544"
+      ]
+    },
+    "437": {
+      "op": "!=",
+      "defined_out": [
+        "new_wallet#0",
+        "old_identity#0",
+        "old_wallet#0",
+        "tmp%5#0"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_identity#0",
+        "tmp%5#0"
+      ]
+    },
+    "438": {
+      "error": "migrate_wallet: already migrated",
+      "op": "assert // migrate_wallet: already migrated",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_identity#0"
+      ]
+    },
+    "439": {
+      "op": "dig 1",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_identity#0",
+        "new_wallet#0 (copy)"
+      ]
+    },
+    "441": {
+      "op": "bytec_0 // \"identity_hash\"",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_identity#0",
+        "new_wallet#0 (copy)",
+        "\"identity_hash\""
+      ]
+    },
+    "442": {
+      "op": "uncover 2",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "new_wallet#0 (copy)",
+        "\"identity_hash\"",
+        "old_identity#0"
+      ]
+    },
+    "444": {
+      "op": "app_local_put",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0"
+      ]
+    },
+    "445": {
+      "op": "dig 1",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0 (copy)"
+      ]
+    },
+    "447": {
+      "op": "intc_0 // 0",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0 (copy)",
+        "0"
+      ]
+    },
+    "448": {
+      "op": "bytec_3 // \"personhood_hash\"",
+      "defined_out": [
+        "\"personhood_hash\"",
+        "0",
+        "new_wallet#0",
+        "old_wallet#0",
+        "old_wallet#0 (copy)"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0 (copy)",
+        "0",
+        "\"personhood_hash\""
+      ]
+    },
+    "449": {
+      "op": "app_local_get_ex",
+      "defined_out": [
+        "maybe_exists%1#0",
+        "maybe_value%1#0",
+        "new_wallet#0",
+        "old_wallet#0"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
         "maybe_value%1#0",
         "maybe_exists%1#0"
       ]
     },
-    "400": {
-      "error": "check self.total_refugees exists",
-      "op": "assert // check self.total_refugees exists",
+    "450": {
+      "error": "check self.personhood_hash exists for account",
+      "op": "assert // check self.personhood_hash exists for account",
       "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
+        "old_wallet#0",
+        "new_wallet#0",
         "maybe_value%1#0"
       ]
     },
-    "401": {
-      "op": "intc_1 // 1",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "maybe_value%1#0",
-        "1"
-      ]
-    },
-    "402": {
-      "op": "+",
-      "defined_out": [
-        "biometric_hash#0",
-        "did#0",
-        "ipfs_cid#0",
-        "refugee#0",
-        "tmp%8#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "tmp%8#0"
-      ]
-    },
-    "403": {
-      "op": "bytec_0 // \"total_refugees\"",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "tmp%8#0",
-        "\"total_refugees\""
-      ]
-    },
-    "404": {
-      "op": "swap",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "\"total_refugees\"",
-        "tmp%8#0"
-      ]
-    },
-    "405": {
-      "op": "app_global_put",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0"
-      ]
-    },
-    "406": {
-      "op": "intc_1 // 1",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "1"
-      ]
-    },
-    "407": {
-      "op": "return",
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0"
-      ]
-    },
-    "408": {
-      "block": "register_bool_false@4",
-      "stack_in": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0"
-      ],
-      "op": "intc_0 // 0",
-      "defined_out": [
-        "or_result%0#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "did#0",
-        "ipfs_cid#0",
-        "biometric_hash#0",
-        "or_result%0#0"
-      ]
-    },
-    "409": {
-      "op": "b register_bool_merge@5"
-    },
-    "412": {
-      "subroutine": "Nexathon.blockchain.refugee_contract.contract.RefugeeContract.upgrade_tier[routing]",
-      "params": {},
-      "block": "upgrade_tier",
-      "stack_in": [],
-      "op": "txna ApplicationArgs 1"
-    },
-    "415": {
-      "op": "dup",
-      "defined_out": [
-        "refugee#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "refugee#0"
-      ]
-    },
-    "416": {
-      "op": "len",
-      "defined_out": [
-        "len%0#0",
-        "refugee#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "len%0#0"
-      ]
-    },
-    "417": {
-      "op": "intc_2 // 32",
-      "defined_out": [
-        "32",
-        "len%0#0",
-        "refugee#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "len%0#0",
-        "32"
-      ]
-    },
-    "418": {
-      "op": "==",
-      "defined_out": [
-        "eq%0#0",
-        "refugee#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "eq%0#0"
-      ]
-    },
-    "419": {
-      "error": "invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
-      "op": "assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
-      "stack_out": [
-        "refugee#0"
-      ]
-    },
-    "420": {
-      "op": "txna ApplicationArgs 2",
-      "defined_out": [
-        "refugee#0",
-        "tmp%2#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "tmp%2#0"
-      ]
-    },
-    "423": {
-      "op": "dup",
-      "defined_out": [
-        "refugee#0",
-        "tmp%2#0",
-        "tmp%2#0 (copy)"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "tmp%2#0",
-        "tmp%2#0 (copy)"
-      ]
-    },
-    "424": {
-      "op": "len",
-      "defined_out": [
-        "len%1#0",
-        "refugee#0",
-        "tmp%2#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "tmp%2#0",
-        "len%1#0"
-      ]
-    },
-    "425": {
-      "op": "pushint 8",
-      "defined_out": [
-        "8",
-        "len%1#0",
-        "refugee#0",
-        "tmp%2#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "tmp%2#0",
-        "len%1#0",
-        "8"
-      ]
-    },
-    "427": {
-      "op": "==",
-      "defined_out": [
-        "eq%1#0",
-        "refugee#0",
-        "tmp%2#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "tmp%2#0",
-        "eq%1#0"
-      ]
-    },
-    "428": {
-      "error": "invalid number of bytes for arc4.uint64",
-      "op": "assert // invalid number of bytes for arc4.uint64",
-      "stack_out": [
-        "refugee#0",
-        "tmp%2#0"
-      ]
-    },
-    "429": {
-      "op": "btoi",
-      "defined_out": [
-        "new_tier#0",
-        "refugee#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "new_tier#0"
-      ]
-    },
-    "430": {
-      "callsub": "Nexathon.blockchain.refugee_contract.contract.RefugeeContract._is_authorized_registrar",
-      "op": "callsub _is_authorized_registrar",
-      "defined_out": [
-        "new_tier#0",
-        "refugee#0",
-        "tmp%0#1"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "new_tier#0",
-        "tmp%0#1"
-      ]
-    },
-    "433": {
-      "op": "bnz upgrade_tier_bool_true@3",
-      "stack_out": [
-        "refugee#0",
-        "new_tier#0"
-      ]
-    },
-    "436": {
-      "callsub": "Nexathon.blockchain.refugee_contract.contract.RefugeeContract._is_admin",
-      "op": "callsub _is_admin",
-      "defined_out": [
-        "new_tier#0",
-        "refugee#0",
-        "tmp%1#1"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "new_tier#0",
-        "tmp%1#1"
-      ]
-    },
-    "439": {
-      "op": "bz upgrade_tier_bool_false@4",
-      "stack_out": [
-        "refugee#0",
-        "new_tier#0"
-      ]
-    },
-    "442": {
-      "block": "upgrade_tier_bool_true@3",
-      "stack_in": [
-        "refugee#0",
-        "new_tier#0"
-      ],
-      "op": "intc_1 // 1",
-      "defined_out": [
-        "or_result%0#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "new_tier#0",
-        "or_result%0#0"
-      ]
-    },
-    "443": {
-      "error": "upgrade_tier: sender not authorized",
-      "block": "upgrade_tier_bool_merge@5",
-      "stack_in": [
-        "refugee#0",
-        "new_tier#0",
-        "or_result%0#0"
-      ],
-      "op": "assert // upgrade_tier: sender not authorized",
-      "defined_out": [],
-      "stack_out": [
-        "refugee#0",
-        "new_tier#0"
-      ]
-    },
-    "444": {
-      "op": "global CurrentApplicationID",
-      "defined_out": [
-        "tmp%2#1"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "new_tier#0",
-        "tmp%2#1"
-      ]
-    },
-    "446": {
-      "op": "dig 2",
-      "defined_out": [
-        "refugee#0",
-        "tmp%2#1"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "new_tier#0",
-        "tmp%2#1",
-        "refugee#0"
-      ]
-    },
-    "448": {
-      "op": "dup"
-    },
-    "449": {
-      "op": "uncover 2",
-      "defined_out": [
-        "refugee#0",
-        "refugee#0 (copy)",
-        "tmp%2#1"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "new_tier#0",
-        "refugee#0",
-        "refugee#0 (copy)",
-        "tmp%2#1"
-      ]
-    },
     "451": {
-      "op": "app_opted_in",
-      "defined_out": [
-        "refugee#0",
-        "tmp%3#1"
-      ],
+      "op": "dig 1",
       "stack_out": [
-        "refugee#0",
-        "new_tier#0",
-        "refugee#0",
-        "tmp%3#1"
-      ]
-    },
-    "452": {
-      "error": "upgrade_tier: refugee not opted in",
-      "op": "assert // upgrade_tier: refugee not opted in",
-      "stack_out": [
-        "refugee#0",
-        "new_tier#0",
-        "refugee#0"
+        "old_wallet#0",
+        "new_wallet#0",
+        "maybe_value%1#0",
+        "new_wallet#0 (copy)"
       ]
     },
     "453": {
-      "op": "dup",
+      "op": "bytec_3 // \"personhood_hash\"",
       "stack_out": [
-        "refugee#0",
-        "new_tier#0",
-        "refugee#0",
-        "refugee#0 (copy)"
+        "old_wallet#0",
+        "new_wallet#0",
+        "maybe_value%1#0",
+        "new_wallet#0 (copy)",
+        "\"personhood_hash\""
       ]
     },
     "454": {
-      "op": "intc_0 // 0",
-      "defined_out": [
-        "0",
-        "refugee#0",
-        "refugee#0 (copy)"
-      ],
+      "op": "uncover 2",
       "stack_out": [
-        "refugee#0",
-        "new_tier#0",
-        "refugee#0",
-        "refugee#0 (copy)",
-        "0"
-      ]
-    },
-    "455": {
-      "op": "bytec_2 // \"trust_tier\"",
-      "defined_out": [
-        "\"trust_tier\"",
-        "0",
-        "refugee#0",
-        "refugee#0 (copy)"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "new_tier#0",
-        "refugee#0",
-        "refugee#0 (copy)",
-        "0",
-        "\"trust_tier\""
+        "old_wallet#0",
+        "new_wallet#0",
+        "new_wallet#0 (copy)",
+        "\"personhood_hash\"",
+        "maybe_value%1#0"
       ]
     },
     "456": {
-      "op": "app_local_get_ex",
-      "defined_out": [
-        "current_tier#0",
-        "maybe_exists%0#0",
-        "refugee#0"
-      ],
+      "op": "app_local_put",
       "stack_out": [
-        "refugee#0",
-        "new_tier#0",
-        "refugee#0",
-        "current_tier#0",
-        "maybe_exists%0#0"
+        "old_wallet#0",
+        "new_wallet#0"
       ]
     },
     "457": {
-      "error": "check self.trust_tier exists for account",
-      "op": "assert // check self.trust_tier exists for account",
-      "stack_out": [
-        "refugee#0",
-        "new_tier#0",
-        "refugee#0",
-        "current_tier#0"
-      ]
-    },
-    "458": {
-      "op": "dig 2",
-      "defined_out": [
-        "current_tier#0",
-        "new_tier#0",
-        "refugee#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "new_tier#0",
-        "refugee#0",
-        "current_tier#0",
-        "new_tier#0"
-      ]
-    },
-    "460": {
-      "op": "dup"
-    },
-    "461": {
-      "op": "uncover 2",
-      "defined_out": [
-        "current_tier#0",
-        "new_tier#0",
-        "new_tier#0 (copy)",
-        "refugee#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "new_tier#0",
-        "refugee#0",
-        "new_tier#0",
-        "new_tier#0 (copy)",
-        "current_tier#0"
-      ]
-    },
-    "463": {
-      "op": ">",
-      "defined_out": [
-        "new_tier#0",
-        "refugee#0",
-        "tmp%4#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "new_tier#0",
-        "refugee#0",
-        "new_tier#0",
-        "tmp%4#0"
-      ]
-    },
-    "464": {
-      "error": "upgrade_tier: cannot downgrade",
-      "op": "assert // upgrade_tier: cannot downgrade",
-      "stack_out": [
-        "refugee#0",
-        "new_tier#0",
-        "refugee#0",
-        "new_tier#0"
-      ]
-    },
-    "465": {
-      "op": "bytec_2 // \"trust_tier\""
-    },
-    "466": {
-      "op": "swap",
-      "stack_out": [
-        "refugee#0",
-        "new_tier#0",
-        "refugee#0",
-        "\"trust_tier\"",
-        "new_tier#0"
-      ]
-    },
-    "467": {
-      "op": "app_local_put",
-      "stack_out": [
-        "refugee#0",
-        "new_tier#0"
-      ]
-    },
-    "468": {
-      "op": "intc_1 // 1",
-      "defined_out": [
-        "1",
-        "new_tier#0",
-        "refugee#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "new_tier#0",
-        "1"
-      ]
-    },
-    "469": {
-      "op": "return",
-      "stack_out": [
-        "refugee#0",
-        "new_tier#0"
-      ]
-    },
-    "470": {
-      "block": "upgrade_tier_bool_false@4",
-      "stack_in": [
-        "refugee#0",
-        "new_tier#0"
-      ],
-      "op": "intc_0 // 0",
-      "defined_out": [
-        "or_result%0#0"
-      ],
-      "stack_out": [
-        "refugee#0",
-        "new_tier#0",
-        "or_result%0#0"
-      ]
-    },
-    "471": {
-      "op": "b upgrade_tier_bool_merge@5"
-    },
-    "474": {
-      "subroutine": "Nexathon.blockchain.refugee_contract.contract.RefugeeContract.issue_aid[routing]",
-      "params": {},
-      "block": "issue_aid",
-      "stack_in": [],
-      "op": "pushbytes \"\"",
-      "stack_out": [
-        "aid_val#0"
-      ]
-    },
-    "476": {
-      "op": "txna ApplicationArgs 1"
-    },
-    "479": {
-      "op": "dup",
-      "defined_out": [
-        "refugee#0"
-      ],
-      "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "refugee#0"
-      ]
-    },
-    "480": {
-      "op": "len",
-      "defined_out": [
-        "len%0#0",
-        "refugee#0"
-      ],
-      "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "len%0#0"
-      ]
-    },
-    "481": {
-      "op": "intc_2 // 32",
-      "defined_out": [
-        "32",
-        "len%0#0",
-        "refugee#0"
-      ],
-      "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "len%0#0",
-        "32"
-      ]
-    },
-    "482": {
-      "op": "==",
-      "defined_out": [
-        "eq%0#0",
-        "refugee#0"
-      ],
-      "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "eq%0#0"
-      ]
-    },
-    "483": {
-      "error": "invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
-      "op": "assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>",
-      "stack_out": [
-        "aid_val#0",
-        "refugee#0"
-      ]
-    },
-    "484": {
-      "callsub": "Nexathon.blockchain.refugee_contract.contract.RefugeeContract._is_authorized_registrar",
-      "op": "callsub _is_authorized_registrar",
-      "defined_out": [
-        "refugee#0",
-        "tmp%0#1"
-      ],
-      "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "tmp%0#1"
-      ]
-    },
-    "487": {
-      "op": "bnz issue_aid_bool_true@3",
-      "stack_out": [
-        "aid_val#0",
-        "refugee#0"
-      ]
-    },
-    "490": {
-      "callsub": "Nexathon.blockchain.refugee_contract.contract.RefugeeContract._is_admin",
-      "op": "callsub _is_admin",
-      "defined_out": [
-        "refugee#0",
-        "tmp%1#1"
-      ],
-      "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "tmp%1#1"
-      ]
-    },
-    "493": {
-      "op": "bz issue_aid_bool_false@4",
-      "stack_out": [
-        "aid_val#0",
-        "refugee#0"
-      ]
-    },
-    "496": {
-      "block": "issue_aid_bool_true@3",
-      "stack_in": [
-        "aid_val#0",
-        "refugee#0"
-      ],
-      "op": "intc_1 // 1",
-      "defined_out": [
-        "or_result%0#0"
-      ],
-      "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "or_result%0#0"
-      ]
-    },
-    "497": {
-      "error": "issue_aid: sender not authorized",
-      "block": "issue_aid_bool_merge@5",
-      "stack_in": [
-        "aid_val#0",
-        "refugee#0",
-        "or_result%0#0"
-      ],
-      "op": "assert // issue_aid: sender not authorized",
-      "defined_out": [],
-      "stack_out": [
-        "aid_val#0",
-        "refugee#0"
-      ]
-    },
-    "498": {
-      "op": "global CurrentApplicationID",
-      "defined_out": [
-        "tmp%2#0"
-      ],
-      "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "tmp%2#0"
-      ]
-    },
-    "500": {
       "op": "dig 1",
-      "defined_out": [
-        "refugee#0",
-        "tmp%2#0"
-      ],
       "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "tmp%2#0",
-        "refugee#0"
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0 (copy)"
       ]
     },
-    "502": {
-      "op": "dup"
-    },
-    "503": {
-      "op": "uncover 2",
-      "defined_out": [
-        "refugee#0",
-        "refugee#0 (copy)",
-        "tmp%2#0"
-      ],
-      "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "refugee#0",
-        "refugee#0 (copy)",
-        "tmp%2#0"
-      ]
-    },
-    "505": {
-      "op": "app_opted_in",
-      "defined_out": [
-        "refugee#0",
-        "tmp%3#0"
-      ],
-      "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "refugee#0",
-        "tmp%3#0"
-      ]
-    },
-    "506": {
-      "error": "issue_aid: refugee not opted in",
-      "op": "assert // issue_aid: refugee not opted in",
-      "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "refugee#0"
-      ]
-    },
-    "507": {
+    "459": {
       "op": "intc_0 // 0",
-      "defined_out": [
-        "0",
-        "refugee#0"
-      ],
       "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "refugee#0",
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0 (copy)",
         "0"
       ]
     },
-    "508": {
-      "op": "bytec_3 // \"aid_claimed\"",
+    "460": {
+      "op": "bytec 4 // \"age_proof_hash\"",
       "defined_out": [
-        "\"aid_claimed\"",
+        "\"age_proof_hash\"",
         "0",
-        "refugee#0"
+        "new_wallet#0",
+        "old_wallet#0",
+        "old_wallet#0 (copy)"
       ],
       "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "refugee#0",
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0 (copy)",
         "0",
-        "\"aid_claimed\""
+        "\"age_proof_hash\""
       ]
     },
-    "509": {
+    "462": {
       "op": "app_local_get_ex",
       "defined_out": [
-        "aid_val#0",
-        "has_aid#0",
-        "refugee#0"
+        "maybe_exists%2#0",
+        "maybe_value%2#0",
+        "new_wallet#0",
+        "old_wallet#0"
       ],
       "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "aid_val#0",
-        "has_aid#0"
+        "old_wallet#0",
+        "new_wallet#0",
+        "maybe_value%2#0",
+        "maybe_exists%2#0"
       ]
     },
-    "510": {
-      "op": "swap",
+    "463": {
+      "error": "check self.age_proof_hash exists for account",
+      "op": "assert // check self.age_proof_hash exists for account",
       "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "has_aid#0",
-        "aid_val#0"
+        "old_wallet#0",
+        "new_wallet#0",
+        "maybe_value%2#0"
       ]
     },
-    "511": {
-      "op": "bury 3",
-      "defined_out": [
-        "aid_val#0",
-        "has_aid#0",
-        "refugee#0"
-      ],
-      "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "has_aid#0"
-      ]
-    },
-    "513": {
-      "op": "bz issue_aid_bool_true@7",
-      "stack_out": [
-        "aid_val#0",
-        "refugee#0"
-      ]
-    },
-    "516": {
+    "464": {
       "op": "dig 1",
       "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "aid_val#0"
+        "old_wallet#0",
+        "new_wallet#0",
+        "maybe_value%2#0",
+        "new_wallet#0 (copy)"
       ]
     },
-    "518": {
-      "op": "bnz issue_aid_bool_false@8",
+    "466": {
+      "op": "bytec 4 // \"age_proof_hash\"",
       "stack_out": [
-        "aid_val#0",
-        "refugee#0"
+        "old_wallet#0",
+        "new_wallet#0",
+        "maybe_value%2#0",
+        "new_wallet#0 (copy)",
+        "\"age_proof_hash\""
       ]
     },
-    "521": {
-      "block": "issue_aid_bool_true@7",
-      "stack_in": [
-        "aid_val#0",
-        "refugee#0"
-      ],
-      "op": "intc_1 // 1",
-      "defined_out": [
-        "or_result%1#0"
-      ],
+    "468": {
+      "op": "uncover 2",
       "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "or_result%1#0"
+        "old_wallet#0",
+        "new_wallet#0",
+        "new_wallet#0 (copy)",
+        "\"age_proof_hash\"",
+        "maybe_value%2#0"
       ]
     },
-    "522": {
-      "error": "issue_aid: already claimed",
-      "block": "issue_aid_bool_merge@9",
-      "stack_in": [
-        "aid_val#0",
-        "refugee#0",
-        "or_result%1#0"
-      ],
-      "op": "assert // issue_aid: already claimed",
-      "defined_out": [],
+    "470": {
+      "op": "app_local_put",
       "stack_out": [
-        "aid_val#0",
-        "refugee#0"
+        "old_wallet#0",
+        "new_wallet#0"
       ]
     },
-    "523": {
-      "op": "dup",
-      "defined_out": [
-        "refugee#0"
-      ],
+    "471": {
+      "op": "dig 1",
       "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "refugee#0"
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0 (copy)"
       ]
     },
-    "524": {
-      "op": "bytec_3 // \"aid_claimed\"",
+    "473": {
+      "op": "intc_0 // 0",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0 (copy)",
+        "0"
+      ]
+    },
+    "474": {
+      "op": "bytec_1 // \"aid_claimed\"",
       "defined_out": [
         "\"aid_claimed\"",
-        "refugee#0"
+        "0",
+        "new_wallet#0",
+        "old_wallet#0",
+        "old_wallet#0 (copy)"
       ],
       "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "refugee#0",
+        "old_wallet#0",
+        "new_wallet#0",
+        "old_wallet#0 (copy)",
+        "0",
         "\"aid_claimed\""
       ]
     },
-    "525": {
-      "op": "intc_1 // 1",
+    "475": {
+      "op": "app_local_get_ex",
       "defined_out": [
-        "\"aid_claimed\"",
-        "1",
-        "refugee#0"
+        "maybe_exists%3#0",
+        "maybe_value%3#0",
+        "new_wallet#0",
+        "old_wallet#0"
       ],
       "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "refugee#0",
-        "\"aid_claimed\"",
-        "1"
+        "old_wallet#0",
+        "new_wallet#0",
+        "maybe_value%3#0",
+        "maybe_exists%3#0"
       ]
     },
-    "526": {
+    "476": {
+      "error": "check self.aid_claimed exists for account",
+      "op": "assert // check self.aid_claimed exists for account",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "maybe_value%3#0"
+      ]
+    },
+    "477": {
+      "op": "dig 1",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "maybe_value%3#0",
+        "new_wallet#0 (copy)"
+      ]
+    },
+    "479": {
+      "op": "bytec_1 // \"aid_claimed\"",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "maybe_value%3#0",
+        "new_wallet#0 (copy)",
+        "\"aid_claimed\""
+      ]
+    },
+    "480": {
+      "op": "uncover 2",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "new_wallet#0 (copy)",
+        "\"aid_claimed\"",
+        "maybe_value%3#0"
+      ]
+    },
+    "482": {
       "op": "app_local_put",
       "stack_out": [
-        "aid_val#0",
-        "refugee#0"
+        "old_wallet#0",
+        "new_wallet#0"
       ]
     },
-    "527": {
-      "op": "intc_1 // 1",
+    "483": {
+      "op": "dup",
       "stack_out": [
-        "aid_val#0",
-        "refugee#0",
+        "old_wallet#0",
+        "new_wallet#0",
+        "new_wallet#0 (copy)"
+      ]
+    },
+    "484": {
+      "op": "bytec 6 // \"wallet_address\"",
+      "defined_out": [
+        "\"wallet_address\"",
+        "new_wallet#0",
+        "new_wallet#0 (copy)",
+        "old_wallet#0"
+      ],
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0",
+        "new_wallet#0 (copy)",
+        "\"wallet_address\""
+      ]
+    },
+    "486": {
+      "op": "uncover 2",
+      "stack_out": [
+        "old_wallet#0",
+        "new_wallet#0 (copy)",
+        "\"wallet_address\"",
+        "new_wallet#0"
+      ]
+    },
+    "488": {
+      "op": "app_local_put",
+      "stack_out": [
+        "old_wallet#0"
+      ]
+    },
+    "489": {
+      "op": "bytec_0 // \"identity_hash\"",
+      "stack_out": [
+        "old_wallet#0",
+        "\"identity_hash\""
+      ]
+    },
+    "490": {
+      "op": "bytec 7 // 0x4d49475241544544",
+      "stack_out": [
+        "old_wallet#0",
+        "\"identity_hash\"",
+        "0x4d49475241544544"
+      ]
+    },
+    "492": {
+      "op": "app_local_put",
+      "stack_out": []
+    },
+    "493": {
+      "op": "intc_1 // 1",
+      "defined_out": [
+        "1"
+      ],
+      "stack_out": [
         "1"
       ]
     },
-    "528": {
+    "494": {
       "op": "return",
-      "stack_out": [
-        "aid_val#0",
-        "refugee#0"
-      ]
+      "stack_out": []
     },
-    "529": {
-      "block": "issue_aid_bool_false@8",
-      "stack_in": [
-        "aid_val#0",
-        "refugee#0"
-      ],
-      "op": "intc_0 // 0",
-      "defined_out": [
-        "or_result%1#0"
-      ],
-      "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "or_result%1#0"
-      ]
-    },
-    "530": {
-      "op": "b issue_aid_bool_merge@9"
-    },
-    "533": {
-      "block": "issue_aid_bool_false@4",
-      "stack_in": [
-        "aid_val#0",
-        "refugee#0"
-      ],
-      "op": "intc_0 // 0",
-      "defined_out": [
-        "or_result%0#0"
-      ],
-      "stack_out": [
-        "aid_val#0",
-        "refugee#0",
-        "or_result%0#0"
-      ]
-    },
-    "534": {
-      "op": "b issue_aid_bool_merge@5"
-    },
-    "537": {
+    "495": {
       "subroutine": "Nexathon.blockchain.refugee_contract.contract.RefugeeContract._is_admin",
       "params": {},
       "block": "_is_admin",
@@ -2963,7 +2631,7 @@
         "tmp%0#0"
       ]
     },
-    "539": {
+    "497": {
       "op": "intc_0 // 0",
       "defined_out": [
         "0",
@@ -2974,8 +2642,8 @@
         "0"
       ]
     },
-    "540": {
-      "op": "bytec 4 // \"admin\"",
+    "498": {
+      "op": "bytec 5 // \"admin\"",
       "defined_out": [
         "\"admin\"",
         "0",
@@ -2987,7 +2655,7 @@
         "\"admin\""
       ]
     },
-    "542": {
+    "500": {
       "op": "app_global_get_ex",
       "defined_out": [
         "maybe_exists%0#0",
@@ -3000,7 +2668,7 @@
         "maybe_exists%0#0"
       ]
     },
-    "543": {
+    "501": {
       "error": "check self.admin exists",
       "op": "assert // check self.admin exists",
       "stack_out": [
@@ -3008,7 +2676,7 @@
         "maybe_value%0#0"
       ]
     },
-    "544": {
+    "502": {
       "op": "==",
       "defined_out": [
         "tmp%1#0"
@@ -3017,16 +2685,45 @@
         "tmp%1#0"
       ]
     },
-    "545": {
+    "503": {
       "retsub": true,
       "op": "retsub"
     },
-    "546": {
-      "subroutine": "Nexathon.blockchain.refugee_contract.contract.RefugeeContract._is_authorized_registrar",
+    "504": {
+      "subroutine": "Nexathon.blockchain.refugee_contract.contract.RefugeeContract._is_authorized",
       "params": {},
-      "block": "_is_authorized_registrar",
+      "block": "_is_authorized",
       "stack_in": [],
-      "op": "bytec_1 // 0x7265676973747261725f",
+      "callsub": "Nexathon.blockchain.refugee_contract.contract.RefugeeContract._is_admin",
+      "op": "callsub _is_admin",
+      "defined_out": [
+        "tmp%0#0"
+      ],
+      "stack_out": [
+        "tmp%0#0"
+      ]
+    },
+    "507": {
+      "op": "bz _is_authorized_after_if_else@2",
+      "stack_out": []
+    },
+    "510": {
+      "op": "intc_1 // 1",
+      "defined_out": [
+        "1"
+      ],
+      "stack_out": [
+        "1"
+      ]
+    },
+    "511": {
+      "retsub": true,
+      "op": "retsub"
+    },
+    "512": {
+      "block": "_is_authorized_after_if_else@2",
+      "stack_in": [],
+      "op": "bytec_2 // 0x7265676973747261725f",
       "defined_out": [
         "0x7265676973747261725f"
       ],
@@ -3034,7 +2731,7 @@
         "0x7265676973747261725f"
       ]
     },
-    "547": {
+    "513": {
       "op": "txn Sender",
       "defined_out": [
         "0x7265676973747261725f",
@@ -3045,7 +2742,7 @@
         "materialized_values%0#0"
       ]
     },
-    "549": {
+    "515": {
       "op": "concat",
       "defined_out": [
         "box_prefixed_key%0#0"
@@ -3054,7 +2751,7 @@
         "box_prefixed_key%0#0"
       ]
     },
-    "550": {
+    "516": {
       "op": "box_len",
       "defined_out": [
         "_%0#0",
@@ -3065,23 +2762,23 @@
         "maybe_exists%0#0"
       ]
     },
-    "551": {
+    "517": {
       "op": "bury 1",
       "stack_out": [
         "maybe_exists%0#0"
       ]
     },
-    "553": {
-      "op": "bz _is_authorized_registrar_after_if_else@2",
+    "519": {
+      "op": "bz _is_authorized_after_if_else@4",
       "stack_out": []
     },
-    "556": {
-      "op": "bytec_1 // 0x7265676973747261725f",
+    "522": {
+      "op": "bytec_2 // 0x7265676973747261725f",
       "stack_out": [
         "0x7265676973747261725f"
       ]
     },
-    "557": {
+    "523": {
       "op": "txn Sender",
       "defined_out": [
         "0x7265676973747261725f",
@@ -3092,7 +2789,7 @@
         "materialized_values%1#0"
       ]
     },
-    "559": {
+    "525": {
       "op": "concat",
       "defined_out": [
         "box_prefixed_key%1#0"
@@ -3101,7 +2798,7 @@
         "box_prefixed_key%1#0"
       ]
     },
-    "560": {
+    "526": {
       "op": "box_get",
       "defined_out": [
         "aggregate%box_get%0#0",
@@ -3112,14 +2809,14 @@
         "aggregate%box_get%1#0"
       ]
     },
-    "561": {
+    "527": {
       "error": "check self.registrars entry exists",
       "op": "assert // check self.registrars entry exists",
       "stack_out": [
         "aggregate%box_get%0#0"
       ]
     },
-    "562": {
+    "528": {
       "op": "btoi",
       "defined_out": [
         "maybe_value_converted%0#0"
@@ -3128,7 +2825,7 @@
         "maybe_value_converted%0#0"
       ]
     },
-    "563": {
+    "529": {
       "op": "intc_1 // 1",
       "defined_out": [
         "1",
@@ -3139,21 +2836,21 @@
         "1"
       ]
     },
-    "564": {
+    "530": {
       "op": "==",
       "defined_out": [
-        "tmp%0#0"
+        "tmp%1#0"
       ],
       "stack_out": [
-        "tmp%0#0"
+        "tmp%1#0"
       ]
     },
-    "565": {
+    "531": {
       "retsub": true,
       "op": "retsub"
     },
-    "566": {
-      "block": "_is_authorized_registrar_after_if_else@2",
+    "532": {
+      "block": "_is_authorized_after_if_else@4",
       "stack_in": [],
       "op": "intc_0 // 0",
       "defined_out": [
@@ -3163,7 +2860,7 @@
         "0"
       ]
     },
-    "567": {
+    "533": {
       "retsub": true,
       "op": "retsub"
     }

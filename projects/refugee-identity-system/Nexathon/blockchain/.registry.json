@@ -108,47 +108,54 @@
     "txHash": null
   },
   {
-    "walletAddress": "LRNNH32UUCYFU3VZR4LAGRHPX5TXAI6YGWKRTQYAARWLKIKUBJAKIRPYWA",
+    "walletAddress": "ATW2TKWSDBJDMAQINKJTBBWQUJQWEFSEFWCMR2RUQ7IPWIYOSO7MIAYJDI",
     "name": "Srujana",
     "nationality": "Syrian",
     "dob": "2005-09-08",
     "gender": "N/A",
     "campID": "CAMP-35",
     "registeredAt": "2026-04-16T13:55:01.742202+00:00",
-    "walletType": "custodial",
+    "walletType": "pera",
     "aidClaimed": false,
     "id": "95477ba2276648a9b2ce9f144209e2e5",
     "languages": [
       "Hindi"
     ],
-    "familyMembers": [
-      {
-        "name": "Asmi",
-        "relationship": "Sibling"
-      }
-    ],
+    "familyMembers": [],
     "txHash": null
   },
   {
-    "walletAddress": "FQSGYPVPWJSNDQQATQSVESVSKO44HHXCPZVSKVEFQSUMYNKB4HCITCAFSA",
+    "walletAddress": "ATW2TKWSDBJDMAQINKJTBBWQUJQWEFSEFWCMR2RUQ7IPWIYOSO7MIAYJDI",
     "name": "Srujana",
     "nationality": "South Sudanese",
     "dob": "2005-09-08",
     "gender": "N/A",
     "campID": "CAMP-15",
     "registeredAt": "2026-04-16T14:11:14.935863+00:00",
-    "walletType": "custodial",
+    "walletType": "pera",
     "aidClaimed": false,
     "id": "695df859ea2b406a9e4364f4ce4775d8",
     "languages": [
       "Hindi"
     ],
-    "familyMembers": [
-      {
-        "name": "Asmi",
-        "relationship": "Sibling"
-      }
+    "familyMembers": [],
+    "txHash": null
+  },
+  {
+    "walletAddress": "ZHPEJOF4P2WW4433OZ2H2TKCZPV37K7EC7RELKDWSFZIWPENSGQGY5WVBI",
+    "name": "Poulomi",
+    "nationality": "Somali",
+    "dob": "2005-09-08",
+    "gender": "N/A",
+    "campID": "CAMP-08",
+    "registeredAt": "2026-04-16T17:19:10.415251+00:00",
+    "walletType": "custodial",
+    "aidClaimed": false,
+    "id": "f6a379bb8eef4f4299f0039c1d9b205e",
+    "languages": [
+      "Hindi"
     ],
+    "familyMembers": [],
     "txHash": null
   }
 ]

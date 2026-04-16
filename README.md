@@ -2,13 +2,40 @@
 
 Modern, multi-portal identity system for humanitarian contexts, anchored on **Algorand** with a **backend-first security model**.
 
-![RIMS cover](docs/screenshots/00-cover.svg)
+![RIMS — Refugee login](docs/screenshots/refugee_login.jpeg)
 
 ## What’s in this repo
 
 - **Frontend (Vite + React)**: `projects/refugee-identity-system/Nexathon/src`
 - **Backend (FastAPI)**: `projects/refugee-identity-system/Nexathon/backend/main.py`
 - **Algorand app artifacts / contract**: `projects/refugee-identity-system/Nexathon/blockchain/`
+
+## Architecture
+
+```mermaid
+flowchart LR
+  subgraph UI[React Frontend (Vite)]
+    R[Refugee Portal]
+    W[Aid Worker Portal]
+    A[Admin Portal]
+  end
+
+  subgraph API[FastAPI Backend]
+    B[Identity + Workflow APIs]
+    S[(Local JSON demo stores\n.deployments.json\n.registry.json\n.migration-requests.json\n.custodial-wallets.json)]
+  end
+
+  subgraph Chain[Algorand]
+    C[RefugeeContract\n(Deployed App + Global/Local State)]
+  end
+
+  R -->|HTTP (no wallet connect)| B
+  W -->|HTTP + optional wallet signing| B
+  A -->|HTTP admin actions| B
+
+  B <--> S
+  B -->|deploy / register / claim-aid / read-state| C
+```
 
 ## Feature tiles
 
@@ -45,16 +72,14 @@ Modern, multi-portal identity system for humanitarian contexts, anchored on **Al
 
 ## Screenshots
 
-> Note: This repo currently ships **SVG placeholders** so the README renders immediately. Replace these with real captures using the same filenames under `docs/screenshots/`.
-
 | Screen | Preview |
 |---|---|
-| Login (role-based) | ![Login](docs/screenshots/01-login.svg) |
-| Aid Worker • Register Refugee | ![Aid Worker Register](docs/screenshots/02-aid-worker-register.svg) |
-| Refugee • Dashboard | ![Refugee Dashboard](docs/screenshots/03-refugee-dashboard.svg) |
-| Aid Worker • Migration Requests | ![Migration Requests](docs/screenshots/04-aid-worker-migration-requests.svg) |
-| Aid Worker • Wallet Migration Tools | ![Wallet Migration Tools](docs/screenshots/05-wallet-migration-tools.svg) |
-| Admin • Overview | ![Admin Dashboard](docs/screenshots/06-admin-dashboard.svg) |
+| Refugee login | ![Refugee login](docs/screenshots/refugee_login.jpeg) |
+| Aid Worker login | ![Aid Worker login](docs/screenshots/aid_worker_login.jpeg) |
+| Refugee • Dashboard | ![Refugee Dashboard](docs/screenshots/03_refugee_dashboard.jpeg) |
+| Aid Worker • Migration Requests | ![Migration Requests](docs/screenshots/04_aid_worker_migration_requests.jpeg) |
+| Aid Worker • Wallet Migration Tools | ![Wallet Migration Tools](docs/screenshots/05_wallet_migration_tools.jpeg) |
+| Admin • Overview | ![Admin Dashboard](docs/screenshots/06_admin_dashboard.jpeg) |
 
 ## Quickstart (recommended)
 

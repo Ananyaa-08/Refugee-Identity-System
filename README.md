@@ -1,22 +1,98 @@
-# refugee-identity-system
+# Refugee Identity & Migration System (RIMS)
 
-Welcome to your new AlgoKit project!
+Modern, multi-portal identity system for humanitarian contexts, anchored on **Algorand** with a **backend-first security model**.
 
-This is your workspace root. A `workspace` in AlgoKit is an orchestrated collection of standalone projects (backends, smart contracts, frontend apps and etc).
+![RIMS cover](docs/screenshots/00-cover.svg)
 
-By default, `projects_root_path` parameter is set to `projects`. Which instructs AlgoKit CLI to create a new directory under `projects` directory when new project is instantiated via `algokit init` at the root of the workspace.
+## What’s in this repo
 
-## Getting Started
+- **Frontend (Vite + React)**: `projects/refugee-identity-system/Nexathon/src`
+- **Backend (FastAPI)**: `projects/refugee-identity-system/Nexathon/backend/main.py`
+- **Algorand app artifacts / contract**: `projects/refugee-identity-system/Nexathon/blockchain/`
 
-To get started refer to `README.md` files in respective sub-projects in the `projects` directory.
+## Feature tiles
 
-To learn more about algokit, visit [documentation](https://github.com/algorandfoundation/algokit-cli/blob/main/docs/algokit.md).
+<table>
+  <tr>
+    <td width="33%">
+      <strong>Refugee Portal</strong><br/>
+      ID-only login (backend verified) → Dashboard → Blockchain Status → Request Migration
+    </td>
+    <td width="33%">
+      <strong>Aid Worker Portal</strong><br/>
+      Register (incl. liveness) → Provision custodial wallet (W1) → View migration requests → Verify in tools
+    </td>
+    <td width="33%">
+      <strong>Admin Portal</strong><br/>
+      Stats + audit log + registered refugees + migration approvals
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <strong>Strict security posture</strong><br/>
+      W1 private key never exposed to the frontend; blockchain interactions routed via backend APIs
+    </td>
+    <td>
+      <strong>Wallet migration workflow</strong><br/>
+      Refugee submits request (no wallet connect) → Aid Worker collects W2 signature → Admin approves on-chain
+    </td>
+    <td>
+      <strong>Production-ready ergonomics</strong><br/>
+      Robust error handling, consistent address display, and backend-driven pages (no mock data)
+    </td>
+  </tr>
+</table>
 
-### GitHub Codespaces
+## Screenshots
 
-To get started execute:
+> Note: This repo currently ships **SVG placeholders** so the README renders immediately. Replace these with real captures using the same filenames under `docs/screenshots/`.
 
-1. `algokit generate devcontainer` - invoking this command from the root of this repository will create a `devcontainer.json` file with all the configuration needed to run this project in a GitHub codespace. [Run the repository inside a codespace](https://docs.github.com/en/codespaces/getting-started/quickstart) to get started.
-2. `algokit init` - invoke this command inside a github codespace to launch an interactive wizard to guide you through the process of creating a new AlgoKit project
+| Screen | Preview |
+|---|---|
+| Login (role-based) | ![Login](docs/screenshots/01-login.svg) |
+| Aid Worker • Register Refugee | ![Aid Worker Register](docs/screenshots/02-aid-worker-register.svg) |
+| Refugee • Dashboard | ![Refugee Dashboard](docs/screenshots/03-refugee-dashboard.svg) |
+| Aid Worker • Migration Requests | ![Migration Requests](docs/screenshots/04-aid-worker-migration-requests.svg) |
+| Aid Worker • Wallet Migration Tools | ![Wallet Migration Tools](docs/screenshots/05-wallet-migration-tools.svg) |
+| Admin • Overview | ![Admin Dashboard](docs/screenshots/06-admin-dashboard.svg) |
 
-Powered by [Copier templates](https://copier.readthedocs.io/en/stable/).
+## Quickstart (recommended)
+
+### Prereqs
+
+- **Node** (for Vite frontend)
+- **Python + Poetry** (for FastAPI backend)
+- Optional: **AlgoKit + Docker** (if you want LocalNet)
+
+### Run backend + frontend (dev)
+
+In one terminal:
+
+```bash
+cd projects/refugee-identity-system/Nexathon
+npm run api
+```
+
+In another terminal:
+
+```bash
+cd projects/refugee-identity-system/Nexathon
+npm run dev
+```
+
+Frontend: `http://localhost:5173`  
+Backend: `http://127.0.0.1:8000`
+
+## Core flows (end-to-end)
+
+- **Register (Aid Worker)**: complete liveness → choose wallet type → for “No smartphone” provision **custodial W1** → print QR
+- **Refugee login**: enter Refugee ID → backend verifies → refugee dashboard loads from backend
+- **Request migration (Refugee)**: click “Submit migration request” (no wallet connect) → appears under Aid Worker “Migration Requests”
+- **Verify/sign (Aid Worker)**: open “Wallet Migration Tools” → connect Pera (W2) → sign backend challenge → submit request
+- **Approve (Admin)**: approve pending migration → backend attempts on-chain migrate (when available)
+
+## Repo notes
+
+- **Wallet address display**: UI shows `ABCD…WXYZ` style everywhere (Pera-like).
+- **Storage files**: local JSON state (custodial wallets, migration requests, registry) is **local-only**; do not commit secrets.
+

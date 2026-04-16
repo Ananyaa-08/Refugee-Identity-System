@@ -77,15 +77,6 @@ export const Sidebar = ({ role, pendingRequests, pendingMigrations, walletAddres
                                 activeBorder="border-[#8b5cf6]"
                             />
                             <NavItem
-                                to="/admin/migrations"
-                                icon={ArrowLeftRight}
-                                label="Wallet Migration"
-                                badge={pendingMigrations}
-                                activeColor="text-[#8b5cf6]"
-                                activeBg="bg-[#8b5cf615]"
-                                activeBorder="border-[#8b5cf6]"
-                            />
-                            <NavItem
                                 to="/admin/audit"
                                 icon={ClipboardList}
                                 label="Audit Log"

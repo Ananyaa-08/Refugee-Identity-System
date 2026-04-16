@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { StatCard } from '../../components/ui/Common';
 import { useIdentity } from '../../context/IdentityContext';
+import { formatAddress } from '../../utils/format';
 
 const RefugeeDashboard = () => {
     const navigate = useNavigate();
@@ -69,7 +70,7 @@ const RefugeeDashboard = () => {
                     {[
                         { label: 'Full Name', value: identity?.name || '—' },
                         { label: 'Refugee ID', value: identity?.identity_id || '—' },
-                        { label: 'Custodial Wallet (W1)', value: identity?.old_wallet ? `${identity.old_wallet.slice(0, 10)}...${identity.old_wallet.slice(-8)}` : '—' },
+                        { label: 'Custodial Wallet (W1)', value: identity?.old_wallet ? formatAddress(identity.old_wallet) : '—' },
                         { label: 'Application ID', value: identity?.app_id ? String(identity.app_id) : '—' },
                         { label: 'Status', value: identity?.status || '—' },
                         { label: 'Opted-in', value: identity?.blockchain?.opted_in ? 'Yes' : 'No' },

@@ -6,6 +6,7 @@ import {
 import { useToast } from '../../context/ToastContext';
 import { clsx } from 'clsx';
 import { api } from '../../utils/api';
+import { formatAddress } from '../../utils/format';
 
 const AdminMigrations = () => {
     const { showToast } = useToast();
@@ -134,7 +135,9 @@ const AdminMigrations = () => {
                                     </div>
                                     <div className="font-mono text-[#e2eaf8] text-xs break-all mb-3 select-all">{c.identity_id}</div>
                                     <div className="text-[#7a94bb] text-[10px] font-bold uppercase tracking-widest mb-1">W1 address</div>
-                                    <div className="font-mono text-[#00c9b1] text-xs break-all mb-3 select-all">{c.address}</div>
+                                    <div className="font-mono text-[#00c9b1] text-xs mb-3" title={c.address || ''}>
+                                        {c.address ? formatAddress(c.address) : '—'}
+                                    </div>
                                     <div className="text-[#7a94bb] text-[10px] font-bold uppercase tracking-widest mb-1">QR payload</div>
                                     <textarea
                                         readOnly
@@ -186,8 +189,8 @@ const AdminMigrations = () => {
                                         <span className="bg-[#ef444415] text-[#ef4444] text-[9px] font-bold px-2 py-0.5 rounded border border-[#ef444420] uppercase">Retiring</span>
                                     </div>
                                     <div className="bg-[#060d1f] border border-[#ef444430] rounded-xl p-5 group-hover:bg-[#ef444403] transition-colors">
-                                        <div className="font-mono text-gray-500 text-xs break-all leading-relaxed mb-2">
-                                            {mig.oldWallet}
+                                        <div className="font-mono text-gray-500 text-xs leading-relaxed mb-2" title={mig.oldWallet || ''}>
+                                            {mig.oldWallet ? formatAddress(mig.oldWallet) : '—'}
                                         </div>
                                         <div className="text-[10px] text-[#3d5278] font-bold uppercase tracking-widest">Original QR / custodial address</div>
                                     </div>
@@ -204,8 +207,8 @@ const AdminMigrations = () => {
                                         <span className="bg-[#00c9b115] text-[#00c9b1] text-[9px] font-bold px-2 py-0.5 rounded border border-[#00c9b120] uppercase">Self-Sovereign</span>
                                     </div>
                                     <div className="bg-[#00c9b105] border border-[#00c9b130] rounded-xl p-5 group-hover:bg-[#00c9b10a] transition-colors">
-                                        <div className="font-mono text-[#00c9b1] text-xs break-all leading-relaxed mb-2 font-bold select-all">
-                                            {mig.newWallet}
+                                        <div className="font-mono text-[#00c9b1] text-xs leading-relaxed mb-2 font-bold" title={mig.newWallet || ''}>
+                                            {mig.newWallet ? formatAddress(mig.newWallet) : '—'}
                                         </div>
                                         <div className="text-[10px] text-[#00c9b1] font-bold uppercase tracking-widest opacity-80 flex items-center gap-1.5">
                                             <Shield size={10} /> Refugee-controlled device
@@ -273,7 +276,9 @@ const AdminMigrations = () => {
                                 </p>
                                 <div className="bg-[#060d1f] p-4 rounded-xl border border-[#1a2d4a] mb-8">
                                     <label className="block text-[#3d5278] text-[9px] font-bold uppercase tracking-widest mb-1">New Control Wallet</label>
-                                    <div className="font-mono text-[#00c9b1] text-[10px] break-all">{processingMig.newWallet}</div>
+                                    <div className="font-mono text-[#00c9b1] text-[10px]" title={processingMig.newWallet || ''}>
+                                        {processingMig.newWallet ? formatAddress(processingMig.newWallet) : '—'}
+                                    </div>
                                 </div>
                                 <button
                                     type="button"

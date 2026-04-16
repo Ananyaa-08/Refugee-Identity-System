@@ -1,6 +1,7 @@
 import React from 'react';
 import { Fingerprint, Hash, Wallet, Calendar } from 'lucide-react';
 import { useIdentity } from '../../context/IdentityContext';
+import { formatAddress } from '../../utils/format';
 
 const Row = ({ label, value, mono }) => (
     <div className="space-y-1">
@@ -27,7 +28,7 @@ const RefugeeIdentityDetails = () => {
                 <div className="grid md:grid-cols-2 gap-8">
                     <Row label="Refugee ID" value={identity?.identity_id} mono />
                     <Row label="Name" value={identity?.name} />
-                    <Row label="Linked Custodial Wallet (W1)" value={identity?.old_wallet} mono />
+                    <Row label="Linked Custodial Wallet (W1)" value={identity?.old_wallet ? formatAddress(identity.old_wallet) : ''} mono />
                     <Row
                         label="Status"
                         value={identity?.status === 'migrated' ? 'Migrated' : identity?.status === 'active' ? 'Active' : identity?.status}

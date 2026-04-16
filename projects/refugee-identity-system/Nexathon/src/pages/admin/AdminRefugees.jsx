@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Users, Search, Filter, ChevronRight, X,
-    ShieldCheck, MapPin, Hash, Lock, Copy, CheckCircle
+    ShieldCheck, MapPin, Hash, Lock, Copy, CheckCircle, Loader2
 } from 'lucide-react';
-import { MOCK_REFUGEES } from '../../utils/mockData';
+import { api } from '../../utils/api';
 import { clsx } from 'clsx';
+import { formatAddress } from '../../utils/format';
 
 const RefugeeProfileDrawer = ({ refugee, onClose }) => {
     if (!refugee) return null;
@@ -35,10 +36,10 @@ const RefugeeProfileDrawer = ({ refugee, onClose }) => {
                     {[
                         { label: 'Refugee ID', value: refugee.id },
                         { label: 'Nationality', value: refugee.nationality },
-                        { label: 'Gender', value: refugee.gender },
+                        { label: 'Gender', value: refugee.gender || 'N/A' },
                         { label: 'Camp Location', value: refugee.campID },
                         { label: 'Wallet Type', value: refugee.walletType.toUpperCase() },
-                        { label: 'Languages', value: refugee.languages.join(', ') },
+                        { label: 'Languages', value: refugee.languages?.length ? refugee.languages.join(', ') : 'N/A' },
                         { label: 'Registration', value: new Date(refugee.registeredAt).toLocaleDateString() },
                     ].map((item, i) => (
                         <div key={i} className="space-y-1">
@@ -53,7 +54,9 @@ const RefugeeProfileDrawer = ({ refugee, onClose }) => {
                     <div className="space-y-3">
                         <label className="block text-[#3d5278] text-[9px] font-bold uppercase tracking-[0.2em]">Wallet Address</label>
                         <div className="flex items-center gap-3 p-3 bg-[#060d1f] rounded-xl border border-[#1a2d4a]">
-                            <span className="font-mono text-[#00c9b1] text-xs truncate flex-1 leading-relaxed">{refugee.walletAddress}</span>
+                            <span className="font-mono text-[#00c9b1] text-xs truncate flex-1 leading-relaxed" title={refugee.walletAddress || ''}>
+                                {refugee.walletAddress ? formatAddress(refugee.walletAddress) : '—'}
+                            </span>
                             <button className="text-[#3d5278] hover:text-[#00c9b1] transition-colors"><Copy size={16} /></button>
                         </div>
                     </div>
@@ -77,11 +80,35 @@ const RefugeeProfileDrawer = ({ refugee, onClose }) => {
 const AdminRefugees = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedRefugee, setSelectedRefugee] = useState(null);
+    const [refugees, setRefugees] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
-    const filteredRefugees = MOCK_REFUGEES.filter(r =>
-        r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        r.id.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const fetchRefugees = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const res = await api.getRefugees();
+            setRefugees(Array.isArray(res.data) ? res.data : []);
+        } catch (err) {
+            setRefugees([]);
+            setError(err.message || 'Unable to load registered refugees');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchRefugees();
+    }, []);
+
+    const filteredRefugees = refugees.filter(r => {
+        const term = searchTerm.toLowerCase();
+        return !term ||
+            (r.name || '').toLowerCase().includes(term) ||
+            (r.id || '').toLowerCase().includes(term) ||
+            (r.walletAddress || '').toLowerCase().includes(term);
+    });
 
     return (
         <div className="page-enter space-y-8 pb-20 relative">
@@ -104,8 +131,11 @@ const AdminRefugees = () => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <button className="flex items-center gap-2 px-6 py-3.5 bg-[#152342] text-white text-[11px] font-bold uppercase tracking-widest rounded-xl hover:bg-[#1a2d4a] border border-[#1a2d4a] transition-all">
-                    <Filter size={16} /> FILTERS
+                <button
+                    onClick={fetchRefugees}
+                    className="flex items-center gap-2 px-6 py-3.5 bg-[#152342] text-white text-[11px] font-bold uppercase tracking-widest rounded-xl hover:bg-[#1a2d4a] border border-[#1a2d4a] transition-all"
+                >
+                    {loading ? <Loader2 size={16} className="animate-spin" /> : <Filter size={16} />} REFRESH
                 </button>
             </div>
 
@@ -126,7 +156,21 @@ const AdminRefugees = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[#1a2d4a]">
-                            {filteredRefugees.map((refugee) => (
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={8} className="py-14 px-6 text-center">
+                                        <Loader2 size={32} className="text-[#00c9b1] animate-spin mx-auto mb-3" />
+                                        <div className="text-[#7a94bb] text-sm">Loading registered refugees...</div>
+                                    </td>
+                                </tr>
+                            ) : filteredRefugees.length === 0 ? (
+                                <tr>
+                                    <td colSpan={8} className="py-14 px-6 text-center">
+                                        <div className="text-[#e2eaf8] text-sm font-bold">{error ? 'Unable to load records' : 'No registered refugees found'}</div>
+                                        <div className="text-[#7a94bb] text-xs mt-2">{error || 'Register a refugee to see the record here.'}</div>
+                                    </td>
+                                </tr>
+                            ) : filteredRefugees.map((refugee) => (
                                 <tr
                                     key={refugee.id}
                                     onClick={() => setSelectedRefugee(refugee)}

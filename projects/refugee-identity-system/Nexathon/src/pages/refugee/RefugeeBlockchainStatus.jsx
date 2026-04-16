@@ -1,6 +1,7 @@
 import React from 'react';
 import { Activity, CheckCircle, XCircle, QrCode } from 'lucide-react';
 import { useIdentity } from '../../context/IdentityContext';
+import { formatAddress } from '../../utils/format';
 
 const Pill = ({ ok, label }) => (
     <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border flex items-center gap-2 ${ok ? 'bg-[#10b98115] text-[#10b981] border-[#10b98130]' : 'bg-[#ef444415] text-[#ef4444] border-[#ef444430]'}`}>
@@ -40,7 +41,12 @@ const RefugeeBlockchainStatus = () => {
                         </div>
 
                         <label className="block text-[#3d5278] text-[10px] font-bold uppercase tracking-[0.2em] mt-6 mb-2">W1 Address</label>
-                        <div className="font-mono text-[#00c9b1] text-xs break-all select-all">{identity?.old_wallet || '—'}</div>
+                        <div
+                            className="font-mono text-[#00c9b1] text-xs select-text"
+                            title={identity?.old_wallet || ''}
+                        >
+                            {identity?.old_wallet ? formatAddress(identity.old_wallet) : '—'}
+                        </div>
                     </div>
 
                     <div className="bg-[#060d1f] border border-[#1a2d4a] rounded-xl p-6">

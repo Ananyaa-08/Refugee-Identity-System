@@ -6,6 +6,7 @@ import { Scanner } from '@yudiel/react-qr-scanner';
 import algosdk from 'algosdk';
 import { RefugeeContractClient } from '../../contracts/RefugeeContractClient';
 import { REFUGEE_APP_ID, ALGOD_SERVER, ALGOD_PORT, ALGOD_TOKEN } from '../../contracts/config';
+import { formatAddress } from '../../utils/format';
 
 const ScanQR = () => {
     const { showToast } = useToast();
@@ -134,7 +135,9 @@ const ScanQR = () => {
                                         <span className="text-[#1a2d4a]">|</span>
                                         <span>{result.nationality}</span>
                                         <span className="text-[#1a2d4a]">|</span>
-                                        <span className="font-mono text-[#00c9b1]/60 font-bold">{result.walletAddress?.slice(0, 10)}...</span>
+                                        <span className="font-mono text-[#00c9b1]/60 font-bold" title={result.walletAddress || ''}>
+                                            {result.walletAddress ? formatAddress(result.walletAddress) : '—'}
+                                        </span>
                                     </div>
                                 </div>
                             </div>

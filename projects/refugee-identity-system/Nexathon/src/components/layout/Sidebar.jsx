@@ -6,6 +6,7 @@ import {
     ClipboardList, Users, Settings, Shield, Fingerprint, Activity
 } from 'lucide-react';
 import { clsx } from 'clsx';
+import { formatAddress } from '../../utils/format';
 
 const NavItem = ({ to, icon: Icon, label, badge, amberDot, activeColor = 'text-[#00c9b1]', activeBg = 'bg-[#00c9b115]', activeBorder = 'border-[#00c9b1]' }) => {
     return (
@@ -111,8 +112,11 @@ export const Sidebar = ({ role, pendingRequests, pendingMigrations, walletAddres
                         <label className="block text-[#7a94bb] text-[10px] font-medium uppercase tracking-widest mb-2">
                             Connected Wallet
                         </label>
-                        <div className="font-mono text-[#00c9b1] text-[11px] break-all p-2 bg-[#00c9b108] rounded-lg border border-[#00c9b115] leading-relaxed">
-                            {walletAddress}
+                        <div
+                            className="font-mono text-[#00c9b1] text-[11px] p-2 bg-[#00c9b108] rounded-lg border border-[#00c9b115] leading-relaxed"
+                            title={walletAddress || ''}
+                        >
+                            {walletAddress ? formatAddress(walletAddress) : '—'}
                         </div>
                     </div>
                 ) : role === 'admin' ? (

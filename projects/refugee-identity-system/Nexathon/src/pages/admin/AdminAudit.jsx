@@ -1,23 +1,65 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     ClipboardList, Download, ExternalLink, Search,
-    Filter, Calendar, ChevronLeft, ChevronRight
+    Filter, Calendar, ChevronLeft, ChevronRight, Loader2
 } from 'lucide-react';
-import { MOCK_AUDIT_LOG } from '../../utils/mockData';
+import { api } from '../../utils/api';
 import { useToast } from '../../context/ToastContext';
 import { clsx } from 'clsx';
+import { formatAddress } from '../../utils/format';
 
 const AdminAudit = () => {
     const { showToast } = useToast();
     const [activeTab, setActiveTab] = useState('All');
+    const [logs, setLogs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
     const tabs = ['All', 'Registration', 'Aid Issued', 'Consent', 'Migration'];
 
-    const filteredLogs = activeTab === 'All'
-        ? MOCK_AUDIT_LOG
-        : MOCK_AUDIT_LOG.filter(log => log.type === activeTab);
+    const fetchLogs = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const res = await api.getAuditLogs();
+            setLogs(Array.isArray(res.data) ? res.data : []);
+        } catch (err) {
+            setLogs([]);
+            setError(err.message || 'Unable to load audit logs');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchLogs();
+    }, []);
+
+    const filteredLogs = logs.filter(log => {
+        if (activeTab === 'All') return true;
+        if (activeTab === 'Consent') return (log.type || '').startsWith('Consent');
+        return log.type === activeTab;
+    });
 
     const handleExport = () => {
-        showToast('info', 'Export Initiated', 'Your CSV export is being prepared for download.');
+        const header = ['Event Type', 'Refugee ID', 'Address', 'Timestamp UTC', 'Transaction Hash'];
+        const rows = filteredLogs.map(log => [
+            log.type || '',
+            log.refugeeID || '',
+            log.address || '',
+            log.timestamp || '',
+            log.txHash || '',
+        ]);
+        const csv = [header, ...rows]
+            .map(row => row.map(value => `"${String(value).replaceAll('"', '""')}"`).join(','))
+            .join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'rims-audit-log.csv';
+        link.click();
+        URL.revokeObjectURL(url);
+        showToast('success', 'Export Ready', 'Audit CSV downloaded.');
     };
 
     return (
@@ -67,7 +109,21 @@ const AdminAudit = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[#1a2d4a]">
-                            {filteredLogs.map((log) => (
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={5} className="py-14 px-6 text-center">
+                                        <Loader2 size={32} className="text-[#00c9b1] animate-spin mx-auto mb-3" />
+                                        <div className="text-[#7a94bb] text-sm">Loading audit activity...</div>
+                                    </td>
+                                </tr>
+                            ) : filteredLogs.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="py-14 px-6 text-center">
+                                        <div className="text-[#e2eaf8] text-sm font-bold">{error ? 'Unable to load audit logs' : 'No audit events found'}</div>
+                                        <div className="text-[#7a94bb] text-xs mt-2">{error || 'Events will appear after registrations, access approvals, aid claims, or migrations.'}</div>
+                                    </td>
+                                </tr>
+                            ) : filteredLogs.map((log) => (
                                 <tr key={log.id} className="hover:bg-[#152342] transition-colors group">
                                     <td className="py-5 px-6 whitespace-nowrap">
                                         <span className={clsx(
@@ -84,9 +140,13 @@ const AdminAudit = () => {
                                         <span className="font-mono text-xs text-[#00c9b1] font-bold">{log.refugeeID}</span>
                                     </td>
                                     <td className="py-5 px-6 whitespace-nowrap">
-                                        <span className="font-mono text-[11px] text-[#7a94bb]">
-                                            {log.address.slice(0, 8)}...{log.address.slice(-4)}
-                                        </span>
+                                        {log.address ? (
+                                            <span className="font-mono text-[11px] text-[#7a94bb]" title={log.address}>
+                                                {formatAddress(log.address)}
+                                            </span>
+                                        ) : (
+                                            <span className="text-[#3d5278] text-[10px] font-bold uppercase tracking-widest">Not recorded</span>
+                                        )}
                                     </td>
                                     <td className="py-5 px-6 whitespace-nowrap">
                                         <span className="text-[#e2eaf8] text-xs font-semibold">
@@ -97,12 +157,21 @@ const AdminAudit = () => {
                                         </span>
                                     </td>
                                     <td className="py-5 px-6 whitespace-nowrap">
-                                        <div className="flex items-center gap-2 group/hash cursor-pointer" onClick={() => showToast('info', 'TX Hash', 'Opening block explorer (demo)')}>
-                                            <span className="font-mono text-[10px] text-[#3d5278] group-hover/hash:text-[#8b5cf6] transition-colors">
-                                                {log.txHash.slice(0, 16)}...
-                                            </span>
-                                            <ExternalLink size={12} className="text-[#3d5278] group-hover/hash:text-[#8b5cf6] transition-colors" />
-                                        </div>
+                                        {log.txHash ? (
+                                            <a
+                                                className="flex items-center gap-2 group/hash"
+                                                href={`https://testnet.explorer.perawallet.app/tx/${log.txHash}`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                            >
+                                                <span className="font-mono text-[10px] text-[#3d5278] group-hover/hash:text-[#8b5cf6] transition-colors">
+                                                    {log.txHash.slice(0, 16)}...
+                                                </span>
+                                                <ExternalLink size={12} className="text-[#3d5278] group-hover/hash:text-[#8b5cf6] transition-colors" />
+                                            </a>
+                                        ) : (
+                                            <span className="text-[#3d5278] text-[10px] font-bold uppercase tracking-widest">Not recorded</span>
+                                        )}
                                     </td>
                                 </tr>
                             ))}
@@ -112,7 +181,7 @@ const AdminAudit = () => {
 
                 {/* Pagination Simulation */}
                 <div className="bg-[#0a1428] border-t border-[#1a2d4a] py-4 px-6 flex items-center justify-between">
-                    <span className="text-[#3d5278] text-[10px] font-bold uppercase tracking-widest">Showing 1-5 of {filteredLogs.length} events</span>
+                    <span className="text-[#3d5278] text-[10px] font-bold uppercase tracking-widest">Showing {filteredLogs.length} event{filteredLogs.length === 1 ? '' : 's'}</span>
                     <div className="flex gap-2">
                         <button disabled className="p-2 border border-[#1a2d4a] text-[#3d5278] rounded-lg opacity-40 cursor-not-allowed"><ChevronLeft size={16} /></button>
                         <button disabled className="p-2 border border-[#1a2d4a] text-[#3d5278] rounded-lg opacity-40 cursor-not-allowed"><ChevronRight size={16} /></button>

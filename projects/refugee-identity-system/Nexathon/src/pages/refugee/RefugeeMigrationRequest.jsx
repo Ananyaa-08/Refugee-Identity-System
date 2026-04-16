@@ -4,6 +4,7 @@ import { clsx } from 'clsx';
 import { useToast } from '../../context/ToastContext';
 import { api } from '../../utils/api';
 import { useIdentity } from '../../context/IdentityContext';
+import { formatAddress } from '../../utils/format';
 
 const RefugeeMigrationRequest = () => {
     const { showToast } = useToast();
@@ -65,7 +66,9 @@ const RefugeeMigrationRequest = () => {
                     </div>
                     <div>
                         <label className="block text-[#3d5278] text-[10px] font-bold uppercase tracking-[0.2em] mb-2">Custodial Wallet (W1)</label>
-                        <div className="font-mono text-[#00c9b1] text-xs break-all select-all">{w1 || '—'}</div>
+                        <div className="font-mono text-[#00c9b1] text-xs" title={w1 || ''}>
+                            {w1 ? formatAddress(w1) : '—'}
+                        </div>
                     </div>
                 </div>
 

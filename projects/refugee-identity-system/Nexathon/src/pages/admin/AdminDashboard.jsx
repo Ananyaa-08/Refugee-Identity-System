@@ -4,20 +4,26 @@ import {
     ArrowRight, TrendingUp, TrendingDown, Clock,
     Download, CheckCircle, UserPlus, ShieldCheck
 } from 'lucide-react';
-import { MOCK_STATS, MOCK_AUDIT_LOG } from '../../utils/mockData';
 import { StatCard } from '../../components/ui/Common';
 import { clsx } from 'clsx';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../context/ToastContext';
-import algosdk from 'algosdk';
-import { RefugeeContractClient } from '../../contracts/RefugeeContractClient';
-import { REFUGEE_APP_ID, ALGOD_SERVER, ALGOD_PORT, ALGOD_TOKEN } from '../../contracts/config';
+import { api } from '../../utils/api';
+import { formatAddress } from '../../utils/format';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
     const { showToast } = useToast();
     const [pendingWorkers, setPendingWorkers] = useState([]);
-    const [totalRegistered, setTotalRegistered] = useState(0);
+    const [stats, setStats] = useState({
+        totalRegistered: 0,
+        aidClaimsThisWeek: 0,
+        pendingMigrations: 0,
+        blockedDuplicates: 0,
+        registrationsByDay: [],
+        aidDistribution: [],
+        recentActivity: [],
+    });
 
     // Load pending staff registrations from localStorage
     useEffect(() => {
@@ -27,29 +33,22 @@ const AdminDashboard = () => {
         };
         loadPending();
 
-        const fetchBlockchainStats = async () => {
+        const fetchStats = async () => {
             try {
-                const algodClient = new algosdk.Algodv2(ALGOD_TOKEN, ALGOD_SERVER, ALGOD_PORT);
-                const appClient = new RefugeeContractClient({
-                    resolveBy: 'id',
-                    id: Number(REFUGEE_APP_ID),
-                    algod: algodClient,
-                });
-
-                const globalState = await appClient.state.global.getAll();
-                if (globalState.totalRefugees !== undefined) {
-                    setTotalRegistered(Number(globalState.totalRefugees));
-                }
+                const res = await api.getAdminStats();
+                if (res?.data) setStats(prev => ({ ...prev, ...res.data }));
             } catch (err) {
-                console.error('Failed to fetch blockchain stats:', err);
+                console.error('Failed to fetch admin stats:', err);
             }
         };
-        fetchBlockchainStats();
+        fetchStats();
 
-        // Polling for demo responsiveness
         const interval = setInterval(loadPending, 5000);
         return () => clearInterval(interval);
     }, []);
+
+    const maxRegistrations = Math.max(...stats.registrationsByDay.map(item => Number(item.count) || 0), 1);
+    const maxAidDistribution = Math.max(...stats.aidDistribution.map(item => Number(item.count) || 0), 1);
 
     const handleApproveWorker = (workerId) => {
         const workers = JSON.parse(localStorage.getItem('demo_aid_workers') || '[]');
@@ -73,24 +72,24 @@ const AdminDashboard = () => {
                 <StatCard
                     icon={Users}
                     label="TOTAL REGISTERED"
-                    value={totalRegistered.toLocaleString()}
+                    value={Number(stats.totalRegistered || 0).toLocaleString()}
                     accentColor="#00c9b1"
-                    change="Verified on Algorand"
+                    change="Loaded from backend"
                     changeType="neutral"
                 />
                 <StatCard
                     icon={Package}
                     label="AID CLAIMS THIS WEEK"
-                    value={MOCK_STATS.aidClaimsThisWeek.toString()}
+                    value={String(stats.aidClaimsThisWeek || 0)}
                     accentColor="#10b981"
-                    change="+48 today"
-                    changeType="up"
+                    change="Last 7 days"
+                    changeType="neutral"
                 />
                 <div onClick={() => navigate('/admin/migrations')} className="cursor-pointer">
                     <StatCard
                         icon={ArrowLeftRight}
                         label="PENDING MIGRATIONS"
-                        value={MOCK_STATS.pendingMigrations.toString()}
+                        value={String(stats.pendingMigrations || 0)}
                         accentColor="#f59e0b"
                         change="Awaiting approval"
                         changeType="neutral"
@@ -99,10 +98,10 @@ const AdminDashboard = () => {
                 <StatCard
                     icon={ShieldAlert}
                     label="BLOCKED DUPLICATES"
-                    value={MOCK_STATS.blockedDuplicates.toString()}
+                    value={String(stats.blockedDuplicates || 0)}
                     accentColor="#ef4444"
-                    change="+3 this week"
-                    changeType="down"
+                    change="Detected by backend"
+                    changeType="neutral"
                 />
             </div>
 
@@ -117,22 +116,14 @@ const AdminDashboard = () => {
                             <div key={i} className="absolute left-0 right-0 border-t border-[#1a2d4a]" style={{ bottom: `${(i + 1) * 25}%` }} />
                         ))}
 
-                        {[
-                            { day: 'Mon', val: 120 },
-                            { day: 'Tue', val: 145 },
-                            { day: 'Wed', val: 98 },
-                            { day: 'Thu', val: 167 },
-                            { day: 'Fri', val: 203 },
-                            { day: 'Sat', val: 189 },
-                            { day: 'Sun', val: 145 },
-                        ].map((item, i) => (
+                        {stats.registrationsByDay.map((item, i) => (
                             <div key={i} className="flex-1 flex flex-col items-center gap-2 group relative">
                                 <div
                                     className="w-full bg-[#00c9b1] rounded-t-sm transition-all duration-500 hover:bg-[#00e0c5] relative"
-                                    style={{ height: `${(item.val / 210) * 100}%` }}
+                                    style={{ height: `${((Number(item.count) || 0) / maxRegistrations) * 100}%` }}
                                 >
                                     <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#152342] text-[#00c9b1] text-[10px] font-bold px-1.5 py-0.5 rounded border border-[#00c9b140] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                                        {item.val}
+                                        {item.count}
                                     </div>
                                 </div>
                                 <span className="text-[#3d5278] text-[10px] font-bold uppercase tracking-tighter">{item.day}</span>
@@ -145,19 +136,13 @@ const AdminDashboard = () => {
                 <div className="bg-[#0f1e38] border border-[#1a2d4a] rounded-2xl p-8">
                     <h3 className="text-[#e2eaf8] font-bold mb-8 uppercase tracking-wider text-sm">Aid Distribution by Type</h3>
                     <div className="space-y-6">
-                        {[
-                            { label: 'Food', count: 892, color: '#00c9b1', percent: 89 },
-                            { label: 'Medicine', count: 634, color: '#3b82f6', percent: 63 },
-                            { label: 'Shelter', count: 445, color: '#8b5cf6', percent: 44 },
-                            { label: 'Cash', count: 312, color: '#f59e0b', percent: 31 },
-                            { label: 'Clothing', count: 201, color: '#10b981', percent: 20 },
-                        ].map((item, i) => (
+                        {stats.aidDistribution.map((item, i) => (
                             <div key={i} className="flex items-center gap-4">
                                 <span className="text-[#7a94bb] text-xs font-bold w-20 uppercase tracking-tight">{item.label}</span>
                                 <div className="flex-1 bg-[#152342] rounded-full h-2 overflow-hidden">
                                     <div
                                         className="h-full rounded-full transition-all duration-1000 ease-out"
-                                        style={{ width: `${item.percent}%`, backgroundColor: item.color }}
+                                        style={{ width: `${((Number(item.count) || 0) / maxAidDistribution) * 100}%`, backgroundColor: i === 0 ? '#10b981' : '#f59e0b' }}
                                     />
                                 </div>
                                 <span className="font-mono text-[11px] text-[#e2eaf8] w-10 text-right">{item.count}</span>
@@ -221,11 +206,13 @@ const AdminDashboard = () => {
             <div className="bg-[#0f1e38] border border-[#1a2d4a] rounded-2xl p-8">
                 <div className="flex items-center justify-between mb-8 pb-4 border-b border-[#1a2d4a]">
                     <h3 className="text-[#e2eaf8] font-bold uppercase tracking-wider text-sm">Recent On-Chain Activity</h3>
-                    <button className="text-[#8b5cf6] text-[10px] font-bold uppercase tracking-[0.2em] hover:underline">VIEW FULL LOG</button>
+                    <button onClick={() => navigate('/admin/audit')} className="text-[#8b5cf6] text-[10px] font-bold uppercase tracking-[0.2em] hover:underline">VIEW FULL LOG</button>
                 </div>
 
                 <div className="divide-y divide-[#1a2d4a]">
-                    {MOCK_AUDIT_LOG.map((log) => (
+                    {stats.recentActivity.length === 0 ? (
+                        <div className="py-8 text-center text-[#3d5278] text-sm italic">No recent activity yet.</div>
+                    ) : stats.recentActivity.map((log) => (
                         <div key={log.id} className="flex flex-col md:flex-row md:items-center justify-between py-4 gap-4 animate-fadeIn">
                             <div className="flex items-center gap-4">
                                 <span className={clsx(
@@ -239,7 +226,9 @@ const AdminDashboard = () => {
                                 </span>
                                 <div className="space-y-0.5">
                                     <div className="font-mono text-xs text-[#e2eaf8]">{log.refugeeID}</div>
-                                    <div className="font-mono text-[10px] text-[#3d5278]">{log.address}</div>
+                                    <div className="font-mono text-[10px] text-[#3d5278]" title={log.address || ''}>
+                                        {log.address ? formatAddress(log.address) : 'No address recorded'}
+                                    </div>
                                 </div>
                             </div>
                             <div className="flex items-center gap-6">
@@ -248,7 +237,7 @@ const AdminDashboard = () => {
                                     {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </div>
                                 <div className="font-mono text-[10px] text-[#3d5278] bg-[#060d1f] px-2 py-1 rounded border border-[#1a2d4a] hidden lg:block">
-                                    {log.txHash.slice(0, 10)}...
+                                    {log.txHash ? `${log.txHash.slice(0, 10)}...` : 'No tx recorded'}
                                 </div>
                             </div>
                         </div>

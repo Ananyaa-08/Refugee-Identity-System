@@ -4,6 +4,7 @@ import { ArrowLeftRight, Loader2, CheckCircle, XCircle, Clock } from 'lucide-rea
 import { clsx } from 'clsx';
 import { api } from '../../utils/api';
 import { useToast } from '../../context/ToastContext';
+import { formatAddress } from '../../utils/format';
 
 const StatusPill = ({ status }) => {
     const st = (status || '').toLowerCase();
@@ -93,11 +94,15 @@ const MigrationRequests = () => {
                             <div className="grid md:grid-cols-2 gap-4">
                                 <div className="bg-[#060d1f] border border-[#1a2d4a] rounded-xl p-4">
                                     <label className="block text-[#3d5278] text-[10px] font-bold uppercase tracking-[0.2em] mb-2">Old wallet (W1)</label>
-                                    <div className="font-mono text-[#7a94bb] text-xs break-all select-all">{r.oldWallet || '—'}</div>
+                                    <div className="font-mono text-[#7a94bb] text-xs" title={r.oldWallet || ''}>
+                                        {r.oldWallet ? formatAddress(r.oldWallet) : '—'}
+                                    </div>
                                 </div>
                                 <div className="bg-[#060d1f] border border-[#1a2d4a] rounded-xl p-4">
                                     <label className="block text-[#3d5278] text-[10px] font-bold uppercase tracking-[0.2em] mb-2">New wallet (W2)</label>
-                                    <div className="font-mono text-[#00c9b1] text-xs break-all select-all">{r.newWallet || '— (set in Wallet Migration Tools)'}</div>
+                                    <div className="font-mono text-[#00c9b1] text-xs" title={r.newWallet || ''}>
+                                        {r.newWallet ? formatAddress(r.newWallet) : '— (set in Wallet Migration Tools)'}
+                                    </div>
                                 </div>
                             </div>
 

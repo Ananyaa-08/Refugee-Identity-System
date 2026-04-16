@@ -12,6 +12,7 @@ import { api } from '../../utils/api';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import algosdk from 'algosdk';
 import { ALGOD_SERVER, ALGOD_PORT, ALGOD_TOKEN } from '../../contracts/config';
+import { formatAddress } from '../../utils/format';
 
 const WalletMigration = () => {
     const navigate = useNavigate();
@@ -30,7 +31,7 @@ const WalletMigration = () => {
 
     const nextStep = () => setStep(prev => prev + 1);
 
-    const shorten = (addr) => (addr ? `${addr.slice(0, 6)}…${addr.slice(-6)}` : '');
+    const shorten = (addr) => (addr ? formatAddress(addr) : '');
 
     const normalizeAlgoAddress = (value) => {
         const raw = (value || '').trim();
@@ -349,8 +350,8 @@ By signing, you confirm ownership of this wallet.`;
                                     <div className="px-4 py-1.5 bg-[#10b98115] text-[#10b981] rounded-full text-[10px] font-bold uppercase tracking-widest border border-[#10b98125]">
                                         Successfully Paired
                                     </div>
-                                    <div className="font-mono text-[#00c9b1] text-xs break-all text-center px-4">
-                                        {migrationData.newAddress}
+                                    <div className="font-mono text-[#00c9b1] text-xs text-center px-4" title={migrationData.newAddress || ''}>
+                                        {migrationData.newAddress ? formatAddress(migrationData.newAddress) : '—'}
                                     </div>
                                 </div>
                             ) : (
@@ -399,14 +400,18 @@ By signing, you confirm ownership of this wallet.`;
                         <div className="bg-[#060d1f] rounded-2xl border border-[#1a2d4a] overflow-hidden mb-10">
                             <div className="p-4 border-b border-[#1a2d4a]">
                                 <label className="block text-[#3d5278] text-[9px] font-bold uppercase tracking-[0.2em] mb-2">Retiring Managed Wallet</label>
-                                    <div className="font-mono text-[#7a94bb] text-[10px] break-all opacity-90">{migrationData.custodialAddress}</div>
+                                    <div className="font-mono text-[#7a94bb] text-[10px] opacity-90" title={migrationData.custodialAddress || ''}>
+                                        {migrationData.custodialAddress ? formatAddress(migrationData.custodialAddress) : '—'}
+                                    </div>
                             </div>
                             <div className="flex justify-center p-2">
                                 <ArrowLeftRight className="text-[#3d5278]" size={16} />
                             </div>
                             <div className="p-4 bg-[#8b5cf605]">
                                 <label className="block text-[#8b5cf6] text-[9px] font-bold uppercase tracking-[0.2em] mb-2">Activating Personal Wallet</label>
-                                <div className="font-mono text-[#8b5cf6] text-[10px] truncate font-bold">{migrationData.newAddress}</div>
+                                <div className="font-mono text-[#8b5cf6] text-[10px] truncate font-bold" title={migrationData.newAddress || ''}>
+                                    {migrationData.newAddress ? formatAddress(migrationData.newAddress) : '—'}
+                                </div>
                             </div>
                         </div>
 
@@ -457,11 +462,15 @@ By signing, you confirm ownership of this wallet.`;
                         <div className="grid gap-4 max-w-sm mx-auto mb-12 text-left">
                             <div className="p-4 bg-[#060d1f] border border-[#1a2d4a] rounded-2xl">
                                 <label className="block text-[#3d5278] text-[9px] font-bold uppercase tracking-widest mb-2">New Active Wallet</label>
-                                <div className="font-mono text-[#00c9b1] text-xs break-all font-bold">{migrationData.newAddress === 'Awaiting Handshake...' ? account : migrationData.newAddress}</div>
+                                <div className="font-mono text-[#00c9b1] text-xs font-bold" title={(migrationData.newAddress === 'Awaiting Handshake...' ? account : migrationData.newAddress) || ''}>
+                                    {formatAddress(migrationData.newAddress === 'Awaiting Handshake...' ? account : migrationData.newAddress)}
+                                </div>
                             </div>
                             <div className="p-4 bg-[#060d1f] border border-[#1a2d4a] rounded-2xl opacity-40">
                                 <label className="block text-[#ef4444] text-[9px] font-bold uppercase tracking-widest mb-2">Retired Wallet</label>
-                                <div className="font-mono text-[#7a94bb] text-xs break-all line-through">{migrationData.custodialAddress}</div>
+                                <div className="font-mono text-[#7a94bb] text-xs line-through" title={migrationData.custodialAddress || ''}>
+                                    {migrationData.custodialAddress ? formatAddress(migrationData.custodialAddress) : '—'}
+                                </div>
                             </div>
                             <div className="flex justify-between px-4 text-[10px] text-[#3d5278] font-bold uppercase tracking-widest">
                                 <span>Block Hash</span>

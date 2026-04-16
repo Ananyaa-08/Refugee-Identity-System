@@ -192,6 +192,38 @@ def _save_refugee_record(row: dict) -> dict:
     return normalized
 
 
+def _find_refugee_by_identity(identity_id: str) -> dict | None:
+    identity_id = (identity_id or "").strip()
+    if not identity_id:
+        return None
+    for row in _refugee_rows_from_storage():
+        if row.get("id") == identity_id:
+            return row
+    return None
+
+
+def _find_refugee_by_wallet(wallet_address: str) -> dict | None:
+    wallet_address = (wallet_address or "").strip()
+    if not wallet_address:
+        return None
+    for row in _refugee_rows_from_storage():
+        if row.get("walletAddress") == wallet_address:
+            return row
+    return None
+
+
+def _identity_available_for_migration(identity_id: str, old_wallet: str) -> tuple[bool, str]:
+    row = _find_refugee_by_identity(identity_id) or _find_refugee_by_wallet(old_wallet)
+    if row and row.get("walletAddress") == old_wallet:
+        return True, "backend_registry"
+
+    custodial = _get_custodial_identity(identity_id)
+    if custodial and custodial.get("address") == old_wallet:
+        return True, "custodial_wallets"
+
+    return False, ""
+
+
 def _refugee_rows_from_storage() -> list[dict]:
     registry_rows = []
     for i, row in enumerate(_legacy_registry_load(), start=1):
@@ -930,8 +962,10 @@ def get_refugee(address: str):
                 "aid_claimed": int(data.get("aid_claimed", 0) or 0),
             },
         }
-    except HTTPException:
-        raise
+    except HTTPException as e:
+        if "already migrated" in str(e.detail):
+            raise
+        source = ""
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1048,12 +1082,25 @@ def migration_message(identity_id: str, old_wallet: str, new_wallet: str):
     _require_algorand_address(old_wallet, "old_wallet")
     _require_algorand_address(new_wallet, "new_wallet")
 
-    client = _get_client()
-    old_state = _read_local_state(client, old_wallet)
-    if not old_state:
-        raise HTTPException(status_code=400, detail="Old wallet is not registered on-chain")
-    if old_state.get("identity_hash") == b"MIGRATED":
-        raise HTTPException(status_code=400, detail="Old wallet is already migrated")
+    app_id = _get_app_id()
+    source = ""
+    try:
+        client = _get_client()
+        app_id = client.app_id
+        old_state = _read_local_state(client, old_wallet)
+        if old_state and old_state.get("identity_hash") == b"MIGRATED":
+            raise HTTPException(status_code=400, detail="Old wallet is already migrated")
+        if old_state:
+            source = "on_chain"
+    except HTTPException:
+        raise
+    except Exception:
+        source = ""
+
+    if not source:
+        ok, source = _identity_available_for_migration(identity_id.strip(), old_wallet)
+        if not ok:
+            raise HTTPException(status_code=400, detail="Old wallet is not registered in backend registry")
 
     timestamp = _utc_now_iso()
     nonce = _new_nonce()
@@ -1071,7 +1118,8 @@ def migration_message(identity_id: str, old_wallet: str, new_wallet: str):
             "message": message,
             "created_at": timestamp,
             "status": "issued",
-            "app_id": client.app_id,
+            "app_id": app_id,
+            "source": source,
         }
     )
     _migration_challenges_save(challenges)
@@ -1083,7 +1131,7 @@ def migration_message(identity_id: str, old_wallet: str, new_wallet: str):
             "timestamp": timestamp,
             "nonce": nonce,
             "message_b64": base64.b64encode(message.encode()).decode(),
-            "app_id": client.app_id,
+            "app_id": app_id,
         }
     }
 
@@ -1109,12 +1157,27 @@ def migration_request_submit(body: MigrationRequestSubmitRequest):
     _require_algorand_address(body.old_wallet, "old_wallet")
     _require_algorand_address(body.new_wallet, "new_wallet")
 
-    client = _get_client()
-    old_state = _read_local_state(client, body.old_wallet)
-    if not old_state:
-        raise HTTPException(status_code=400, detail="Old wallet is not registered on-chain")
-    if old_state.get("identity_hash") == b"MIGRATED":
-        raise HTTPException(status_code=400, detail="Old wallet is already migrated")
+    app_id = _get_app_id()
+    source = ""
+    try:
+        client = _get_client()
+        app_id = client.app_id
+        old_state = _read_local_state(client, body.old_wallet)
+        if old_state and old_state.get("identity_hash") == b"MIGRATED":
+            raise HTTPException(status_code=400, detail="Old wallet is already migrated")
+        if old_state:
+            source = "on_chain"
+    except HTTPException as e:
+        if "already migrated" in str(e.detail):
+            raise
+        source = ""
+    except Exception:
+        source = ""
+
+    if not source:
+        ok, source = _identity_available_for_migration(body.identity_id.strip(), body.old_wallet)
+        if not ok:
+            raise HTTPException(status_code=400, detail="Old wallet is not registered in backend registry")
 
     challenges = _migration_challenges_load()
     candidates = [
@@ -1169,6 +1232,8 @@ def migration_request_submit(body: MigrationRequestSubmitRequest):
             "nonce": challenge.get("nonce"),
             "created_at": challenge.get("created_at"),
         },
+        "app_id": app_id,
+        "source": source,
     }
     rows.append(req)
     _migration_save(rows)
@@ -1212,40 +1277,53 @@ def migration_approve(body: MigrationIdRequest):
         raise HTTPException(status_code=404, detail="Pending migration not found")
     old_wallet = req["oldWallet"]
     new_wallet = req["newWallet"]
-    client = _get_client()
-    algorand = _get_algorand()
-    deployer = algorand.account.from_environment("DEPLOYER")
-
-    old_state = _read_local_state(client, old_wallet)
-    if not old_state:
-        raise HTTPException(status_code=400, detail="Old wallet is not registered on-chain")
-    if old_state.get("identity_hash") == b"MIGRATED":
-        raise HTTPException(status_code=400, detail="Old wallet is already migrated")
-
+    on_chain_result = "not_attempted"
     try:
-        algorand.client.algod.account_application_info(new_wallet, client.app_id)
-    except AlgodHTTPError as e:
-        if e.code == 404:
-            raise HTTPException(
-                status_code=400,
-                detail="New wallet must opt in to the RefugeeContract app before migration.",
-            ) from e
+        client = _get_client()
+        algorand = _get_algorand()
+        deployer = algorand.account.from_environment("DEPLOYER")
+
+        old_state = _read_local_state(client, old_wallet)
+        if old_state and old_state.get("identity_hash") == b"MIGRATED":
+            raise HTTPException(status_code=400, detail="Old wallet is already migrated")
+
+        if old_state:
+            try:
+                algorand.client.algod.account_application_info(new_wallet, client.app_id)
+            except AlgodHTTPError as e:
+                if e.code == 404:
+                    on_chain_result = "new_wallet_not_opted_in"
+                else:
+                    raise
+            else:
+                client.send.migrate_wallet(
+                    args=(old_wallet, new_wallet),
+                    params=algokit_utils.CommonAppCallParams(
+                        sender=deployer.address,
+                        signer=deployer.signer,
+                        account_references=[old_wallet, new_wallet, deployer.address],
+                    ),
+                )
+                on_chain_result = "migrated"
+        else:
+            on_chain_result = "backend_registry_only"
+    except HTTPException:
         raise
-    client.send.migrate_wallet(
-        args=(old_wallet, new_wallet),
-        params=algokit_utils.CommonAppCallParams(
-            sender=deployer.address,
-            signer=deployer.signer,
-            account_references=[old_wallet, new_wallet, deployer.address],
-        ),
-    )
+    except Exception as e:
+        on_chain_result = f"backend_registry_only: {e}"
+
+    refugee_row = _find_refugee_by_identity(req.get("identity_id") or req.get("refugeeID")) or _find_refugee_by_wallet(old_wallet)
+    if refugee_row:
+        _save_refugee_record({**refugee_row, "walletAddress": new_wallet, "walletType": "pera"})
+
     for r in rows:
         if r.get("id") == body.id:
             r["status"] = "approved"
             r["approved_at"] = datetime.now(timezone.utc).isoformat()
+            r["on_chain_result"] = on_chain_result
             break
     _migration_save(rows)
-    return {"ok": True}
+    return {"ok": True, "on_chain_result": on_chain_result}
 
 
 @app.post("/api/blockchain/migration-reject")

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a1428"/>
+      <stop offset="1" stop-color="#0f1e38"/>
+    </linearGradient>
+  </defs>
+  <rect width="1400" height="900" fill="url(#bg)"/>
+  <text x="80" y="95" font-family="ui-sans-serif, system-ui" font-size="28" fill="#e2eaf8" font-weight="700">Login (Role-based)</text>
+  <text x="80" y="130" font-family="ui-sans-serif, system-ui" font-size="16" fill="#7a94bb">Refugee: ID-only login (backend verified) " Aid Worker/Admin: portal access</text>
+
+  <rect x="80" y="170" width="1240" height="650" rx="24" fill="#060d1f" stroke="#1a2d4a" stroke-width="3"/>
+  <rect x="120" y="220" width="520" height="540" rx="20" fill="#0f1e38" stroke="#1a2d4a"/>
+  <rect x="720" y="220" width="560" height="540" rx="20" fill="#0f1e38" stroke="#1a2d4a"/>
+
+  <text x="155" y="275" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas" font-size="14" fill="#00c9b1">Refugee Portal</text>
+  <text x="155" y="315" font-family="ui-sans-serif, system-ui" font-size="18" fill="#e2eaf8" font-weight="700">Enter Refugee ID</text>
+  <rect x="155" y="350" width="450" height="46" rx="10" fill="#060d1f" stroke="#1a2d4a"/>
+  <text x="172" y="380" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas" font-size="14" fill="#3d5278">REF-2026-001</text>
+  <rect x="155" y="420" width="220" height="44" rx="12" fill="#00c9b1"/>
+  <text x="190" y="449" font-family="ui-sans-serif, system-ui" font-size="12" fill="#060d1f" font-weight="800" letter-spacing="1.5">VERIFY &amp; LOGIN</text>
+
+  <text x="755" y="275" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas" font-size="14" fill="#00c9b1">Aid Worker / Admin</text>
+  <text x="755" y="315" font-family="ui-sans-serif, system-ui" font-size="18" fill="#e2eaf8" font-weight="700">Select a portal</text>
+  <rect x="755" y="350" width="485" height="80" rx="16" fill="#152342" stroke="#1a2d4a"/>
+  <rect x="755" y="450" width="485" height="80" rx="16" fill="#152342" stroke="#1a2d4a"/>
+  <rect x="755" y="550" width="485" height="80" rx="16" fill="#152342" stroke="#1a2d4a"/>
+  <text x="785" y="398" font-family="ui-sans-serif, system-ui" font-size="16" fill="#e2eaf8" font-weight="700">Refugee Dashboard</text>
+  <text x="785" y="498" font-family="ui-sans-serif, system-ui" font-size="16" fill="#e2eaf8" font-weight="700">Aid Worker Portal</text>
+  <text x="785" y="598" font-family="ui-sans-serif, system-ui" font-size="16" fill="#e2eaf8" font-weight="700">Admin Portal</text>
+  <text x="120" y="860" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas" font-size="13" fill="#3d5278">
+    Placeholder screenshot (replace with real capture)
+  </text>
+</svg>
+

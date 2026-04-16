@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a1428"/>
+      <stop offset="1" stop-color="#0f1e38"/>
+    </linearGradient>
+  </defs>
+  <rect width="1400" height="900" fill="url(#bg)"/>
+  <text x="80" y="95" font-family="ui-sans-serif, system-ui" font-size="28" fill="#e2eaf8" font-weight="700">Aid Worker " Migration Requests</text>
+  <text x="80" y="130" font-family="ui-sans-serif, system-ui" font-size="16" fill="#7a94bb">Requests submitted from Refugee Portal (`/api/blockchain/migration-request-lite`)</text>
+
+  <rect x="80" y="170" width="1240" height="650" rx="24" fill="#060d1f" stroke="#1a2d4a" stroke-width="3"/>
+  <rect x="120" y="220" width="1160" height="100" rx="20" fill="#0f1e38" stroke="#1a2d4a"/>
+  <text x="155" y="280" font-family="ui-sans-serif, system-ui" font-size="16" fill="#e2eaf8" font-weight="700">Pending requests</text>
+  <text x="155" y="305" font-family="ui-sans-serif, system-ui" font-size="13" fill="#7a94bb">Verify routes to Wallet Migration Tools with selected request</text>
+
+  <rect x="120" y="350" width="1160" height="430" rx="20" fill="#0f1e38" stroke="#1a2d4a"/>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas" font-size="13">
+    <text x="155" y="410" fill="#7a94bb">ID</text>
+    <text x="350" y="410" fill="#7a94bb">W1</text>
+    <text x="600" y="410" fill="#7a94bb">W2</text>
+    <text x="980" y="410" fill="#7a94bb">Status</text>
+  </g>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas" font-size="13">
+    <text x="155" y="460" fill="#e2eaf8">251d&3825</text>
+    <text x="350" y="460" fill="#7a94bb">NSVG&SPC4</text>
+    <text x="600" y="460" fill="#00c9b1"></text>
+    <rect x="960" y="440" width="90" height="28" rx="10" fill="#f59e0b"/>
+    <text x="978" y="460" fill="#060d1f" font-weight="800">PENDING</text>
+    <rect x="1070" y="438" width="170" height="32" rx="12" fill="#00c9b1"/>
+    <text x="1120" y="459" fill="#060d1f" font-family="ui-sans-serif, system-ui" font-size="12" font-weight="800" letter-spacing="1.2">VERIFY</text>
+  </g>
+  <text x="80" y="860" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas" font-size="13" fill="#3d5278">
+    Placeholder screenshot (replace with real capture)
+  </text>
+</svg>
+

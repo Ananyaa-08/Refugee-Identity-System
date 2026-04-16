@@ -33,6 +33,7 @@ export const api = {
             `/api/blockchain/migration-message?identity_id=${encodeURIComponent(identity_id)}&old_wallet=${encodeURIComponent(old_wallet)}&new_wallet=${encodeURIComponent(new_wallet)}`
         ),
     migrationSubmit: (body) => request('POST', '/api/blockchain/migration-request', body),
+    migrationSubmitLite: (identity_id) => request('POST', '/api/blockchain/migration-request-lite', { identity_id }),
     migrationRequests: (status = null) =>
         request('GET', status ? `/api/blockchain/migration-requests?status=${encodeURIComponent(status)}` : '/api/blockchain/migration-requests'),
     migrationApprove: (id) => request('POST', '/api/blockchain/migration-approve', { id }),

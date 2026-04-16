@@ -862,6 +862,52 @@ def migration_request_submit(body: MigrationRequestSubmitRequest):
     return {"ok": True, "data": {"id": req["id"]}}
 
 
+@app.post("/api/blockchain/migration-request-lite")
+def migration_request_lite(body: IdentityIdRequest):
+    """
+    Refugee-portal request (NO wallet connect, NO signature).
+
+    Creates a pending migration request for a custodial identity_id.
+    Aid workers then perform the wallet migration tooling flow separately.
+    """
+    identity_id = (body.identity_id or "").strip()
+    if not identity_id:
+        raise HTTPException(status_code=400, detail="identity_id is required")
+
+    row = _get_custodial_identity(identity_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Identity not found")
+
+    old_wallet = (row.get("address") or "").strip()
+    _require_algorand_address(old_wallet, "old_wallet")
+
+    client = _get_client()
+    old_state = _read_local_state(client, old_wallet)
+    if not old_state:
+        raise HTTPException(status_code=400, detail="Old wallet is not registered on-chain")
+    if old_state.get("identity_hash") == b"MIGRATED":
+        raise HTTPException(status_code=400, detail="Old wallet is already migrated")
+
+    rows = _migration_load()
+    if any((r.get("oldWallet") == old_wallet and (r.get("status") or "").lower() == "pending") for r in rows):
+        raise HTTPException(status_code=400, detail="A pending migration already exists for this custodial wallet")
+
+    req = {
+        "id": str(uuid.uuid4()),
+        "identity_id": identity_id,
+        "refugeeID": identity_id,
+        "refugeeName": row.get("name") or "Custodial → Self-sovereign migration",
+        "camp": "On-Chain",
+        "oldWallet": old_wallet,
+        "newWallet": None,
+        "requestedAt": datetime.now(timezone.utc).isoformat(),
+        "status": "pending",
+    }
+    rows.append(req)
+    _migration_save(rows)
+    return {"ok": True, "data": {"id": req["id"]}}
+
+
 @app.get("/api/blockchain/migration-requests")
 def migration_requests_list(status: str | None = None):
     """

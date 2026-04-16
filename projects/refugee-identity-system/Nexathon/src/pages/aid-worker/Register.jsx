@@ -979,7 +979,7 @@ const Register = () => {
                             <p className="text-[#7a94bb] mb-12">The digital identity has been permanently secured on the blockchain network.</p>
 
                             <div className="font-mono text-[#e2eaf8] text-2xl font-bold tracking-[0.2em] mb-12 p-4 bg-[#152342] rounded-xl border border-[#1a2d4a]">
-                                REF-2024-004
+                                {custodial.identityId || '—'}
                             </div>
 
                             {/* QR Card Preview */}
@@ -998,9 +998,8 @@ const Register = () => {
                                             value={
                                                 custodial.qrPayload ||
                                                 JSON.stringify({
-                                                    identity_id: "REF-2024-004",
+                                                    identity_id: custodial.identityId,
                                                     old_wallet: formData.walletAddress,
-                                                    name: formData.fullName,
                                                 })
                                             }
                                             size={100}
@@ -1015,7 +1014,7 @@ const Register = () => {
                                         </div>
                                         <div>
                                             <label className="block text-[9px] text-gray-400 font-bold uppercase tracking-widest border-l border-gray-100 pl-2">Refugee ID</label>
-                                            <span className="block text-xs font-mono font-bold text-gray-600 ml-2">{custodial.identityId || 'REF-2024-004'}</span>
+                                            <span className="block text-xs font-mono font-bold text-gray-600 ml-2">{custodial.identityId || '—'}</span>
                                         </div>
                                     </div>
                                 </div>

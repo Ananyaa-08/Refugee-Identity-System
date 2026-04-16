@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeftRight, Loader2, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { clsx } from 'clsx';
 import { api } from '../../utils/api';
@@ -23,6 +24,7 @@ const StatusPill = ({ status }) => {
 
 const MigrationRequests = () => {
     const { showToast } = useToast();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [rows, setRows] = useState([]);
 
@@ -95,8 +97,18 @@ const MigrationRequests = () => {
                                 </div>
                                 <div className="bg-[#060d1f] border border-[#1a2d4a] rounded-xl p-4">
                                     <label className="block text-[#3d5278] text-[10px] font-bold uppercase tracking-[0.2em] mb-2">New wallet (W2)</label>
-                                    <div className="font-mono text-[#00c9b1] text-xs break-all select-all">{r.newWallet || '—'}</div>
+                                    <div className="font-mono text-[#00c9b1] text-xs break-all select-all">{r.newWallet || '— (set in Wallet Migration Tools)'}</div>
                                 </div>
+                            </div>
+
+                            <div className="flex justify-end mt-5">
+                                <button
+                                    type="button"
+                                    onClick={() => navigate('/aid-worker/migration', { state: { migrationRequest: r } })}
+                                    className="px-6 py-2.5 bg-[#00c9b1] text-[#060d1f] text-[11px] font-bold uppercase tracking-widest rounded-lg hover:bg-[#00e0c5] transition-all active:scale-95"
+                                >
+                                    Verify
+                                </button>
                             </div>
                         </div>
                     ))}

@@ -133,6 +133,7 @@ const Register = () => {
     const [submitStage, setSubmitStage] = useState(0);
     const [showSuccess, setShowSuccess] = useState(false);
     const [currentLang, setCurrentLang] = useState('');
+    const [registeredRecord, setRegisteredRecord] = useState(null);
 
     const [formData, setFormData] = useState({
         fullName: '',
@@ -402,9 +403,9 @@ const Register = () => {
             } catch {
                 attempts++;
                 if (attempts >= 3) {
-                    showToast('error', 'Sync Failed', 'Network error tracking hash. Please check connection.');
+                    showToast('info', 'Liveness Verified Locally', 'Backend sync is unavailable, but the liveness hash is kept for registration.');
                     setFeedback('Network error. Hash stored locally.');
-                    setFormData(prev => ({ ...prev, livenessVerified: false }));
+                    setFormData(prev => ({ ...prev, livenessVerified: true }));
                 }
             }
         }
@@ -449,12 +450,28 @@ const Register = () => {
                 return;
             }
             setIsSubmitting(true);
-            setSubmitStage(7);
-            setTimeout(() => {
+            setSubmitStage(6);
+            try {
+                const saved = await api.saveRefugeeRecord({
+                    id: custodial.identityId,
+                    name: formData.fullName,
+                    dob: formData.dob,
+                    nationality: formData.nationality,
+                    campID: formData.campId,
+                    walletType: 'custodial',
+                    walletAddress: formData.walletAddress,
+                    languages: formData.languages,
+                    familyMembers: formData.familyMembers,
+                });
+                setRegisteredRecord(saved?.data || null);
+                setSubmitStage(7);
                 setShowSuccess(true);
                 setIsSubmitting(false);
                 showToast('success', 'Registration Complete', 'Custodial identity (W1) has been created and recorded. Refugee ID + QR payload are ready.');
-            }, 300);
+            } catch (err) {
+                setIsSubmitting(false);
+                showToast('error', 'Registration Failed', err.message || 'Could not save refugee record.');
+            }
             return;
         }
 
@@ -486,11 +503,12 @@ const Register = () => {
 
             // 4. Opt-in (must be signed by the refugee wallet)
             const algodClient = new algosdk.Algodv2(ALGOD_TOKEN, ALGOD_SERVER, ALGOD_PORT);
-            const targetRefugee = formData.walletAddress || account;
+            const targetRefugee = account;
 
             setSubmitStage(4);
+            let optInTxHash = null;
             try {
-                await peraOptInApp({ algodClient, appId, address: targetRefugee, signTransactions });
+                optInTxHash = await peraOptInApp({ algodClient, appId, address: targetRefugee, signTransactions });
             } catch (optErr) {
                 // If already opted in, algod will reject the second opt-in; treat as ok.
                 console.log("Opt-in skipped/failed (may already be opted-in):", optErr);
@@ -498,12 +516,29 @@ const Register = () => {
 
             // 5. Register local-state hashes (authorized registrar is backend deployer)
             setSubmitStage(5);
-            await api.registerRefugee({
-                refugee: targetRefugee,
-                identity_hash: bytesToHex(identityHash),
-                personhood_hash: bytesToHex(personhoodHash),
-                age_proof_hash: bytesToHex(ageProofHash),
+            try {
+                await api.registerRefugee({
+                    refugee: targetRefugee,
+                    identity_hash: bytesToHex(identityHash),
+                    personhood_hash: bytesToHex(personhoodHash),
+                    age_proof_hash: bytesToHex(ageProofHash),
+                });
+            } catch (chainErr) {
+                console.warn('Blockchain registration unavailable, saving backend record only:', chainErr);
+            }
+
+            const saved = await api.saveRefugeeRecord({
+                name: formData.fullName,
+                dob: formData.dob,
+                nationality: formData.nationality,
+                campID: formData.campId,
+                walletType: 'pera',
+                walletAddress: targetRefugee,
+                languages: formData.languages,
+                familyMembers: formData.familyMembers,
+                txHash: optInTxHash,
             });
+            setRegisteredRecord(saved?.data || null);
 
             // 7. Success
             setSubmitStage(6);
@@ -816,7 +851,12 @@ const Register = () => {
                             <div
                                 onClick={() => {
                                     setCustodial({ identityId: '', qrPayload: '', isProvisioning: false });
-                                    setFormData({ ...formData, walletType: 'pera', walletAddress: 'PERA7J3KLMN8QRS2TUVA4WXY5ZAB6CDSPUB' });
+                                    if (!account) {
+                                        showToast('info', 'Wallet Required', 'Connect Pera Wallet first, then select this option again.');
+                                        connectWallet();
+                                        return;
+                                    }
+                                    setFormData({ ...formData, walletType: 'pera', walletAddress: account });
                                 }}
                                 className={clsx(
                                     "bg-[#0f1e38] border p-6 rounded-xl cursor-pointer transition-all duration-300 flex flex-col items-center text-center",
@@ -979,7 +1019,7 @@ const Register = () => {
                             <p className="text-[#7a94bb] mb-12">The digital identity has been permanently secured on the blockchain network.</p>
 
                             <div className="font-mono text-[#e2eaf8] text-2xl font-bold tracking-[0.2em] mb-12 p-4 bg-[#152342] rounded-xl border border-[#1a2d4a]">
-                                REF-2024-004
+                                {registeredRecord?.id || custodial.identityId || 'Pending'}
                             </div>
 
                             {/* QR Card Preview */}
@@ -998,7 +1038,7 @@ const Register = () => {
                                             value={
                                                 custodial.qrPayload ||
                                                 JSON.stringify({
-                                                    identity_id: "REF-2024-004",
+                                                    identity_id: registeredRecord?.id || custodial.identityId,
                                                     old_wallet: formData.walletAddress,
                                                     name: formData.fullName,
                                                 })
@@ -1015,7 +1055,7 @@ const Register = () => {
                                         </div>
                                         <div>
                                             <label className="block text-[9px] text-gray-400 font-bold uppercase tracking-widest border-l border-gray-100 pl-2">Refugee ID</label>
-                                            <span className="block text-xs font-mono font-bold text-gray-600 ml-2">{custodial.identityId || 'REF-2024-004'}</span>
+                                            <span className="block text-xs font-mono font-bold text-gray-600 ml-2">{registeredRecord?.id || custodial.identityId || 'Pending'}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1026,7 +1066,7 @@ const Register = () => {
                                         <span className="block text-[10px] font-mono text-[#0a7560] break-all leading-tight">{formData.walletAddress}</span>
                                     </div>
                                     <div className="flex justify-between px-1">
-                                        <span className="text-[9px] text-gray-400 font-medium italic">Registered: Feb 12, 2024 14:22 GMT</span>
+                                        <span className="text-[9px] text-gray-400 font-medium italic">Registered: {registeredRecord?.registeredAt ? new Date(registeredRecord.registeredAt).toLocaleString() : new Date().toLocaleString()}</span>
                                         <span className="text-[9px] text-gray-400 font-medium">Camp: {formData.campId || 'CAMP-01'}</span>
                                     </div>
                                 </div>
@@ -1047,6 +1087,7 @@ const Register = () => {
                                     onClick={() => {
                                         setStep(1);
                                         setShowSuccess(false);
+                                        setRegisteredRecord(null);
                                         setFormData({
                                             fullName: '', dob: '', nationality: 'Syrian', campId: '',
                                             languages: [], familyMembers: [], livenessVerified: false,

@@ -2,12 +2,16 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, LogOut } from 'lucide-react';
 import { useWallet } from '../../context/WalletContext';
+import { clearAdminSession } from '../../utils/adminAuth';
 
 export const Navbar = ({ role }) => {
     const navigate = useNavigate();
     const { account, connectWallet, disconnectWallet } = useWallet();
 
     const handleExit = async () => {
+        if (role === 'admin') {
+            clearAdminSession();
+        }
         await disconnectWallet();
         navigate('/');
     };

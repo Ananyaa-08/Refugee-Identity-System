@@ -1,0 +1,28 @@
+%% Figure 3 — 5-Stage Biometric Liveness Pipeline (Register.jsx)
+flowchart TD
+    START([Aid worker opens Register]) --> S0{Face centered<br/>in frame?}
+    S0 -->|No| S0
+    S0 -->|Yes| S1
+
+    S1["Stage 1 — Blink<br/>EAR ≤ 0.20 for ~200ms"]
+    S1 --> S2["Stage 2 — Turn LEFT<br/>Head yaw > threshold"]
+    S2 --> S3["Stage 3 — Blink<br/>while rotated"]
+    S3 --> S4["Stage 4 — Turn RIGHT<br/>Head yaw < threshold"]
+    S4 --> S5["Stage 5 — Final blink<br/>confirm live subject"]
+    S5 --> HASH["Composite SHA-256<br/>personhood_hash"]
+    HASH --> API["POST /api/refugee/liveness-hash<br/>(ack only)"]
+    API --> REG["Continue registration<br/>custodial or Pera path"]
+
+    subgraph CLIENT["Client-side only — no video uploaded"]
+        S1
+        S2
+        S3
+        S4
+        S5
+        HASH
+    end
+
+    classDef stage fill:#1a3358,stroke:#4a9eff,color:#e2eaf8
+    classDef done fill:#0d3d35,stroke:#00c9b1,color:#e2eaf8
+    class S1,S2,S3,S4,S5 stage
+    class HASH,REG done

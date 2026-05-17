@@ -12,30 +12,9 @@ Modern, multi-portal identity system for humanitarian contexts, anchored on **Al
 
 ## Architecture
 
-```mermaid
-flowchart LR
-  subgraph UI[React Frontend (Vite)]
-    R[Refugee Portal]
-    W[Aid Worker Portal]
-    A[Admin Portal]
-  end
+![System overview](diagrams/png/05-system-overview.png)
 
-  subgraph API[FastAPI Backend]
-    B[Identity + Workflow APIs]
-    S[(Local JSON demo stores\n.deployments.json\n.registry.json\n.migration-requests.json\n.custodial-wallets.json)]
-  end
-
-  subgraph Chain[Algorand]
-    C[RefugeeContract\n(Deployed App + Global/Local State)]
-  end
-
-  R -->|HTTP (no wallet connect)| B
-  W -->|HTTP + optional wallet signing| B
-  A -->|HTTP admin actions| B
-
-  B <--> S
-  B -->|deploy / register / claim-aid / read-state| C
-```
+See [diagrams/](diagrams/) for all figures (architecture, registration flow, liveness pipeline, wallet migration, three-hash model). Source: Mermaid `.mmd` files; rendered PNG/SVG in `diagrams/png/` and `diagrams/svg/`.
 
 ## Feature tiles
 
@@ -109,6 +88,8 @@ Frontend: `http://localhost:5173`
 Backend: `http://127.0.0.1:8000`
 
 ## Core flows (end-to-end)
+
+![End-to-end flows](diagrams/png/06-end-to-end-flows.png)
 
 - **Register (Aid Worker)**: complete liveness → choose wallet type → for “No smartphone” provision **custodial W1** → print QR
 - **Refugee login**: enter Refugee ID → backend verifies → refugee dashboard loads from backend

@@ -157,5 +157,22 @@
     ],
     "familyMembers": [],
     "txHash": null
+  },
+  {
+    "walletAddress": "ZKNDHCHS7NGX2CGOD2J5CTUZOUTMHAQMPXN4AJRZAVFSRBRJ42IU2IK3KY",
+    "name": "ila",
+    "nationality": "South Sudanese",
+    "dob": "2004-08-05",
+    "gender": "N/A",
+    "campID": "Camp-87",
+    "registeredAt": "2026-05-16T20:32:51.071790+00:00",
+    "walletType": "custodial",
+    "aidClaimed": false,
+    "id": "REF-2026-006",
+    "languages": [
+      "english"
+    ],
+    "familyMembers": [],
+    "txHash": null
   }
 ]

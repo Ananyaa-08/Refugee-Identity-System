@@ -1,10 +1,15 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { Navbar } from './Navbar';
 import { Sidebar } from './Sidebar';
 import { MOCK_STATS } from '../../utils/mockData';
+import { isAdminAuthenticated } from '../../utils/adminAuth';
 
 const AdminLayout = () => {
+    if (!isAdminAuthenticated()) {
+        return <Navigate to="/" replace />;
+    }
+
     // Demo admin wallet
     const ADMIN_WALLET = 'ADMIN8H2JKLM1NPQR3STU5VWX7YZ9ABCDE';
 

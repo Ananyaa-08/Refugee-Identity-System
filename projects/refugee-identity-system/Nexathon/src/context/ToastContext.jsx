@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -30,10 +31,8 @@ export const ToastProvider = ({ children }) => {
         setToasts((prev) => prev.filter((toast) => toast.id !== id));
     }, []);
 
-    return (
-        <ToastContext.Provider value={{ showToast }}>
-            {children}
-            <div className="fixed bottom-0 right-0 p-4 z-50 flex flex-col gap-2 pointer-events-none">
+    const toastLayer = (
+            <div className="fixed bottom-0 right-0 p-4 z-[1200] flex flex-col gap-2 pointer-events-none">
                 {toasts.map((toast) => (
                     <div
                         key={toast.id}
@@ -70,6 +69,12 @@ export const ToastProvider = ({ children }) => {
                     </div>
                 ))}
             </div>
+    );
+
+    return (
+        <ToastContext.Provider value={{ showToast }}>
+            {children}
+            {typeof document !== 'undefined' && createPortal(toastLayer, document.body)}
         </ToastContext.Provider>
     );
 };

@@ -1,0 +1,23 @@
+%% README — System architecture overview
+flowchart LR
+    subgraph UI["React Frontend (Vite :5173)"]
+        R[Refugee Portal]
+        W[Aid Worker Portal]
+        A[Admin Portal]
+    end
+
+    subgraph API["FastAPI Backend (:8000)"]
+        B[Identity + Workflow APIs]
+        S[(Local JSON stores<br/>.deployments.json<br/>.registry.json<br/>.migration-requests.json<br/>.custodial-wallets.json)]
+    end
+
+    subgraph Chain["Algorand"]
+        C[RefugeeContract<br/>Local State + Box Storage]
+    end
+
+    R -->|"HTTP (no wallet connect)"| B
+    W -->|"HTTP + optional Pera signing"| B
+    A -->|"HTTP admin actions"| B
+
+    B <--> S
+    B -->|"deploy / register / claim-aid / migrate_wallet"| C

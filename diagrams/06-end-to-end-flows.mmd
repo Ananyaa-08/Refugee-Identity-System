@@ -1,0 +1,27 @@
+%% README — Core end-to-end flows
+flowchart TB
+    subgraph REG["Register (Aid Worker)"]
+        R1[Liveness in browser] --> R2{Wallet type?}
+        R2 -->|No smartphone| R3[Custodial W1 via API]
+        R2 -->|Pera| R4[Opt-in + register via API]
+        R3 --> R5[Print QR card]
+        R4 --> R5
+    end
+
+    subgraph REF["Refugee"]
+        F1[Login with identity_id] --> F2[Dashboard / blockchain status]
+        F2 --> F3[Submit migration request lite]
+    end
+
+    subgraph MIG["Migration"]
+        M1[Aid worker signs challenge in Pera] --> M2[Admin approves]
+        M2 --> M3[on-chain migrate_wallet]
+    end
+
+    subgraph AID["Aid distribution"]
+        A1[Search refugee] --> A2[claim_aid on-chain]
+    end
+
+    R5 -.-> F1
+    F3 --> M1
+    F2 --> A1

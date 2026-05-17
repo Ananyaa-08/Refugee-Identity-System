@@ -1,0 +1,25 @@
+%% Three-hash commitment model (off-chain PII → on-chain anchors)
+flowchart LR
+    subgraph OFF["Off-chain (registration UI)"]
+        PII["Full name, DOB,<br/>nationality, liveness"]
+    end
+
+    subgraph HASH["SHA-256 commitments"]
+        HID["H_ID<br/>identity_hash"]
+        HP["H_person<br/>personhood_hash"]
+        HA["H_age<br/>age_proof_hash"]
+    end
+
+    subgraph ON["Algorand local state"]
+        LS["RefugeeContract<br/>per-wallet local state"]
+    end
+
+    PII -->|"hash + salt"| HID
+    PII -->|"liveness composite"| HP
+    PII -->|"over18 flag"| HA
+    HID --> LS
+    HP --> LS
+    HA --> LS
+
+    Note1["No raw PII stored on-chain"]
+    LS --- Note1

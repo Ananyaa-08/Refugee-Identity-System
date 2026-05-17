@@ -1,0 +1,41 @@
+%% Figure 1 — RIMS Three-Layer System Architecture
+flowchart TB
+    subgraph L1["Layer 1 — Frontend (Vite + React 18)"]
+        direction LR
+        AW["Aid Worker Portal<br/>/aid-worker"]
+        RF["Refugee Portal<br/>/refugee"]
+        AD["Admin Portal<br/>/admin"]
+        PW["Pera Wallet<br/>@perawallet/connect"]
+    end
+
+    subgraph L2["Layer 2 — Backend (FastAPI :8000)"]
+        direction TB
+        API["REST /api/blockchain/*<br/>/api/admin/* /api/audit/*"]
+        JSON[("JSON persistence<br/>.registry.json<br/>.custodial-wallets.json<br/>.migration-requests.json<br/>.deployments.json")]
+        SDK["AlgoKit Utils + algosdk<br/>DEPLOYER_MNEMONIC signer"]
+    end
+
+    subgraph L3["Layer 3 — Blockchain (Algorand)"]
+        direction TB
+        APP["RefugeeContract (PuyaPy)<br/>ARC-4 app"]
+        LS["Per-account local state<br/>identity_hash, personhood_hash,<br/>age_proof_hash, aid_claimed"]
+        BOX["BoxMap registrars<br/>registrar_&lt;address&gt;"]
+    end
+
+    AW -->|"HTTP + optional Pera sign"| API
+    RF -->|"HTTP (ID login, no wallet)"| API
+    AD -->|"HTTP admin actions"| API
+    PW -.->|"Migration / opt-in"| AW
+
+    API <--> JSON
+    API --> SDK
+    SDK -->|"deploy, register, claim_aid,<br/>migrate_wallet, add_registrar"| APP
+    APP --> LS
+    APP --> BOX
+
+    classDef frontend fill:#0f2744,stroke:#00c9b1,color:#e2eaf8
+    classDef backend fill:#1a3358,stroke:#4a9eff,color:#e2eaf8
+    classDef chain fill:#0d3d35,stroke:#00c9b1,color:#e2eaf8
+    class L1 frontend
+    class L2 backend
+    class L3 chain

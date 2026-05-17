@@ -1,0 +1,28 @@
+%% Figure 7 — Custodial-to-Sovereign Wallet Migration Protocol
+sequenceDiagram
+    autonumber
+    participant RF as Refugee Portal
+    participant AW as Aid Worker<br/>Wallet Migration Tools
+    participant PW as Pera Wallet W2
+    participant API as FastAPI
+    participant JSON as migration-requests.json
+    participant AD as Admin Portal
+    participant SC as RefugeeContract
+
+    RF->>API: POST /api/blockchain/migration-request-lite<br/>{ identity_id }
+    API->>JSON: PENDING (no W2 yet)
+    API-->>RF: Request submitted
+
+    AW->>API: GET /api/blockchain/migration-message
+    API-->>AW: challenge nonce + message
+    AW->>PW: signData(message)
+    PW-->>AW: signature σ
+    AW->>API: POST /api/blockchain/migration-request<br/>{ identity_id, newWallet, signature }
+    API->>API: verify_bytes(σ, message, W2)
+    API->>JSON: PENDING with W2 + signature
+
+    AD->>API: POST /api/blockchain/migration-approve
+    API->>SC: migrate_wallet(W1, W2)<br/>if W2 opted in
+    SC->>SC: Copy local state W1 → W2<br/>W1.identity_hash = MIGRATED
+    API->>JSON: APPROVED + on_chain_result
+    API-->>AD: Migration complete

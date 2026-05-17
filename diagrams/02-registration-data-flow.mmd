@@ -1,0 +1,27 @@
+%% Figure 2 — End-to-End Registration and Verification Data Flow
+sequenceDiagram
+    autonumber
+    participant AW as Aid Worker<br/>(Register.jsx)
+    participant CAM as Browser<br/>MediaPipe + Webcam
+    participant API as FastAPI<br/>main.py
+    participant JSON as JSON stores
+    participant ALGO as Algorand<br/>RefugeeContract
+
+    Note over AW,ALGO: Registration (custodial path)
+    AW->>CAM: Run 5 liveness challenges
+    CAM->>CAM: EAR + head pose<br/>composite SHA-256
+    CAM-->>AW: personhood_hash (client)
+    AW->>API: POST /api/blockchain/generate-custodial-wallet
+    API->>ALGO: Fund W1, opt-in, register(H_ID, H_person, H_age)
+    API->>JSON: Save .custodial-wallets.json + .registry.json
+    API-->>AW: identity_id, W1 address, QR payload
+    AW->>AW: Print RIMS Security Card (QR)
+
+    Note over AW,ALGO: Verification / aid (online)
+    AW->>API: GET /api/blockchain/refugee-state/{address}
+    API->>ALGO: Read local state
+    ALGO-->>API: hashes, aid_claimed
+    API-->>AW: On-chain status
+    AW->>API: POST /api/blockchain/claim-aid
+    API->>ALGO: claim_aid(refugee)
+    ALGO-->>API: aid_claimed = 1

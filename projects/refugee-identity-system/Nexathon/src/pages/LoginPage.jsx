@@ -4,6 +4,15 @@ import { Shield, HardHat, User, ArrowRight, X } from 'lucide-react';
 import { MOCK_STATS } from '../utils/mockData';
 import { useToast } from '../context/ToastContext';
 import { api } from '../utils/api';
+import Portal from '../components/ui/Portal';
+import {
+    getAidWorkerPasswordChecklist,
+    validateAidWorkerPassword,
+} from '../utils/passwordValidation';
+import {
+    setAdminAuthenticated,
+    validateAdminCredentials,
+} from '../utils/adminAuth';
 
 const LoginCard = ({ icon: Icon, title, description, badgeColor, buttonColor, onEnter }) => {
     return (
@@ -36,11 +45,21 @@ const LoginPage = () => {
     const [workerName, setWorkerName] = useState('');
     const [workerId, setWorkerId] = useState('');
     const [workerPass, setWorkerPass] = useState('');
+    const [workerAlert, setWorkerAlert] = useState(null);
+
+    const passwordChecklist = getAidWorkerPasswordChecklist(workerPass);
+    const passwordValid = validateAidWorkerPassword(workerPass).valid;
 
     // Refugee login is ID-only and must be verified via backend (no manual wallet entry).
     const [showRefugeeForm, setShowRefugeeForm] = useState(false);
     const [refugeeId, setRefugeeId] = useState('');
     const [isVerifyingRefugee, setIsVerifyingRefugee] = useState(false);
+
+    // Admin login — only admin / 123456789
+    const [showAdminForm, setShowAdminForm] = useState(false);
+    const [adminId, setAdminId] = useState('');
+    const [adminPass, setAdminPass] = useState('');
+    const [adminAlert, setAdminAlert] = useState(null);
 
     const handleRefugeeLogin = async (e) => {
         if (e) e.preventDefault();
@@ -51,8 +70,9 @@ const LoginPage = () => {
         }
         setIsVerifyingRefugee(true);
         try {
-            await api.verifyIdentity(id);
-            localStorage.setItem('refugee_identity_id', id);
+            const res = await api.verifyIdentity(id);
+            const canonicalId = res?.data?.identity_id || id;
+            localStorage.setItem('refugee_identity_id', canonicalId);
             setShowRefugeeForm(false);
             navigate('/refugee/dashboard');
         } catch (err) {
@@ -63,15 +83,50 @@ const LoginPage = () => {
     };
 
     /* ... existing code ... */
+    const handleAdminLogin = (e) => {
+        e.preventDefault();
+        const id = adminId.trim();
+        const pass = adminPass;
+
+        if (!validateAdminCredentials(id, pass)) {
+            setAdminAlert({
+                title: 'Access denied',
+                message: 'Invalid administrator credentials.',
+            });
+            return;
+        }
+
+        setAdminAuthenticated();
+        setShowAdminForm(false);
+        setAdminAlert(null);
+        setAdminId('');
+        setAdminPass('');
+        navigate('/admin/dashboard');
+    };
+
     // Aid Worker Registration Logic
     const handleWorkerRegister = (e) => {
         try {
             e.preventDefault();
             const existing = JSON.parse(localStorage.getItem('demo_aid_workers') || '[]');
 
-            // Prevent duplicate IDs in demo
-            if (existing.find(w => w.id === workerId)) {
-                showToast('error', 'Registration Error', 'This ID is already in use.');
+            const prior = existing.find((w) => w.id === workerId);
+            if (prior && prior.status !== 'rejected') {
+                setWorkerAlert({
+                    type: 'pending',
+                    title: 'Registration error',
+                    message: 'This ID is already in use.',
+                });
+                return;
+            }
+
+            const { valid, failed } = validateAidWorkerPassword(workerPass);
+            if (!valid) {
+                setWorkerAlert({
+                    type: 'rejected',
+                    title: 'Invalid password',
+                    message: failed.join(' · '),
+                });
                 return;
             }
 
@@ -79,20 +134,31 @@ const LoginPage = () => {
                 name: workerName,
                 id: workerId,
                 password: workerPass,
-                status: 'pending'
+                status: 'pending',
+                registeredAt: new Date().toISOString(),
             };
 
-            existing.push(newWorker);
-            localStorage.setItem('demo_aid_workers', JSON.stringify(existing));
+            const nextWorkers = prior
+                ? existing.map((w) => (w.id === workerId ? newWorker : w))
+                : [...existing, newWorker];
+            localStorage.setItem('demo_aid_workers', JSON.stringify(nextWorkers));
 
-            showToast('success', 'Registration Submitted', 'Pending admin approval.');
+            setWorkerAlert({
+                type: 'success',
+                title: 'Registration submitted',
+                message: 'An administrator must approve your account before you can log in.',
+            });
             setIsRegistering(false);
             setWorkerName('');
             setWorkerId('');
             setWorkerPass('');
         } catch (error) {
             console.error('Registration failed:', error);
-            showToast('error', 'Error', 'Failed to register. Please try again.');
+            setWorkerAlert({
+                type: 'rejected',
+                title: 'Error',
+                message: 'Failed to register. Please try again.',
+            });
         }
     };
 
@@ -101,32 +167,45 @@ const LoginPage = () => {
         try {
             if (e) e.preventDefault();
 
-            // 1. Priority Master Backdoor
-            if (workerId === 'admin' && workerPass === '1234') {
-                localStorage.setItem('walletAddress', 'AID-WORKER-SESSION');
-                navigate('/aid-worker');
-                return;
-            }
-
-            // 2. Query Local DB
+            // Query Local DB
             const workers = JSON.parse(localStorage.getItem('demo_aid_workers') || '[]');
             const user = workers.find(w => w.id === workerId);
 
             if (!user) {
-                showToast('error', 'Error', 'Account not found.');
+                setWorkerAlert({
+                    type: 'rejected',
+                    title: 'Login failed',
+                    message: 'Account not found.',
+                });
                 return;
             }
 
             if (user.password !== workerPass) {
-                showToast('error', 'Error', 'Invalid password.');
+                setWorkerAlert({
+                    type: 'rejected',
+                    title: 'Login failed',
+                    message: 'Invalid password.',
+                });
+                return;
+            }
+
+            if (user.status === 'rejected') {
+                setWorkerAlert({
+                    type: 'rejected',
+                    title: 'Registration rejected',
+                    message:
+                        'Your aid worker registration was rejected by an administrator. You cannot access the portal with this account.',
+                });
                 return;
             }
 
             if (user.status === 'pending') {
-                // Demo: allow pending users to login (admin must approve for production)
-                showToast('success', 'Demo Login', 'Logged in as pending staff. Admin can approve from Overview.');
-                localStorage.setItem('walletAddress', `OFFICER-${user.id}`);
-                navigate('/aid-worker');
+                setWorkerAlert({
+                    type: 'pending',
+                    title: 'Pending approval',
+                    message:
+                        'Your registration is awaiting admin approval. You can log in after an administrator approves your account.',
+                });
                 return;
             }
 
@@ -136,12 +215,18 @@ const LoginPage = () => {
                 return;
             }
 
-            // Fallback: allow login for demo (e.g. status undefined)
-            localStorage.setItem('walletAddress', `OFFICER-${user.id}`);
-            navigate('/aid-worker');
+            setWorkerAlert({
+                type: 'pending',
+                title: 'Account not active',
+                message: 'Your account is not active yet. Contact an administrator.',
+            });
         } catch (error) {
             console.error('Login failed:', error);
-            showToast('error', 'Error', 'Login failed. Please try again.');
+            setWorkerAlert({
+                type: 'rejected',
+                title: 'Error',
+                message: 'Login failed. Please try again.',
+            });
         }
     };
 
@@ -175,7 +260,10 @@ const LoginPage = () => {
                         description="Register refugees, distribute aid resources, and manage verification requests."
                         badgeColor="bg-[#f59e0b20] text-[#f59e0b]"
                         buttonColor="border border-[#f59e0b] text-[#f59e0b] hover:bg-[#f59e0b20]"
-                        onEnter={() => setShowWorkerForm(true)}
+                        onEnter={() => {
+                            setWorkerAlert(null);
+                            setShowWorkerForm(true);
+                        }}
                     />
                     <LoginCard
                         icon={User}
@@ -191,18 +279,37 @@ const LoginPage = () => {
                         description="Approve wallet migrations, audit blockchain activity, and manage system health."
                         badgeColor="bg-[#8b5cf620] text-[#8b5cf6]"
                         buttonColor="border border-[#8b5cf6] text-[#8b5cf6] hover:bg-[#8b5cf620]"
-                        onEnter={() => navigate('/admin/dashboard')}
+                        onEnter={() => {
+                            setAdminAlert(null);
+                            setShowAdminForm(true);
+                        }}
                     />
                 </div>
             </div>
 
-            {/* Aid Worker Login Form Overlay - FIXED MODAL */}
+            {/* Aid Worker Login Form — portaled so alerts stack above backdrop */}
             {showWorkerForm && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#000000dd] backdrop-blur-sm px-6">
+                <Portal>
+                <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-[#000000dd] backdrop-blur-sm px-6">
                     <div className="bg-[#0f1e38] border border-[#1a2d4a] rounded-2xl p-8 max-w-sm w-full shadow-2xl animate-fadeSlideUp relative">
-                        <h3 className="text-[#e2eaf8] text-xl font-bold mb-6 text-center">
+                        <h3 className="text-[#e2eaf8] text-xl font-bold mb-4 text-center">
                             {isRegistering ? 'Register New Staff' : 'Aid Worker Login'}
                         </h3>
+
+                        {workerAlert && (
+                            <div
+                                className={`mb-4 rounded-lg border px-4 py-3 text-left ${
+                                    workerAlert.type === 'rejected'
+                                        ? 'bg-[#ef444412] border-[#ef444440] text-[#fca5a5]'
+                                        : workerAlert.type === 'success'
+                                          ? 'bg-[#10b98112] border-[#10b98140] text-[#6ee7b7]'
+                                          : 'bg-[#f59e0b12] border-[#f59e0b40] text-[#fcd34d]'
+                                }`}
+                            >
+                                <p className="text-sm font-bold text-[#e2eaf8]">{workerAlert.title}</p>
+                                <p className="text-xs mt-1 opacity-90">{workerAlert.message}</p>
+                            </div>
+                        )}
 
                         <div className="space-y-4 mb-6">
                             {isRegistering && (
@@ -213,32 +320,56 @@ const LoginPage = () => {
                                 />
                             )}
                             <input
-                                placeholder="Official ID (e.g. admin)"
+                                placeholder="Official ID (e.g. officer01)"
                                 className="w-full bg-[#060d1f] border border-[#1a2d4a] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#00c9b1]"
                                 value={workerId} onChange={e => setWorkerId(e.target.value)}
                             />
-                            <input
-                                type="password" placeholder="Password (e.g. 1234)"
-                                className="w-full bg-[#060d1f] border border-[#1a2d4a] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#00c9b1]"
-                                value={workerPass} onChange={e => setWorkerPass(e.target.value)}
-                            />
+                            <div className="space-y-1.5">
+                                <input
+                                    type="password"
+                                    placeholder="Password"
+                                    autoComplete={isRegistering ? 'new-password' : 'current-password'}
+                                    className="w-full bg-[#060d1f] border border-[#1a2d4a] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#00c9b1]"
+                                    value={workerPass}
+                                    onChange={(e) => setWorkerPass(e.target.value)}
+                                />
+                                {isRegistering && (
+                                    <ul className="text-[10px] leading-snug space-y-0.5 px-1">
+                                        {passwordChecklist.map((item) => (
+                                            <li
+                                                key={item.id}
+                                                className={item.met ? 'text-[#00c9b1]' : 'text-[#7a94bb]'}
+                                            >
+                                                {item.met ? '✓' : '○'} {item.label}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
                         </div>
 
                         <div className="flex flex-col gap-3">
                             <button
                                 onClick={isRegistering ? handleWorkerRegister : handleWorkerLogin}
-                                className="w-full bg-[#00c9b1] text-[#060d1f] font-bold py-3 rounded-xl hover:bg-[#00e0c5] transition-all"
+                                disabled={isRegistering && !passwordValid}
+                                className="w-full bg-[#00c9b1] text-[#060d1f] font-bold py-3 rounded-xl hover:bg-[#00e0c5] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isRegistering ? 'SUBMIT REGISTRATION' : 'LOGIN'}
                             </button>
                             <button
-                                onClick={() => setIsRegistering(!isRegistering)}
+                                onClick={() => {
+                                    setIsRegistering(!isRegistering);
+                                    setWorkerAlert(null);
+                                }}
                                 className="text-[#7a94bb] text-xs font-bold uppercase tracking-widest hover:text-white"
                             >
                                 {isRegistering ? 'Switch to Login' : 'Register New Account'}
                             </button>
                             <button
-                                onClick={() => setShowWorkerForm(false)}
+                                onClick={() => {
+                                    setShowWorkerForm(false);
+                                    setWorkerAlert(null);
+                                }}
                                 className="w-full py-3 bg-[#152342] text-white font-bold rounded-xl border border-[#1a2d4a] hover:bg-[#1a2d4a] transition-all mt-2"
                             >
                                 CANCEL
@@ -246,11 +377,66 @@ const LoginPage = () => {
                         </div>
                     </div>
                 </div>
+                </Portal>
             )}
 
-            {/* Refugee ID Login Overlay */}
+            {/* Admin Login Form — portaled; only admin / 123456789 */}
+            {showAdminForm && (
+                <Portal>
+                <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-[#000000dd] backdrop-blur-sm px-6">
+                    <div className="bg-[#0f1e38] border border-[#8b5cf640] rounded-2xl p-8 max-w-sm w-full shadow-2xl animate-fadeSlideUp relative">
+                        <h3 className="text-[#e2eaf8] text-xl font-bold mb-4 text-center">Admin Login</h3>
+
+                        {adminAlert && (
+                            <div className="mb-4 rounded-lg border px-4 py-3 text-left bg-[#ef444412] border-[#ef444440] text-[#fca5a5]">
+                                <p className="text-sm font-bold text-[#e2eaf8]">{adminAlert.title}</p>
+                                <p className="text-xs mt-1 opacity-90">{adminAlert.message}</p>
+                            </div>
+                        )}
+
+                        <form onSubmit={handleAdminLogin} className="space-y-4 mb-6">
+                            <input
+                                placeholder="User ID"
+                                autoComplete="username"
+                                className="w-full bg-[#060d1f] border border-[#1a2d4a] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#8b5cf6]"
+                                value={adminId}
+                                onChange={(e) => setAdminId(e.target.value)}
+                            />
+                            <input
+                                type="password"
+                                placeholder="Password"
+                                autoComplete="current-password"
+                                className="w-full bg-[#060d1f] border border-[#1a2d4a] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#8b5cf6]"
+                                value={adminPass}
+                                onChange={(e) => setAdminPass(e.target.value)}
+                            />
+                            <button
+                                type="submit"
+                                className="w-full bg-[#8b5cf6] text-white font-bold py-3 rounded-xl hover:bg-[#7c3aed] transition-all"
+                            >
+                                LOGIN
+                            </button>
+                        </form>
+
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setShowAdminForm(false);
+                                setAdminAlert(null);
+                            }}
+                            className="w-full py-3 bg-[#152342] text-white font-bold rounded-xl border border-[#1a2d4a] hover:bg-[#1a2d4a] transition-all"
+                        >
+                            CANCEL
+                        </button>
+                    </div>
+                </div>
+                </Portal>
+            )}
+
+            {/* Refugee Login Form — portaled so toasts stack above backdrop */}
             {showRefugeeForm && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#000000dd] backdrop-blur-sm px-6">
+                <Portal>
+                <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-[#000000dd] backdrop-blur-sm px-6">
                     <div className="bg-[#0f1e38] border border-[#1a2d4a] rounded-2xl p-8 max-w-sm w-full shadow-2xl animate-fadeSlideUp relative">
                         <button
                             onClick={() => setShowRefugeeForm(false)}
@@ -281,6 +467,7 @@ const LoginPage = () => {
                         </form>
                     </div>
                 </div>
+                </Portal>
             )}
 
             {/* Marquee Footer ... existing content ... */}

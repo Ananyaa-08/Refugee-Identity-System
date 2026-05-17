@@ -707,41 +707,180 @@ def _get_custodial_identity(identity_id: str) -> dict | None:
     return row
 
 
+def _find_custodial_by_wallet(wallet_address: str) -> tuple[str, dict] | None:
+    wallet_address = (wallet_address or "").strip()
+    if not wallet_address:
+        return None
+    for key, row in (_custodial_wallets_load() or {}).items():
+        if isinstance(row, dict) and (row.get("address") or "").strip() == wallet_address:
+            return str(key), row
+    return None
+
+
+def _link_custodial_refugee_id(wallet_address: str, refugee_id: str) -> None:
+    """Attach human-readable REF-* id to the custodial wallet row (by wallet address)."""
+    found = _find_custodial_by_wallet(wallet_address)
+    if not found:
+        return
+    key, row = found
+    wallets = _custodial_wallets_load()
+    row = dict(row)
+    row["refugee_id"] = refugee_id
+    wallets[key] = row
+    _custodial_wallets_save(wallets)
+
+
+def _resolve_refugee_identity(identity_id: str) -> dict | None:
+    """
+    Resolve a refugee login id across custodial JSON and registry JSON.
+
+    Users often enter REF-2026-NNN from the printed card while custodial storage
+    may key wallets by UUID hex from provisioning.
+    """
+    identity_id = (identity_id or "").strip()
+    if not identity_id:
+        return None
+
+    custodial_row: dict | None = None
+    custodial_key: str | None = None
+    wallets = _custodial_wallets_load() or {}
+
+    direct = wallets.get(identity_id)
+    if isinstance(direct, dict):
+        custodial_key = identity_id
+        custodial_row = direct
+    else:
+        for key, row in wallets.items():
+            if not isinstance(row, dict):
+                continue
+            if (row.get("refugee_id") or "").strip() == identity_id:
+                custodial_key = str(key)
+                custodial_row = row
+                break
+
+    registry_row = _find_refugee_by_identity(identity_id)
+
+    if custodial_row is None and registry_row:
+        found = _find_custodial_by_wallet(str(registry_row.get("walletAddress") or ""))
+        if found:
+            custodial_key, custodial_row = found
+
+    if custodial_row is None and registry_row is None:
+        return None
+
+    address = ""
+    if custodial_row:
+        address = (custodial_row.get("address") or "").strip()
+    if not address and registry_row:
+        address = (str(registry_row.get("walletAddress") or "")).strip()
+
+    canonical_id = identity_id
+    if registry_row and registry_row.get("id"):
+        canonical_id = str(registry_row["id"])
+    elif custodial_row and custodial_row.get("refugee_id"):
+        canonical_id = str(custodial_row["refugee_id"])
+
+    name = (registry_row or {}).get("name") or (custodial_row or {}).get("name") or "Registered Refugee"
+
+    return {
+        "identity_id": canonical_id,
+        "address": address,
+        "custodial_row": custodial_row,
+        "registry_row": registry_row,
+        "provisioning_status": (custodial_row or {}).get("provisioning_status"),
+        "name": name,
+        "created_at": (custodial_row or {}).get("created_at") or (registry_row or {}).get("registeredAt"),
+    }
+
+
+def _read_on_chain_identity_status(address: str) -> dict:
+    """Best-effort on-chain status; never raises for missing app/local state."""
+    result = {
+        "on_chain": False,
+        "migrated": False,
+        "app_id": _get_app_id(),
+        "opted_in": False,
+        "local_state_exists": False,
+        "funded": False,
+        "amount_microalgos": 0,
+    }
+    if not result["app_id"]:
+        return result
+    try:
+        client = _get_client()
+        result["app_id"] = client.app_id
+        algod = _get_algorand().client.algod
+        info = algod.account_info(address)
+        result["amount_microalgos"] = int(info.get("amount", 0) or 0)
+        result["funded"] = result["amount_microalgos"] > 0
+        try:
+            algod.account_application_info(address, client.app_id)
+            result["opted_in"] = True
+            local_state = _read_local_state(client, address) or {}
+            result["local_state_exists"] = bool(local_state)
+            result["on_chain"] = bool(local_state)
+            result["migrated"] = local_state.get("identity_hash") == b"MIGRATED"
+        except AlgodHTTPError as e:
+            if getattr(e, "code", None) != 404:
+                raise
+    except HTTPException:
+        raise
+    except Exception:
+        pass
+    return result
+
+
 @app.post("/api/blockchain/verify-identity")
 def verify_identity(body: IdentityIdRequest):
     """
-    Strictly verify that a refugee identity exists and is linked to a real custodial wallet (W1).
+    Verify refugee portal login id against registry + custodial storage.
 
-    Requirements:
-    - identity_id must exist in backend custodial storage
-    - W1 address must be a valid Algorand address
-    - W1 must be opted into the app (local state exists) and not migrated
+    On-chain registration is preferred but not required when the record exists
+    in the backend (e.g. local_only provisioning or registry-only legacy rows).
     """
     identity_id = (body.identity_id or "").strip()
     if not identity_id:
         raise HTTPException(status_code=400, detail="identity_id is required")
 
-    row = _get_custodial_identity(identity_id)
-    if not row:
-        raise HTTPException(status_code=404, detail="Identity not found")
+    resolved = _resolve_refugee_identity(identity_id)
+    if not resolved:
+        raise HTTPException(
+            status_code=404,
+            detail="Identity not found. Use the Refugee ID from registration (e.g. REF-2026-001).",
+        )
 
-    address = (row.get("address") or "").strip()
+    address = resolved["address"]
     _require_algorand_address(address, "old_wallet")
 
-    client = _get_client()
-    state = _read_local_state(client, address)
-    if not state:
-        raise HTTPException(status_code=400, detail="Identity wallet is not registered on-chain")
-    if state.get("identity_hash") == b"MIGRATED":
+    chain = _read_on_chain_identity_status(address)
+    if chain["migrated"]:
         raise HTTPException(status_code=400, detail="Identity has already been migrated")
 
-    return {"success": True, "data": {"identity_id": identity_id, "old_wallet": address, "app_id": client.app_id}}
+    if chain["on_chain"]:
+        mode = "on_chain"
+    elif resolved.get("provisioning_status") == "local_only":
+        mode = "local_only"
+    elif resolved.get("registry_row") or resolved.get("custodial_row"):
+        mode = "backend_registry"
+    else:
+        raise HTTPException(status_code=400, detail="Identity wallet is not registered on-chain")
+
+    canonical_id = resolved["identity_id"]
+    return {
+        "success": True,
+        "data": {
+            "identity_id": canonical_id,
+            "old_wallet": address,
+            "app_id": chain.get("app_id"),
+            "verification_mode": mode,
+        },
+    }
 
 
 @app.post("/api/blockchain/get-identity")
 def get_identity(body: IdentityIdRequest):
     """
-    Get identity + on-chain status for a custodial (no smartphone) refugee identity.
+    Get identity + on-chain status for a refugee (custodial or registry-backed).
 
     SECURITY: private keys are never returned.
     """
@@ -749,57 +888,36 @@ def get_identity(body: IdentityIdRequest):
     if not identity_id:
         raise HTTPException(status_code=400, detail="identity_id is required")
 
-    row = _get_custodial_identity(identity_id)
-    if not row:
+    resolved = _resolve_refugee_identity(identity_id)
+    if not resolved:
         raise HTTPException(status_code=404, detail="Identity not found")
 
-    address = (row.get("address") or "").strip()
+    address = resolved["address"]
     _require_algorand_address(address, "old_wallet")
 
-    client = _get_client()
-    algod = _get_algorand().client.algod
-    app_id = client.app_id
+    chain = _read_on_chain_identity_status(address)
+    canonical_id = resolved["identity_id"]
+    qr_payload = json.dumps({"identity_id": canonical_id, "old_wallet": address})
 
-    funded = False
-    algo_amount = 0
-    try:
-        info = algod.account_info(address)
-        algo_amount = int(info.get("amount", 0) or 0)
-        funded = algo_amount > 0
-    except Exception:
-        funded = False
-
-    opted_in = False
-    local_state = {}
-    local_state_exists = False
-    migrated = False
-    try:
-        algod.account_application_info(address, app_id)
-        opted_in = True
-        local_state = _read_local_state(client, address) or {}
-        local_state_exists = bool(local_state)
-        migrated = local_state.get("identity_hash") == b"MIGRATED"
-    except AlgodHTTPError as e:
-        if getattr(e, "code", None) == 404:
-            opted_in = False
-        else:
-            raise
-
-    qr_payload = json.dumps({"identity_id": identity_id, "old_wallet": address})
     return {
         "success": True,
         "data": {
-            "identity_id": identity_id,
-            "name": row.get("name") or "Registered Refugee",
+            "identity_id": canonical_id,
+            "name": resolved.get("name") or "Registered Refugee",
             "old_wallet": address,
-            "status": "migrated" if migrated else "active",
-            "created_at": row.get("created_at"),
-            "app_id": app_id,
+            "status": "migrated" if chain["migrated"] else "active",
+            "created_at": resolved.get("created_at"),
+            "app_id": chain.get("app_id"),
+            "verification_mode": (
+                "on_chain"
+                if chain["on_chain"]
+                else resolved.get("provisioning_status") or "backend_registry"
+            ),
             "blockchain": {
-                "funded": funded,
-                "amount_microalgos": algo_amount,
-                "opted_in": opted_in,
-                "local_state_exists": local_state_exists,
+                "funded": chain["funded"],
+                "amount_microalgos": chain["amount_microalgos"],
+                "opted_in": chain["opted_in"],
+                "local_state_exists": chain["local_state_exists"],
             },
             "qr_payload": qr_payload,
         },
@@ -1054,6 +1172,8 @@ def register_refugee_record(body: dict):
             "txHash": body.get("txHash"),
         }
     )
+    if (saved.get("walletType") or "").lower() == "custodial" and saved.get("id"):
+        _link_custodial_refugee_id(wallet_address, str(saved["id"]))
     return {"success": True, "data": saved}
 
 
@@ -1276,16 +1396,12 @@ def migration_request_lite(body: IdentityIdRequest):
     if not identity_id:
         raise HTTPException(status_code=400, detail="identity_id is required")
 
-    # Resolve W1 from backend storage first (registry), then custodial wallet file.
-    row = _find_refugee_by_identity(identity_id)
-    old_wallet = (str((row or {}).get("walletAddress") or "")).strip()
-    display_name = (row or {}).get("name") if row else None
-    if not old_wallet:
-        custodial_row = _get_custodial_identity(identity_id)
-        old_wallet = (str((custodial_row or {}).get("address") or "")).strip()
-        display_name = display_name or ((custodial_row or {}).get("name") if custodial_row else None)
-    if not old_wallet:
+    resolved = _resolve_refugee_identity(identity_id)
+    if not resolved:
         raise HTTPException(status_code=404, detail="Identity not found")
+    identity_id = resolved["identity_id"]
+    old_wallet = resolved["address"]
+    display_name = resolved.get("name")
     _require_algorand_address(old_wallet, "old_wallet")
 
     # If on-chain is available, enforce it isn't already migrated; otherwise allow backend registry only.
@@ -1446,8 +1562,8 @@ def generate_custodial_wallet(body: GenerateCustodialWalletRequest | None = None
         client = _get_client()
         _ensure_deployer_is_registrar(client)
 
-        # Identity ID: stable external identifier used by QR + migration challenge message.
-        identity_id = uuid.uuid4().hex
+        # Human-readable id for QR cards and refugee portal login (REF-YYYY-NNN).
+        identity_id = _next_refugee_id(_legacy_registry_load())
 
         # Generate a real Algorand account for W1.
         private_key, address = algo_account.generate_account()
@@ -1486,6 +1602,7 @@ def generate_custodial_wallet(body: GenerateCustodialWalletRequest | None = None
             "created_at": _utc_now_iso(),
             "app_id": client.app_id,
             "name": (body.name.strip() if body and body.name and body.name.strip() else None),
+            "refugee_id": identity_id,
         }
         _custodial_wallets_save(wallets)
 
@@ -1508,6 +1625,7 @@ def generate_custodial_wallet(body: GenerateCustodialWalletRequest | None = None
             "created_at": _utc_now_iso(),
             "app_id": _get_app_id(),
             "name": (body.name.strip() if body and body.name and body.name.strip() else None),
+            "refugee_id": identity_id,
             "provisioning_status": "local_only",
             "provisioning_error": str(e),
         }

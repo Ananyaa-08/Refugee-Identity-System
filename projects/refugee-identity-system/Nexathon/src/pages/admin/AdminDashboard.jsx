@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     Users, Package, ArrowLeftRight, ShieldAlert,
     ArrowRight, TrendingUp, TrendingDown, Clock,
-    Download, CheckCircle, UserPlus, ShieldCheck
+    Download,     CheckCircle, UserPlus, ShieldCheck, XCircle
 } from 'lucide-react';
 import { StatCard } from '../../components/ui/Common';
 import { clsx } from 'clsx';
@@ -50,14 +50,38 @@ const AdminDashboard = () => {
     const maxRegistrations = Math.max(...stats.registrationsByDay.map(item => Number(item.count) || 0), 1);
     const maxAidDistribution = Math.max(...stats.aidDistribution.map(item => Number(item.count) || 0), 1);
 
-    const handleApproveWorker = (workerId) => {
+    const updateWorkerStatus = (workerId, status, toastTitle, toastMessage) => {
         const workers = JSON.parse(localStorage.getItem('demo_aid_workers') || '[]');
-        const updated = workers.map(w =>
-            w.id === workerId ? { ...w, status: 'approved' } : w
+        const updated = workers.map((w) =>
+            w.id === workerId
+                ? {
+                      ...w,
+                      status,
+                      reviewedAt: new Date().toISOString(),
+                  }
+                : w
         );
         localStorage.setItem('demo_aid_workers', JSON.stringify(updated));
-        setPendingWorkers(prev => prev.filter(w => w.id !== workerId));
-        showToast('success', 'Staff Approved', 'Aid worker can now log in.');
+        setPendingWorkers((prev) => prev.filter((w) => w.id !== workerId));
+        showToast('success', toastTitle, toastMessage);
+    };
+
+    const handleApproveWorker = (workerId) => {
+        updateWorkerStatus(
+            workerId,
+            'approved',
+            'Staff approved',
+            'This aid worker can now log in to the portal.'
+        );
+    };
+
+    const handleRejectWorker = (workerId) => {
+        updateWorkerStatus(
+            workerId,
+            'rejected',
+            'Staff rejected',
+            'They will see a rejection message if they try to log in.'
+        );
     };
 
     return (
@@ -74,7 +98,7 @@ const AdminDashboard = () => {
                     label="TOTAL REGISTERED"
                     value={Number(stats.totalRegistered || 0).toLocaleString()}
                     accentColor="#00c9b1"
-                    change="Loaded from backend"
+                    change="In registry"
                     changeType="neutral"
                 />
                 <StatCard
@@ -100,7 +124,7 @@ const AdminDashboard = () => {
                     label="BLOCKED DUPLICATES"
                     value={String(stats.blockedDuplicates || 0)}
                     accentColor="#ef4444"
-                    change="Detected by backend"
+                    change="Duplicates blocked"
                     changeType="neutral"
                 />
             </div>
@@ -190,12 +214,22 @@ const AdminDashboard = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => handleApproveWorker(worker.id)}
-                                    className="flex items-center gap-2 bg-[#00c9b1] text-[#060d1f] font-bold px-4 py-2 rounded-lg hover:bg-[#00e0c5] active:scale-95 transition-all text-[10px] uppercase tracking-widest shadow-[0_0_15px_rgba(0,201,177,0.1)]"
-                                >
-                                    <CheckCircle size={14} /> APPROVE
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRejectWorker(worker.id)}
+                                        className="flex items-center gap-2 bg-[#ef444415] text-[#ef4444] border border-[#ef444430] font-bold px-4 py-2 rounded-lg hover:bg-[#ef444425] active:scale-95 transition-all text-[10px] uppercase tracking-widest"
+                                    >
+                                        <XCircle size={14} /> REJECT
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleApproveWorker(worker.id)}
+                                        className="flex items-center gap-2 bg-[#00c9b1] text-[#060d1f] font-bold px-4 py-2 rounded-lg hover:bg-[#00e0c5] active:scale-95 transition-all text-[10px] uppercase tracking-widest shadow-[0_0_15px_rgba(0,201,177,0.1)]"
+                                    >
+                                        <CheckCircle size={14} /> APPROVE
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>

@@ -27,6 +27,7 @@ const LoginCard = ({ icon: Icon, title, description, badgeColor, buttonColor, on
             <p className="text-[#7a94bb] text-sm mb-8 leading-relaxed">{description}</p>
 
             <button
+                type="button"
                 className={`w-full py-3 px-6 rounded-lg font-bold text-sm tracking-widest flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 ${buttonColor}`}
             >
                 ENTER PORTAL <ArrowRight size={16} />
@@ -211,7 +212,7 @@ const LoginPage = () => {
 
             if (user.status === 'approved') {
                 localStorage.setItem('walletAddress', `OFFICER-${user.id}`);
-                navigate('/aid-worker');
+                navigate('/aid-worker/register');
                 return;
             }
 
@@ -259,7 +260,7 @@ const LoginPage = () => {
                         title="Aid Worker Portal"
                         description="Register refugees, distribute aid resources, and manage verification requests."
                         badgeColor="bg-[#f59e0b20] text-[#f59e0b]"
-                        buttonColor="border border-[#f59e0b] text-[#f59e0b] hover:bg-[#f59e0b20]"
+                        buttonColor="bg-[#f59e0b] text-[#060d1f] hover:bg-[#fbbf24] shadow-[0_0_20px_rgba(245,158,11,0.25)]"
                         onEnter={() => {
                             setWorkerAlert(null);
                             setShowWorkerForm(true);
@@ -278,7 +279,7 @@ const LoginPage = () => {
                         title="Admin Portal"
                         description="Approve wallet migrations, audit blockchain activity, and manage system health."
                         badgeColor="bg-[#8b5cf620] text-[#8b5cf6]"
-                        buttonColor="border border-[#8b5cf6] text-[#8b5cf6] hover:bg-[#8b5cf620]"
+                        buttonColor="bg-[#8b5cf6] text-white hover:bg-[#7c3aed] shadow-[0_0_20px_rgba(139,92,246,0.25)]"
                         onEnter={() => {
                             setAdminAlert(null);
                             setShowAdminForm(true);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Check, Camera, Smartphone, QrCode,
-    Trash2, Plus, Info, Lock, Loader2, Printer, Shield,
+    Trash2, Plus, Info, Lock, Loader2, Printer, Shield, ChevronDown,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useToast } from '../../context/ToastContext';
@@ -15,6 +15,14 @@ import { useWallet } from '../../context/WalletContext';
 import { FaceLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 import { api } from '../../utils/api';
 import { formatAddress } from '../../utils/format';
+import {
+    NATIONALITY_PRESETS,
+    validateNationality,
+    normalizeNationality,
+    getNationalityCustomInputError,
+    NATIONALITY_ERROR_MESSAGE,
+    NATIONALITY_REQUIRED_MESSAGE,
+} from '../../utils/nationalityValidation';
 
 // --- Form Components (PropTypes omitted for local helpers) ---
 /* eslint-disable react/prop-types */
@@ -28,17 +36,116 @@ const Input = ({ label, ...props }) => (
     </div>
 );
 
-const Select = ({ label, options, ...props }) => (
-    <div className="w-full">
-        <label className="block text-[#7a94bb] text-xs font-medium uppercase tracking-widest mb-2">{label}</label>
-        <select
-            className="w-full bg-[#060d1f] border border-[#1a2d4a] rounded-lg px-4 py-3 text-[#e2eaf8] text-sm focus:outline-none focus:border-[#00c9b1] cursor-pointer appearance-none transition-all duration-200"
-            {...props}
-        >
-            {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-        </select>
-    </div>
-);
+/** Custom listbox: options panel always opens below the field (avoids upward-flipping browser menus). */
+const NationalityPicker = ({
+    listValue,
+    customText,
+    onListChange,
+    onCustomChange,
+    error,
+}) => {
+    const [open, setOpen] = useState(false);
+    const wrapRef = useRef(null);
+
+    useEffect(() => {
+        const close = (e) => {
+            if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+        };
+        document.addEventListener('mousedown', close);
+        return () => document.removeEventListener('mousedown', close);
+    }, []);
+
+    const displayLabel =
+        listValue === ''
+            ? 'Choose from list…'
+            : listValue === 'Other'
+              ? 'Other — type nationality below'
+              : listValue;
+
+    return (
+        <div className="w-full relative" ref={wrapRef}>
+            <label className="block text-[#7a94bb] text-xs font-medium uppercase tracking-widest mb-2">Nationality</label>
+            <button
+                type="button"
+                onClick={() => setOpen((o) => !o)}
+                className="w-full relative bg-[#060d1f] border border-[#1a2d4a] rounded-lg px-4 py-3 pr-10 text-left text-[#e2eaf8] text-sm focus:outline-none focus:border-[#00c9b1] focus:ring-1 focus:ring-[#00c9b120] transition-all duration-200"
+            >
+                <span className={listValue === '' ? 'text-[#3d5278]' : ''}>{displayLabel}</span>
+                <ChevronDown
+                    size={18}
+                    className={clsx(
+                        'absolute right-3 top-1/2 -translate-y-1/2 text-[#7a94bb] pointer-events-none transition-transform',
+                        open && 'rotate-180',
+                    )}
+                />
+            </button>
+            {open && (
+                <ul
+                    className="absolute left-0 right-0 top-full z-[200] mt-1 max-h-60 overflow-y-auto rounded-lg border border-[#1a2d4a] bg-[#0f1e38] shadow-2xl py-1"
+                    role="listbox"
+                >
+                    {NATIONALITY_PRESETS.map((opt) => (
+                        <li key={opt}>
+                            <button
+                                type="button"
+                                role="option"
+                                className="w-full text-left px-4 py-2.5 text-sm text-[#e2eaf8] hover:bg-[#152342] flex items-center justify-between gap-2"
+                                onClick={() => {
+                                    onListChange(opt);
+                                    setOpen(false);
+                                }}
+                            >
+                                <span>{opt}</span>
+                                {listValue === opt ? <Check size={16} className="text-[#00c9b1] shrink-0" /> : null}
+                            </button>
+                        </li>
+                    ))}
+                    <li>
+                        <button
+                            type="button"
+                            role="option"
+                            className="w-full text-left px-4 py-2.5 text-sm text-[#e2eaf8] hover:bg-[#152342] flex items-center justify-between gap-2 border-t border-[#1a2d4a]"
+                            onClick={() => {
+                                onListChange('Other');
+                                setOpen(false);
+                            }}
+                        >
+                            <span>Other — type below</span>
+                            {listValue === 'Other' ? <Check size={16} className="text-[#00c9b1] shrink-0" /> : null}
+                        </button>
+                    </li>
+                </ul>
+            )}
+            {listValue === 'Other' && (
+                <input
+                    id="nationality-custom-input"
+                    type="text"
+                    autoComplete="off"
+                    spellCheck={false}
+                    className={clsx(
+                        'mt-2 w-full rounded-lg px-4 py-3 text-sm transition-all duration-200',
+                        'bg-[#060d1f] text-[#e2eaf8] placeholder-[#3d5278]',
+                        'border focus:outline-none focus:ring-1',
+                        error === NATIONALITY_ERROR_MESSAGE
+                            ? 'border-[#ef4444] focus:border-[#ef4444] focus:ring-[#ef444420]'
+                            : 'border-[#1a2d4a] focus:border-[#00c9b1] focus:ring-[#00c9b120]',
+                        '[&:-webkit-autofill]:shadow-[inset_0_0_0_1000px_#060d1f]',
+                        '[&:-webkit-autofill]:[-webkit-text-fill-color:#e2eaf8]',
+                        '[&:-webkit-autofill]:border-[#1a2d4a]',
+                    )}
+                    placeholder="Enter your nationality"
+                    value={customText}
+                    onChange={(e) => onCustomChange(e.target.value)}
+                />
+            )}
+            {error ? (
+                <p className="mt-1.5 text-[10px] text-[#fca5a5] font-bold uppercase tracking-widest">
+                    {error}
+                </p>
+            ) : null}
+        </div>
+    );
+};
 /* eslint-enable react/prop-types */
 
 // --- Liveness Constants & Helpers ---
@@ -148,6 +255,11 @@ const Register = () => {
         walletAddress: '',
     });
 
+    const [nationalityListValue, setNationalityListValue] = useState('Syrian');
+    const [nationalityCustomText, setNationalityCustomText] = useState('');
+    const [nationalityError, setNationalityError] = useState(null);
+    const prevStepRef = useRef(1);
+
     const [custodial, setCustodial] = useState({
         identityId: '',
         qrPayload: '',
@@ -183,6 +295,21 @@ const Register = () => {
         confidenceScores: [],
         challengesCompleted: []
     });
+
+    useEffect(() => {
+        if (step === 1 && prevStepRef.current > 1) {
+            const n = formData.nationality;
+            if (NATIONALITY_PRESETS.includes(n)) {
+                setNationalityListValue(n);
+                setNationalityCustomText('');
+            } else if (n) {
+                setNationalityListValue('Other');
+                setNationalityCustomText(n);
+            }
+            setNationalityError(null);
+        }
+        prevStepRef.current = step;
+    }, [step]);
 
     // Initialize FaceLandmarker
     useEffect(() => {
@@ -573,6 +700,59 @@ const Register = () => {
         }));
     };
 
+    const handleNationalityListChange = (v) => {
+        setNationalityListValue(v);
+        setNationalityError(null);
+        if (v === 'Other') {
+            setNationalityCustomText('');
+            return;
+        }
+        setNationalityCustomText('');
+        setFormData((prev) => ({ ...prev, nationality: v }));
+    };
+
+    const handleNationalityCustomChange = (v) => {
+        setNationalityCustomText(v);
+        setNationalityError(getNationalityCustomInputError(v));
+    };
+
+    const goNextFromPersonalInfo = () => {
+        if (nationalityListValue === 'Other') {
+            const customNorm = normalizeNationality(nationalityCustomText);
+            if (!customNorm) {
+                setNationalityError(NATIONALITY_REQUIRED_MESSAGE);
+                requestAnimationFrame(() => {
+                    document.getElementById('nationality-custom-input')?.focus();
+                });
+                return;
+            }
+            const { valid, normalized } = validateNationality(customNorm);
+            if (!valid) {
+                setNationalityError(NATIONALITY_ERROR_MESSAGE);
+                return;
+            }
+            setNationalityError(null);
+            setFormData((prev) => ({ ...prev, nationality: normalized }));
+            setStep(2);
+            return;
+        }
+
+        if (!nationalityListValue || !NATIONALITY_PRESETS.includes(nationalityListValue)) {
+            setNationalityError(NATIONALITY_REQUIRED_MESSAGE);
+            return;
+        }
+
+        const resolved = nationalityListValue;
+        const { valid, normalized } = validateNationality(resolved);
+        if (!valid) {
+            setNationalityError(NATIONALITY_ERROR_MESSAGE);
+            return;
+        }
+        setNationalityError(null);
+        setFormData((prev) => ({ ...prev, nationality: normalized }));
+        setStep(2);
+    };
+
     const nextStep = () => setStep(prev => prev + 1);
     const prevStep = () => setStep(prev => prev - 1);
 
@@ -639,7 +819,15 @@ const Register = () => {
                         <div className="grid grid-cols-2 gap-6">
                             <Input label="Full Name" placeholder="e.g. Ahmad Saadi" value={formData.fullName} onChange={e => setFormData({ ...formData, fullName: e.target.value })} />
                             <Input label="Date of Birth" type="date" value={formData.dob} onChange={e => setFormData({ ...formData, dob: e.target.value })} />
-                            <Select label="Nationality" options={['Syrian', 'Afghan', 'South Sudanese', 'Myanmar', 'Somali', 'Ukrainian', 'Ethiopian', 'Congolese', 'Sudanese', 'Venezuelan', 'Other']} value={formData.nationality} onChange={e => setFormData({ ...formData, nationality: e.target.value })} />
+                            <div className="col-span-2">
+                                <NationalityPicker
+                                    listValue={nationalityListValue}
+                                    customText={nationalityCustomText}
+                                    onListChange={handleNationalityListChange}
+                                    onCustomChange={handleNationalityCustomChange}
+                                    error={nationalityError}
+                                />
+                            </div>
                             <Input label="Camp ID" placeholder="e.g. CAMP-01" value={formData.campId} onChange={e => setFormData({ ...formData, campId: e.target.value })} />
                         </div>
 
@@ -716,7 +904,7 @@ const Register = () => {
                         </div>
 
                         <button
-                            onClick={nextStep}
+                            onClick={goNextFromPersonalInfo}
                             disabled={!formData.fullName || !formData.dob}
                             className="bg-[#00c9b1] text-[#060d1f] font-bold py-4 px-6 rounded-lg hover:bg-[#00e0c5] active:scale-95 transition-all w-full disabled:opacity-40"
                         >
@@ -1097,6 +1285,9 @@ const Register = () => {
                                             languages: [], familyMembers: [], livenessVerified: false,
                                             walletType: null, walletAddress: '',
                                         });
+                                        setNationalityListValue('Syrian');
+                                        setNationalityCustomText('');
+                                        setNationalityError(null);
                                         setCustodial({ identityId: '', qrPayload: '', isProvisioning: false });
                                     }}
                                     className="bg-[#00c9b1] text-[#060d1f] font-bold py-4 rounded-xl hover:bg-[#00e0c5] transition-all"

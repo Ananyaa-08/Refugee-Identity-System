@@ -91,14 +91,14 @@
     "txHash": null
   },
   {
-    "walletAddress": "NSVGHJWE2SWSXFNYGLIVC5M5NXAQUMKSLELI5MULRCXKAE5WZSDYW4SPC4",
+    "walletAddress": "ATW2TKWSDBJDMAQINKJTBBWQUJQWEFSEFWCMR2RUQ7IPWIYOSO7MIAYJDI",
     "name": "Kriti",
     "nationality": "Somali",
     "dob": "2006-04-13",
     "gender": "N/A",
     "campID": "CAMP-15",
     "registeredAt": "2026-04-16T13:14:55.758424+00:00",
-    "walletType": "custodial",
+    "walletType": "pera",
     "aidClaimed": false,
     "id": "251da0b5cd6c4d5aaf5b21f583283825",
     "languages": [

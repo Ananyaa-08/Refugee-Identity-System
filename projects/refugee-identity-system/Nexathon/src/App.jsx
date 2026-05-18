@@ -53,7 +53,7 @@ const App = () => {
 
             {/* Aid Worker Routes */}
             <Route path="/aid-worker" element={<AidWorkerLayout />}>
-              <Route index element={<Navigate to="search" replace />} />
+              <Route index element={<Navigate to="register" replace />} />
               <Route path="search" element={<SearchRefugee />} />
               <Route path="register" element={<Register />} />
               <Route path="distribution" element={<AidDistribution />} />

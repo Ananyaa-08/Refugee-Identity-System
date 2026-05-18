@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Check, Camera, Smartphone, QrCode,
-    Trash2, Plus, Info, Lock, Loader2, Printer, Shield, ChevronDown,
+    Trash2, Plus, Info, Lock, Loader2, Printer, Shield, ChevronDown, X,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useToast } from '../../context/ToastContext';
@@ -23,6 +23,14 @@ import {
     NATIONALITY_ERROR_MESSAGE,
     NATIONALITY_REQUIRED_MESSAGE,
 } from '../../utils/nationalityValidation';
+import {
+    validateCampId,
+    getCampIdInputError,
+    formatCampIdExample,
+    CAMP_ID_ERROR_MESSAGE,
+    CAMP_ID_REQUIRED_MESSAGE,
+    CAMP_ID_FORMAT_HINT,
+} from '../../utils/campIdValidation';
 
 // --- Form Components (PropTypes omitted for local helpers) ---
 /* eslint-disable react/prop-types */
@@ -146,6 +154,71 @@ const NationalityPicker = ({
         </div>
     );
 };
+
+const RELATIONSHIP_PRESETS = ['Spouse', 'Son', 'Daughter', 'Parent', 'Sibling', 'Grandparent', 'Grandchild', 'Guardian', 'Other'];
+
+/** Type a custom relationship or pick a preset from the list below. */
+const RelationshipCombobox = ({ value, onChange }) => {
+    const [open, setOpen] = useState(false);
+    const wrapRef = useRef(null);
+
+    useEffect(() => {
+        const close = (e) => {
+            if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+        };
+        document.addEventListener('mousedown', close);
+        return () => document.removeEventListener('mousedown', close);
+    }, []);
+
+    const pickPreset = (preset) => {
+        onChange(preset);
+        setOpen(false);
+    };
+
+    return (
+        <div className="relative w-44 shrink-0" ref={wrapRef}>
+            <div className="flex rounded-lg border border-[#1a2d4a] bg-[#060d1f] focus-within:border-[#00c9b1] focus-within:ring-1 focus-within:ring-[#00c9b120] overflow-hidden">
+                <input
+                    type="text"
+                    autoComplete="off"
+                    spellCheck={false}
+                    placeholder="Relationship"
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    className="min-w-0 flex-1 bg-transparent px-3 py-2 text-[#e2eaf8] text-sm focus:outline-none placeholder-[#3d5278]"
+                />
+                <button
+                    type="button"
+                    aria-label="Show relationship options"
+                    onClick={() => setOpen((o) => !o)}
+                    className="flex shrink-0 items-center justify-center border-l border-[#1a2d4a] px-2 text-[#7a94bb] hover:text-[#e2eaf8] hover:bg-[#152342] transition-colors"
+                >
+                    <ChevronDown size={16} className={clsx('transition-transform', open && 'rotate-180')} />
+                </button>
+            </div>
+            {open && (
+                <ul
+                    className="absolute left-0 right-0 top-full z-[200] mt-1 max-h-48 overflow-y-auto rounded-lg border border-[#1a2d4a] bg-[#0f1e38] shadow-2xl py-1"
+                    role="listbox"
+                >
+                    {RELATIONSHIP_PRESETS.map((preset) => (
+                        <li key={preset}>
+                            <button
+                                type="button"
+                                role="option"
+                                className="w-full text-left px-3 py-2 text-sm text-[#e2eaf8] hover:bg-[#152342] flex items-center justify-between gap-2"
+                                onClick={() => pickPreset(preset)}
+                            >
+                                <span>{preset}</span>
+                                {value === preset ? <Check size={14} className="text-[#00c9b1] shrink-0" /> : null}
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </div>
+    );
+};
 /* eslint-enable react/prop-types */
 
 // --- Liveness Constants & Helpers ---
@@ -258,6 +331,7 @@ const Register = () => {
     const [nationalityListValue, setNationalityListValue] = useState('Syrian');
     const [nationalityCustomText, setNationalityCustomText] = useState('');
     const [nationalityError, setNationalityError] = useState(null);
+    const [campIdError, setCampIdError] = useState(null);
     const prevStepRef = useRef(1);
 
     const [custodial, setCustodial] = useState({
@@ -716,6 +790,33 @@ const Register = () => {
         setNationalityError(getNationalityCustomInputError(v));
     };
 
+    const handleCampIdChange = (v) => {
+        setFormData((prev) => ({ ...prev, campId: v }));
+        setCampIdError(getCampIdInputError(v));
+    };
+
+    const advanceFromPersonalInfo = (nationalityValue) => {
+        const { valid: campValid, normalized: campNorm } = validateCampId(formData.campId);
+        if (!campNorm) {
+            setCampIdError(CAMP_ID_REQUIRED_MESSAGE);
+            requestAnimationFrame(() => {
+                document.getElementById('camp-id-input')?.focus();
+            });
+            return;
+        }
+        if (!campValid) {
+            setCampIdError(CAMP_ID_ERROR_MESSAGE);
+            requestAnimationFrame(() => {
+                document.getElementById('camp-id-input')?.focus();
+            });
+            return;
+        }
+        setCampIdError(null);
+        setNationalityError(null);
+        setFormData((prev) => ({ ...prev, nationality: nationalityValue, campId: campNorm }));
+        setStep(2);
+    };
+
     const goNextFromPersonalInfo = () => {
         if (nationalityListValue === 'Other') {
             const customNorm = normalizeNationality(nationalityCustomText);
@@ -731,9 +832,7 @@ const Register = () => {
                 setNationalityError(NATIONALITY_ERROR_MESSAGE);
                 return;
             }
-            setNationalityError(null);
-            setFormData((prev) => ({ ...prev, nationality: normalized }));
-            setStep(2);
+            advanceFromPersonalInfo(normalized);
             return;
         }
 
@@ -742,15 +841,12 @@ const Register = () => {
             return;
         }
 
-        const resolved = nationalityListValue;
-        const { valid, normalized } = validateNationality(resolved);
+        const { valid, normalized } = validateNationality(nationalityListValue);
         if (!valid) {
             setNationalityError(NATIONALITY_ERROR_MESSAGE);
             return;
         }
-        setNationalityError(null);
-        setFormData((prev) => ({ ...prev, nationality: normalized }));
-        setStep(2);
+        advanceFromPersonalInfo(normalized);
     };
 
     const nextStep = () => setStep(prev => prev + 1);
@@ -828,16 +924,58 @@ const Register = () => {
                                     error={nationalityError}
                                 />
                             </div>
-                            <Input label="Camp ID" placeholder="e.g. CAMP-01" value={formData.campId} onChange={e => setFormData({ ...formData, campId: e.target.value })} />
+                            <div className="w-full col-span-2">
+                                <label className="block text-[#7a94bb] text-xs font-medium uppercase tracking-widest mb-2">Camp ID</label>
+                                <input
+                                    id="camp-id-input"
+                                    type="text"
+                                    autoComplete="off"
+                                    spellCheck={false}
+                                    placeholder={formatCampIdExample(formData.nationality)}
+                                    value={formData.campId}
+                                    onChange={(e) => handleCampIdChange(e.target.value)}
+                                    className={clsx(
+                                        'w-full rounded-lg px-4 py-3 text-sm transition-all duration-200',
+                                        'bg-[#060d1f] text-[#e2eaf8] placeholder-[#3d5278]',
+                                        'border focus:outline-none focus:ring-1',
+                                        campIdError
+                                            ? 'border-[#ef4444] focus:border-[#ef4444] focus:ring-[#ef444420]'
+                                            : 'border-[#1a2d4a] focus:border-[#00c9b1] focus:ring-[#00c9b120]',
+                                        '[&:-webkit-autofill]:shadow-[inset_0_0_0_1000px_#060d1f]',
+                                        '[&:-webkit-autofill]:[-webkit-text-fill-color:#e2eaf8]',
+                                    )}
+                                />
+                                <p className="mt-1 text-[10px] text-[#3d5278]">{CAMP_ID_FORMAT_HINT}</p>
+                                {campIdError ? (
+                                    <p className="mt-1 text-[10px] text-[#fca5a5] font-bold uppercase tracking-widest">
+                                        {campIdError}
+                                    </p>
+                                ) : null}
+                            </div>
                         </div>
 
                         <div>
                             <label className="block text-[#7a94bb] text-xs font-medium uppercase tracking-widest mb-2">Languages Spoken</label>
                             <div className="flex flex-wrap gap-2 mb-3">
-                                {formData.languages.map(lang => (
-                                    <span key={lang} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#00c9b120] text-[#00c9b1] border border-[#00c9b140]">
+                                {formData.languages.map((lang) => (
+                                    <span
+                                        key={lang}
+                                        className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full text-xs font-semibold bg-[#00c9b120] text-[#00c9b1] border border-[#00c9b140]"
+                                    >
                                         {lang}
-                                        <button onClick={() => setFormData(prev => ({ ...prev, languages: prev.languages.filter(l => l !== lang) }))}><Check size={12} /></button>
+                                        <button
+                                            type="button"
+                                            aria-label={`Remove ${lang}`}
+                                            onClick={() =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    languages: prev.languages.filter((l) => l !== lang),
+                                                }))
+                                            }
+                                            className="flex h-5 w-5 items-center justify-center rounded-full text-[#00c9b1] hover:bg-[#ef444430] hover:text-[#fca5a5] transition-colors"
+                                        >
+                                            <X size={12} strokeWidth={2.5} />
+                                        </button>
                                     </span>
                                 ))}
                             </div>
@@ -876,23 +1014,14 @@ const Register = () => {
                                             }}
                                         />
                                     </div>
-                                    <div className="w-40">
-                                        <select
-                                            className="w-full bg-[#060d1f] border border-[#1a2d4a] rounded-lg px-4 py-2 text-[#e2eaf8] text-sm"
-                                            value={member.relationship}
-                                            onChange={e => {
-                                                const newMembers = [...formData.familyMembers];
-                                                newMembers[idx].relationship = e.target.value;
-                                                setFormData({ ...formData, familyMembers: newMembers });
-                                            }}
-                                        >
-                                            <option>Spouse</option>
-                                            <option>Son</option>
-                                            <option>Daughter</option>
-                                            <option>Parent</option>
-                                            <option>Sibling</option>
-                                        </select>
-                                    </div>
+                                    <RelationshipCombobox
+                                        value={member.relationship}
+                                        onChange={(relationship) => {
+                                            const newMembers = [...formData.familyMembers];
+                                            newMembers[idx].relationship = relationship;
+                                            setFormData({ ...formData, familyMembers: newMembers });
+                                        }}
+                                    />
                                     <button
                                         onClick={() => setFormData(prev => ({ ...prev, familyMembers: prev.familyMembers.filter((_, i) => i !== idx) }))}
                                         className="p-2 text-[#ef4444] hover:bg-[#ef444410] rounded-lg transition-colors"
@@ -1288,6 +1417,7 @@ const Register = () => {
                                         setNationalityListValue('Syrian');
                                         setNationalityCustomText('');
                                         setNationalityError(null);
+                                        setCampIdError(null);
                                         setCustodial({ identityId: '', qrPayload: '', isProvisioning: false });
                                     }}
                                     className="bg-[#00c9b1] text-[#060d1f] font-bold py-4 rounded-xl hover:bg-[#00e0c5] transition-all"

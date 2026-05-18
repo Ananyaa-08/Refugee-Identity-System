@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { api } from '../../utils/api';
+import { clearActiveAppIdCache } from '../../utils/appId';
 import { useToast } from '../../context/ToastContext';
 
 const StatusCard = ({ title, icon: Icon, badge, items, accentColor }) => (
@@ -65,14 +66,23 @@ const AdminStatus = () => {
         }).catch(() => {});
     }, []);
 
-    const handleDeploy = async () => {
+    const handleDeploy = async (forceNew = false) => {
         setIsDeploying(true);
         try {
-            const res = await api.deploy();
+            const res = await api.deploy({ force_new: forceNew });
             const data = res.data ?? res;
             if (!data?.app_id) throw new Error('Deploy succeeded but no app_id returned');
+            clearActiveAppIdCache();
             setAppInfo(data);
-            showToast('success', 'Contract Deployed', `App ID: ${data.app_id}`);
+            if (data.warning) {
+                showToast('warning', 'Deploy completed with warning', data.warning);
+            } else {
+                showToast(
+                    'success',
+                    forceNew ? 'Fresh contract deployed' : 'Contract deployed',
+                    `App ID: ${data.app_id} (creator: ${data.creator ? `${data.creator.slice(0, 6)}…` : '—'})`,
+                );
+            }
         } catch (err) {
             showToast('error', 'Deploy Failed', err.message);
         } finally {
@@ -110,20 +120,36 @@ const AdminStatus = () => {
                 <div className="flex flex-wrap gap-4 items-end">
                     <div>
                         <label className="block text-[#7a94bb] text-xs font-bold uppercase mb-2">Contract</label>
-                        <button
-                            onClick={handleDeploy}
-                            disabled={isDeploying}
-                            className="bg-[#00c9b1] text-[#060d1f] font-bold py-2 px-6 rounded-lg hover:bg-[#00e0c5] disabled:opacity-50 flex items-center gap-2"
-                        >
-                            {isDeploying ? <Loader2 size={18} className="animate-spin" /> : null}
-                            {appInfo?.app_id ? 'Redeploy' : 'Deploy Contract'}
-                        </button>
+                        <div className="flex flex-wrap gap-2">
+                            <button
+                                type="button"
+                                onClick={() => handleDeploy(false)}
+                                disabled={isDeploying}
+                                className="bg-[#152342] text-[#e2eaf8] font-bold py-2 px-5 rounded-lg border border-[#1a2d4a] hover:border-[#3d5278] disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {isDeploying ? <Loader2 size={18} className="animate-spin" /> : null}
+                                {appInfo?.app_id ? 'Update in place' : 'Deploy'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleDeploy(true)}
+                                disabled={isDeploying}
+                                className="bg-[#00c9b1] text-[#060d1f] font-bold py-2 px-5 rounded-lg hover:bg-[#00e0c5] disabled:opacity-50 flex items-center gap-2"
+                            >
+                                Deploy Fresh Contract
+                            </button>
+                        </div>
                     </div>
                     {appInfo?.app_id && (
                         <>
                             <div className="text-[#7a94bb] text-sm">
                                 App ID: <span className="text-[#00c9b1] font-mono font-bold">{appInfo.app_id}</span>
                             </div>
+                            {appInfo.warning ? (
+                                <p className="text-[#f59e0b] text-xs leading-relaxed border border-[#f59e0b30] bg-[#f59e0b08] rounded-lg p-3 w-full">
+                                    {appInfo.warning}
+                                </p>
+                            ) : null}
                             <div className="flex-1 min-w-[200px]">
                                 <label className="block text-[#7a94bb] text-xs font-bold uppercase mb-2">Add Registrar (aid worker address)</label>
                                 <div className="flex gap-2">

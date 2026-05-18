@@ -10,22 +10,46 @@ async function request(method, path, body = null) {
     if (body) opts.body = JSON.stringify(body);
     const res = await fetch(url, opts);
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.detail || data.message || res.statusText);
+    if (!res.ok) {
+        const detail = data.detail;
+        const message = Array.isArray(detail)
+            ? detail.map((d) => d.msg || d.message || JSON.stringify(d)).join('; ')
+            : detail || data.message || res.statusText;
+        throw new Error(message);
+    }
     return data;
 }
 
 export const api = {
     getAppInfo: () => request('GET', '/api/blockchain/app-info'),
-    deploy: () => request('POST', '/api/blockchain/deploy'),
+    deploy: (body = {}) => request('POST', '/api/blockchain/deploy', body),
     addRegistrar: (address) => request('POST', '/api/blockchain/add-registrar', { address }),
     registerRefugee: (body) => request('POST', '/api/blockchain/register', body),
     custodialIdentities: () => request('GET', '/api/blockchain/custodial-identities'),
     getRefugeeByAddress: (address) => request('GET', `/api/blockchain/refugee/${address}`),
     getRefugees: () => request('GET', '/api/blockchain/refugees'),
     saveRefugeeRecord: (body) => request('POST', '/api/refugees/register-record', body),
+    lookupRefugee: (body) => request('POST', '/api/refugees/lookup', body),
     getAuditLogs: () => request('GET', '/api/audit/logs'),
     getAdminStats: () => request('GET', '/api/admin/stats'),
     getRefugeeState: (address) => request('GET', `/api/blockchain/refugee-state/${address}`),
+    verifyOnchainStatus: (address, options = {}) => {
+        const url = `${BASE}/api/blockchain/verify-onchain-status/${encodeURIComponent(address)}`;
+        return fetch(url, { signal: options.signal })
+            .then((res) => res.json().catch(() => ({})))
+            .then((data) => ({
+                address: data.address ?? address,
+                onchain_status: data.onchain_status ?? 'unknown',
+                identity_hash_present: Boolean(data.identity_hash_present),
+                aid_claimed: Number(data.aid_claimed) || 0,
+            }))
+            .catch(() => ({
+                address,
+                onchain_status: 'unknown',
+                identity_hash_present: false,
+                aid_claimed: 0,
+            }));
+    },
     claimAid: (address) => request('POST', '/api/blockchain/claim-aid', { address }),
     generateCustodialWallet: (body = null) => request('POST', '/api/blockchain/generate-custodial-wallet', body),
     verifyIdentity: (identity_id) => request('POST', '/api/blockchain/verify-identity', { identity_id }),

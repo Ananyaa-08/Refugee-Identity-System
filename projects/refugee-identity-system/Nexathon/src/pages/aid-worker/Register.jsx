@@ -10,11 +10,15 @@ import { QRCodeSVG } from 'qrcode.react';
 import Webcam from "react-webcam";
 import algosdk from 'algosdk';
 import CryptoJS from 'crypto-js';
-import { REFUGEE_APP_ID, ALGOD_SERVER, ALGOD_PORT, ALGOD_TOKEN } from '../../contracts/config';
+import { ALGOD_SERVER, ALGOD_PORT, ALGOD_TOKEN } from '../../contracts/config';
+import { getActiveAppId } from '../../utils/appId';
 import { useWallet } from '../../context/WalletContext';
 import {
     connectRefugeePeraWallet,
     killRefugeePeraWalletSession,
+    peraWallet,
+    normalizePeraAccount,
+    sendSignedTxnGroup,
 } from '../../utils/wallet';
 import { FaceLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 import { api } from '../../utils/api';
@@ -269,30 +273,81 @@ const bytesToHex = (u8) =>
         .map((b) => b.toString(16).padStart(2, '0'))
         .join('');
 
-async function getOrDeployAppId() {
-    const info = await api.getAppInfo();
-    const appId = info?.data?.app_id;
-    if (appId) return Number(appId);
-    const deployed = await api.deploy();
-    return Number(deployed?.data?.app_id);
+async function assertPeraSessionForRefugee(expectedAddress) {
+    const expected = normalizePeraAccount(expectedAddress);
+    const accounts = (await peraWallet.reconnectSession().catch(() => [])).map(normalizePeraAccount);
+    if (!accounts.includes(expected)) {
+        throw new Error(
+            `Pera Wallet must be connected as the refugee (${expected.slice(0, 4)}…${expected.slice(-4)}). `
+            + 'Return to Wallet Setup and link the refugee phone again before registering.',
+        );
+    }
+}
+
+function isOptedInOnChain(status) {
+    return status === 'confirmed' || status === 'opted_in_only' || status === 'migrated';
+}
+
+async function waitForWalletOptIn(address, timeoutMs = 20000) {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+        const status = await api.verifyOnchainStatus(address);
+        if (isOptedInOnChain(status.onchain_status)) {
+            return status;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+    return api.verifyOnchainStatus(address);
+}
+
+async function ensureRefugeeOptIn({ algodClient, appId, address, signTransactions }) {
+    const initial = await api.verifyOnchainStatus(address);
+    if (isOptedInOnChain(initial.onchain_status)) {
+        return { txHash: null, alreadyOptedIn: true };
+    }
+    if (initial.onchain_status === 'unknown') {
+        throw new Error(
+            'Could not verify on-chain opt-in status. Check the API is running and try again.',
+        );
+    }
+
+    await assertPeraSessionForRefugee(address);
+
+    let txHash;
+    try {
+        txHash = await peraOptInApp({ algodClient, appId, address, signTransactions });
+    } catch (optErr) {
+        throw new Error(
+            `Failed to opt the refugee wallet into app ${appId}. `
+            + `Approve the opt-in transaction in Pera. ${optErr?.message || optErr}`,
+        );
+    }
+
+    const after = await waitForWalletOptIn(address);
+    if (!isOptedInOnChain(after.onchain_status)) {
+        throw new Error(
+            `Opt-in to app ${appId} did not complete on-chain. `
+            + 'Confirm the Application Opt-In transaction in Pera (TestNet, correct account), then try again.',
+        );
+    }
+
+    return { txHash, alreadyOptedIn: false };
 }
 
 async function peraOptInApp({ algodClient, appId, address, signTransactions }) {
+    const sender = normalizePeraAccount(address);
+    if (!sender) {
+        throw new Error('Refugee wallet address is missing. Reconnect Pera on Wallet Setup.');
+    }
     const sp = await algodClient.getTransactionParams().do();
     const txn = algosdk.makeApplicationOptInTxnFromObject({
-        from: address,
-        appIndex: appId,
+        sender,
+        appIndex: Number(appId),
         suggestedParams: sp,
     });
-    const txnsToSign = [
-        {
-            txn,
-            signers: [address],
-        },
-    ];
+    const txnsToSign = [{ txn, signers: [sender] }];
     const signed = await signTransactions([txnsToSign]);
-    const blobs = signed.map((s) => s.blob);
-    const { txId } = await algodClient.sendRawTransaction(blobs).do();
+    const { txId } = await sendSignedTxnGroup(algodClient, signed);
     await algosdk.waitForConfirmation(algodClient, txId, 10);
     return txId;
 }
@@ -318,6 +373,7 @@ const Register = () => {
     const [step, setStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitStage, setSubmitStage] = useState(0);
+    const [activeAppId, setActiveAppId] = useState(null);
     const [showSuccess, setShowSuccess] = useState(false);
     const [currentLang, setCurrentLang] = useState('');
     const [registeredRecord, setRegisteredRecord] = useState(null);
@@ -691,13 +747,20 @@ const Register = () => {
         setIsSubmitting(true);
         setSubmitStage(1);
 
-        try {
-            // 0. Ensure app is deployed (backend persists app_id)
-            setSubmitStage(1);
-            const appId = await getOrDeployAppId();
-            if (!Number.isFinite(appId)) throw new Error("App is not deployed (missing app_id)");
+        const targetRefugee = formData.walletAddress;
 
-            // 2–3. Identity commitments (32-byte hashes; align with backend/custodial register pattern)
+        try {
+            setSubmitStage(1);
+            const appInfo = await api.getAppInfo();
+            if (appInfo?.data?.warning) {
+                throw new Error(appInfo.data.warning);
+            }
+            const appId = Number(appInfo?.data?.app_id);
+            if (!Number.isFinite(appId)) {
+                throw new Error('RIMS contract is not deployed. Deploy from Admin → System Status first.');
+            }
+            setActiveAppId(appId);
+
             setSubmitStage(2);
             const biometricData = formData.fullName + formData.dob + formData.nationality;
             const identityHash = sha256Bytes32(`identity:${biometricData}`);
@@ -708,30 +771,43 @@ const Register = () => {
             const ageProofHash = sha256Bytes32(`age:${formData.dob}|${formData.campId}`);
             setSubmitStage(3);
 
-            // 4. Opt-in (must be signed by the refugee wallet)
             const algodClient = new algosdk.Algodv2(ALGOD_TOKEN, ALGOD_SERVER, ALGOD_PORT);
-            const targetRefugee = formData.walletAddress;
 
             setSubmitStage(4);
-            let optInTxHash = null;
-            try {
-                optInTxHash = await peraOptInApp({ algodClient, appId, address: targetRefugee, signTransactions });
-            } catch (optErr) {
-                // If already opted in, algod will reject the second opt-in; treat as ok.
-                console.log("Opt-in skipped/failed (may already be opted-in):", optErr);
+            const { txHash: optInTxHash } = await ensureRefugeeOptIn({
+                algodClient,
+                appId,
+                address: targetRefugee,
+                signTransactions,
+            });
+            setSubmitStage(5);
+
+            const reg = await api.registerRefugee({
+                refugee: targetRefugee,
+                identity_hash: bytesToHex(identityHash),
+                personhood_hash: bytesToHex(personhoodHash),
+                age_proof_hash: bytesToHex(ageProofHash),
+            });
+            if (!reg?.ok) {
+                throw new Error(reg?.detail || 'Blockchain register transaction failed');
+            }
+            const registerTxHash = reg.tx_id || reg.txHash;
+            if (!registerTxHash) {
+                throw new Error('Blockchain register succeeded but no transaction id was returned');
+            }
+            if (Number(reg.app_id) && Number(reg.app_id) !== appId) {
+                throw new Error(
+                    `App ID mismatch: UI used ${appId} but backend registered on ${reg.app_id}. Redeploy from Admin → System Status.`,
+                );
             }
 
-            // 5. Register local-state hashes (authorized registrar is backend deployer)
-            setSubmitStage(5);
-            try {
-                await api.registerRefugee({
-                    refugee: targetRefugee,
-                    identity_hash: bytesToHex(identityHash),
-                    personhood_hash: bytesToHex(personhoodHash),
-                    age_proof_hash: bytesToHex(ageProofHash),
-                });
-            } catch (chainErr) {
-                console.warn('Blockchain registration unavailable, saving backend record only:', chainErr);
+            setSubmitStage(6);
+            const onchain = await api.verifyOnchainStatus(targetRefugee);
+            if (onchain.onchain_status !== 'confirmed') {
+                throw new Error(
+                    `On-chain registration not confirmed (status: ${onchain.onchain_status}). `
+                    + `Ensure opt-in and register both used app ${appId}.`,
+                );
             }
 
             const saved = await api.saveRefugeeRecord({
@@ -743,22 +819,26 @@ const Register = () => {
                 walletAddress: targetRefugee,
                 languages: formData.languages,
                 familyMembers: formData.familyMembers,
-                txHash: optInTxHash,
+                txHash: registerTxHash,
             });
             setRegisteredRecord(saved?.data || null);
 
-            // 7. Success
-            setSubmitStage(6);
+            setSubmitStage(7);
             setTimeout(() => {
                 setShowSuccess(true);
                 setIsSubmitting(false);
-                showToast('success', 'Registration Complete', 'Refugee identity has been permanently recorded on Algorand.');
+                showToast(
+                    'success',
+                    'Registration Complete',
+                    `Identity secured on Algorand (app ${appId}, tx ${String(registerTxHash).slice(0, 10)}…).`,
+                );
             }, 500);
 
         } catch (err) {
-            console.error(err);
+            console.error('Pera registration failed:', err);
             setIsSubmitting(false);
-            showToast('error', 'Registration Failed', err.message || 'Check console for details');
+            setSubmitStage(0);
+            showToast('error', 'Registration Failed', err.message || 'Blockchain registration did not complete.');
         }
     };
 
@@ -865,7 +945,8 @@ const Register = () => {
             : Boolean(formData.walletType);
 
     useEffect(() => {
-        if (step !== 3) {
+        // Keep WalletConnect through Review (step 4) so REGISTER IDENTITY can sign opt-in.
+        if (step !== 3 && step !== 4) {
             killRefugeePeraWalletSession();
             setPeraConnectQrUrl('');
         }
@@ -1474,7 +1555,7 @@ const Register = () => {
                                         { label: 'Authorizing registrar credentials', done: submitStage >= 1 },
                                         { label: 'Generating identity hashes', done: submitStage >= 2 },
                                         { label: 'Preparing metadata', done: submitStage >= 3 },
-                                        { label: 'Connecting to Algorand network', done: submitStage >= 4, extra: `App #${REFUGEE_APP_ID}` },
+                                        { label: 'Connecting to Algorand network', done: submitStage >= 4, extra: activeAppId ? `App #${activeAppId}` : '' },
                                         { label: 'Refugee Opt-In (Mandatory Status)', done: submitStage >= 5 },
                                         { label: 'Writing to Blockchain Ledger', done: submitStage >= 6, extra: 'Block Committing...' },
                                         { label: 'Identity Secured successfully ✓', done: submitStage >= 7 },

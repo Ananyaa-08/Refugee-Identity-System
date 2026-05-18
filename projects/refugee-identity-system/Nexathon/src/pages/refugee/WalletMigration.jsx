@@ -7,7 +7,7 @@ import {
 import { clsx } from 'clsx';
 import { useToast } from '../../context/ToastContext';
 import { useWallet } from '../../context/WalletContext';
-import { peraWallet } from '../../utils/wallet';
+import { peraWallet, sendSignedTxnGroup } from '../../utils/wallet';
 import { api } from '../../utils/api';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import algosdk from 'algosdk';
@@ -167,14 +167,13 @@ const WalletMigration = () => {
                 const algod = new algosdk.Algodv2(ALGOD_TOKEN, ALGOD_SERVER, ALGOD_PORT);
                 const sp = await algod.getTransactionParams().do();
                 const optInTxn = algosdk.makeApplicationOptInTxnFromObject({
-                    from: newAddr,
+                    sender: newAddr,
                     appIndex: appId,
                     suggestedParams: sp,
                 });
                 const txnsToSign = [{ txn: optInTxn, signers: [newAddr] }];
                 const signed = await peraWallet.signTransaction([txnsToSign]);
-                const blobs = signed.map((s) => s.blob);
-                const { txId } = await algod.sendRawTransaction(blobs).do();
+                const { txId } = await sendSignedTxnGroup(algod, signed);
                 await algosdk.waitForConfirmation(algod, txId, 10);
             } catch (optErr) {
                 // If already opted in, a second opt-in fails; allow the flow to continue.

@@ -27,12 +27,15 @@ deployer = check("account.from_environment(DEPLOYER)", lambda: algokit_utils.Alg
 if deployer:
     check("Deployer address", lambda: deployer.address)
 
+from blockchain.blockchain_utils import get_app_id
 from blockchain.artifacts.refugee_contract.refugee_contract_client import RefugeeContractClient
 if algorand and deployer:
+    _app_id = get_app_id()
+    check("APP_ID from .deployments.json / env", lambda: _app_id or "NOT SET")
     client = check("RefugeeContractClient init", lambda: RefugeeContractClient(
-        algorand=algorand, app_id=758854828,
+        algorand=algorand, app_id=_app_id,
         default_sender=deployer.address, default_signer=deployer.signer
-    ))
+    )) if _app_id else None
     if client:
         check("Global state read", lambda: f"totalRefugees={client.state.global_state().total_refugees}")
 

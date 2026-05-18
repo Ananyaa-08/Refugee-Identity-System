@@ -64,7 +64,7 @@ async function deploy() {
     
     console.log('\n✅ SUCCESS! Refugee Identity System Deployed.');
     console.log('New Application ID:', appId);
-    console.log('\n👉 Update REFUGEE_APP_ID in Nexathon/src/contracts/config.js with this ID');
+    console.log('\n👉 Save app id to Nexathon/.deployments.json (Admin → Deploy does this automatically)');
 }
 
 deploy().catch(err => {

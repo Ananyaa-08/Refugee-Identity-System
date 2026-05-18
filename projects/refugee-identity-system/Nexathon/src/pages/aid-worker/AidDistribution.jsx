@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
     Package, Search, Clock, CheckCircle, AlertTriangle,
     MapPin, Globe, Loader2, ArrowRight, X
@@ -7,11 +8,21 @@ import { clsx } from 'clsx';
 import { useToast } from '../../context/ToastContext';
 import { useWallet } from '../../context/WalletContext';
 import { api } from '../../utils/api';
+import { formatAddress } from '../../utils/format';
 
 const AidDistribution = () => {
     const { showToast } = useToast();
     const { account } = useWallet();
+    const location = useLocation();
     const [selectedRefugee, setSelectedRefugee] = useState(null); // Starts empty
+
+    useEffect(() => {
+        const refugee = location.state?.refugee;
+        if (refugee?.walletAddress) {
+            setSelectedRefugee(refugee);
+            setSearchTerm(refugee.walletAddress);
+        }
+    }, [location.state]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isConfirming, setIsConfirming] = useState(false);
     const [pendingAid, setPendingAid] = useState(null);
@@ -145,7 +156,7 @@ const AidDistribution = () => {
                     <div className="bg-[#060d1f] p-4 rounded-xl border border-[#1a2d4a] w-full md:w-auto">
                         <label className="block text-[#3d5278] text-[9px] font-bold uppercase tracking-[0.2em] mb-2">Connected Address</label>
                         <div className="font-mono text-[#00c9b1] text-xs">
-                            {selectedRefugee.walletAddress ? `${selectedRefugee.walletAddress.slice(0, 10)}...${selectedRefugee.walletAddress.slice(-8)}` : 'UNKNOWN'}
+                            {selectedRefugee.walletAddress ? formatAddress(selectedRefugee.walletAddress) : 'UNKNOWN'}
                         </div>
                     </div>
                 </div>
@@ -234,8 +245,8 @@ const AidDistribution = () => {
                                 <div className="flex items-center gap-2 text-[#3d5278] text-[9px] font-bold uppercase tracking-[0.2em] mb-2">
                                     Subject Identity ID
                                 </div>
-                                <div className="font-mono text-[#00c9b1] text-xs break-all leading-relaxed">
-                                    {selectedRefugee?.walletAddress}
+                                <div className="font-mono text-[#00c9b1] text-xs leading-relaxed">
+                                    {selectedRefugee?.id || formatAddress(selectedRefugee?.walletAddress) || '—'}
                                 </div>
                             </div>
 

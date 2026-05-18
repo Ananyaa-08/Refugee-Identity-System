@@ -61,3 +61,30 @@ export const reconnectSession = async () => {
 export const signTransaction = async (txGroups) => {
     return await peraWallet.signTransaction(txGroups);
 };
+
+/** Pera returns Uint8Array[]; older examples used { blob: Uint8Array }. */
+export function signedTxnToBlobs(signed) {
+    if (!Array.isArray(signed) || signed.length === 0) {
+        throw new Error('No signed transaction returned from Pera Wallet.');
+    }
+    return signed.map((item) => {
+        if (item instanceof Uint8Array) {
+            return item;
+        }
+        if (item?.blob instanceof Uint8Array) {
+            return item.blob;
+        }
+        if (item?.blob) {
+            return new Uint8Array(item.blob);
+        }
+        throw new Error('Unexpected signed transaction format from Pera Wallet.');
+    });
+}
+
+export async function sendSignedTxnGroup(algodClient, signed) {
+    const blobs = signedTxnToBlobs(signed);
+    if (blobs.length === 1) {
+        return algodClient.sendRawTransaction(blobs[0]).do();
+    }
+    return algodClient.sendRawTransaction(blobs).do();
+}

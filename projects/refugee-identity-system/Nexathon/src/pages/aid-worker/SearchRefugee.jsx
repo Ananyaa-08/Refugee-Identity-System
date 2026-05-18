@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Eye, User, MapPin, Globe, CheckCircle, Loader2, X } from 'lucide-react';
 import { api } from '../../utils/api';
+import { formatAddress } from '../../utils/format';
 import { clsx } from 'clsx';
 
 const SearchRefugee = () => {
@@ -144,7 +145,7 @@ const SearchRefugee = () => {
                             <div className="space-y-1">
                                 <label className="text-[10px] text-[#3d5278] font-bold uppercase tracking-widest pl-2 border-l border-[#1a2d4a]">System ID</label>
                                 <div className="flex items-center gap-1.5 text-[11px] font-mono text-[#e2eaf8]">
-                                    {refugee.walletAddress ? `${refugee.walletAddress.slice(0, 10)}...${refugee.walletAddress.slice(-4)}` : '—'}
+                                    {refugee.walletAddress ? formatAddress(refugee.walletAddress) : '—'}
                                 </div>
                             </div>
                             <div className="space-y-1">
@@ -196,8 +197,8 @@ const SearchRefugee = () => {
                                 <X size={20} />
                             </button>
                         </div>
-                        <p className="text-[#00c9b1] font-mono text-sm break-all p-4 bg-[#060d1f] rounded-lg border border-[#1a2d4a]">
-                            {selectedRefugee.walletAddress || '—'}
+                        <p className="text-[#00c9b1] font-mono text-sm p-4 bg-[#060d1f] rounded-lg border border-[#1a2d4a]">
+                            {selectedRefugee.id || formatAddress(selectedRefugee.walletAddress) || '—'}
                         </p>
                     </div>
                 </div>

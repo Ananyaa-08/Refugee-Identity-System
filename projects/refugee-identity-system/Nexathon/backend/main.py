@@ -36,6 +36,7 @@ if os.getenv("RIMS_NETWORK", "").lower() == "localnet" and _env_localnet.exists(
 from algosdk import util
 from algosdk.error import AlgodHTTPError
 from algosdk.encoding import decode_address
+from algosdk.logic import get_application_address
 from algosdk import account as algo_account
 from algosdk import mnemonic
 from algosdk.transaction import ApplicationOptInTxn, PaymentTxn, wait_for_confirmation
@@ -173,6 +174,7 @@ def _save_refugee_record(row: dict) -> dict:
         "registeredAt": row.get("registeredAt") or now,
         "walletType": row.get("walletType") or "custodial",
         "aidClaimed": bool(row.get("aidClaimed", False)),
+        "aidClaimedAt": row.get("aidClaimedAt") or row.get("aid_claimed_at"),
         "id": refugee_id,
         "languages": row.get("languages") or [],
         "familyMembers": row.get("familyMembers") or [],
@@ -523,19 +525,51 @@ def _ensure_deployer_funded_for_localnet(algorand: algokit_utils.AlgorandClient)
         return
 
 
-def _ensure_deployer_is_registrar(client: RefugeeContractClient) -> None:
+def _contract_admin_address(client: RefugeeContractClient) -> str | None:
+    """Return the contract admin Algorand address from global state, if available."""
+    try:
+        admin_bytes = client.state.global_state.get_value("admin")
+        if isinstance(admin_bytes, (bytes, bytearray)) and len(admin_bytes) == 32:
+            return util.encode_address(bytes(admin_bytes))
+    except Exception:
+        pass
+    return None
+
+
+def _deployer_account():
     algorand = _get_algorand()
     _ensure_deployer_funded_for_localnet(algorand)
-    deployer = algorand.account.from_environment("DEPLOYER")
-    # Idempotently set deployer as registrar so backend can register refugees.
-    client.send.add_registrar(
-        args=(deployer.address, "add"),
-        params=algokit_utils.CommonAppCallParams(
-            sender=deployer.address,
-            signer=deployer.signer,
-            box_references=[_create_registrar_box_reference(client.app_id, deployer.address)],
-        ),
-    )
+    return algorand.account.from_environment("DEPLOYER")
+
+
+def _ensure_deployer_is_registrar(client: RefugeeContractClient) -> None:
+    deployer = _deployer_account()
+    admin = _contract_admin_address(client)
+    if admin and admin == deployer.address:
+        return
+    try:
+        client.send.add_registrar(
+            args=(deployer.address, "add"),
+            params=algokit_utils.CommonAppCallParams(
+                sender=deployer.address,
+                signer=deployer.signer,
+                box_references=[_create_registrar_box_reference(client.app_id, deployer.address)],
+            ),
+        )
+    except Exception as e:
+        detail = str(e)
+        if admin:
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "Backend DEPLOYER is not authorized for this contract. "
+                    f"Contract admin is {admin[:8]}…{admin[-4:]}; "
+                    f"configured deployer is {deployer.address[:8]}…{deployer.address[-4:]}. "
+                    "Use the deployer mnemonic that created app "
+                    f"{client.app_id}, or redeploy from Admin → System Status."
+                ),
+            ) from e
+        raise HTTPException(status_code=503, detail=detail) from e
 
 
 def _fund_account(sender_private_key: str, receiver: str, amount_microalgos: int) -> str:
@@ -587,16 +621,60 @@ def _startup_log() -> None:
     print(f"[startup] ALGOD_SERVER={server} ALGOD_PORT={port} APP_ID={app_id}")
 
 
-def _get_app_id() -> int | None:
-    """Read persisted app_id from deployments file."""
-    import json
-    if not _DEPLOYMENTS_FILE.exists():
-        return None
+def _application_exists(app_id: int) -> bool:
+    """Return True if the application is deployed on the configured algod network."""
     try:
-        data = json.loads(_DEPLOYMENTS_FILE.read_text())
-        return data.get("app_id")
+        _get_algod().application_info(app_id)
+        return True
+    except AlgodHTTPError as e:
+        if getattr(e, "code", None) == 404:
+            return False
+        message = str(e).lower()
+        if "not found" in message or "does not exist" in message:
+            return False
+        raise
     except Exception:
-        return None
+        return False
+
+
+def _get_app_id() -> int | None:
+    """
+    Resolve the RefugeeContract app id for the active algod network.
+
+    Canonical sources only (in order):
+    1. Nexathon/.deployments.json (written by Admin deploy)
+    2. REFUGEE_APP_ID environment variable
+
+    Does not fall back to legacy hardcoded app IDs or overwrite deployments.json.
+    """
+    deployment = _get_deployment()
+    candidates: list[int] = []
+
+    file_id = deployment.get("app_id")
+    if file_id is not None:
+        try:
+            candidates.append(int(file_id))
+        except (TypeError, ValueError):
+            pass
+
+    env_id = (os.getenv("REFUGEE_APP_ID") or "").strip()
+    if env_id:
+        try:
+            env_app_id = int(env_id)
+            if env_app_id not in candidates:
+                candidates.append(env_app_id)
+        except ValueError:
+            pass
+
+    seen: set[int] = set()
+    for app_id in candidates:
+        if app_id in seen:
+            continue
+        seen.add(app_id)
+        if _application_exists(app_id):
+            return app_id
+
+    return None
 
 
 def _get_deployment() -> dict:
@@ -655,14 +733,48 @@ def test_blockchain():
     }
 
 
+def _application_creator(app_id: int) -> str | None:
+    try:
+        info = _get_algod().application_info(app_id)
+        return info.get("params", {}).get("creator")
+    except Exception:
+        return None
+
+
 @app.get("/api/blockchain/app-info")
 def get_app_info():
-    """Return deployed app ID and address."""
-    deployment = _get_deployment()
-    app_id = deployment.get("app_id")
+    """Return deployed app ID and address (same id used for opt-in, register, and verification)."""
+    app_id = _get_app_id()
     if not app_id:
         return {"data": {"app_id": None, "app_address": None}}
-    return {"data": {"app_id": app_id, "app_address": deployment.get("app_address")}}
+    deployment = _get_deployment()
+    app_address = deployment.get("app_address")
+    if not app_address:
+        try:
+            app_address = str(get_application_address(app_id))
+        except Exception:
+            app_address = None
+    creator = _application_creator(app_id)
+    warning = None
+    deployer_addr = None
+    try:
+        deployer_addr = _deployer_account().address
+        if creator and deployer_addr and creator != deployer_addr:
+            warning = (
+                f"App {app_id} was created by {creator}, not the RIMS deployer ({deployer_addr}). "
+                "Fix DEPLOYER_MNEMONIC in .env, restart the API, then use Deploy Fresh Contract."
+            )
+    except Exception:
+        pass
+    return {
+        "data": {
+            "app_id": app_id,
+            "app_address": app_address,
+            "creator": creator,
+            "deployer": deployer_addr,
+            "warning": warning,
+        }
+    }
 
 
 @app.get("/api/blockchain/custodial-identities")
@@ -697,6 +809,11 @@ def custodial_identities():
 
 class IdentityIdRequest(BaseModel):
     identity_id: str
+
+
+class RefugeeLookupRequest(BaseModel):
+    identity_id: str | None = None
+    wallet_address: str | None = None
 
 
 def _get_custodial_identity(identity_id: str) -> dict | None:
@@ -790,6 +907,42 @@ def _resolve_refugee_identity(identity_id: str) -> dict | None:
         "provisioning_status": (custodial_row or {}).get("provisioning_status"),
         "name": name,
         "created_at": (custodial_row or {}).get("created_at") or (registry_row or {}).get("registeredAt"),
+    }
+
+
+def _build_refugee_profile_payload(resolved: dict, chain: dict | None = None) -> dict:
+    """Merge registry + custodial + on-chain status into a single aid-worker profile."""
+    registry = resolved.get("registry_row") or {}
+    custodial = resolved.get("custodial_row") or {}
+    chain = chain or {}
+    wallet_address = (resolved.get("address") or "").strip()
+    canonical_id = resolved.get("identity_id") or ""
+
+    return {
+        "id": canonical_id,
+        "identity_id": canonical_id,
+        "name": resolved.get("name") or "Registered Refugee",
+        "walletAddress": wallet_address,
+        "nationality": registry.get("nationality") or custodial.get("nationality") or "N/A",
+        "dob": registry.get("dob") or custodial.get("dob"),
+        "gender": registry.get("gender") or custodial.get("gender") or "N/A",
+        "campID": registry.get("campID") or registry.get("camp") or custodial.get("campID") or "N/A",
+        "languages": registry.get("languages") or custodial.get("languages") or [],
+        "familyMembers": registry.get("familyMembers") or [],
+        "walletType": registry.get("walletType") or ("custodial" if custodial else "pera"),
+        "aidClaimed": bool(registry.get("aidClaimed", False)),
+        "registeredAt": resolved.get("created_at") or registry.get("registeredAt"),
+        "status": "migrated" if chain.get("migrated") else "active",
+        "verification_mode": (
+            "on_chain"
+            if chain.get("on_chain")
+            else resolved.get("provisioning_status") or "backend_registry"
+        ),
+        "blockchain": {
+            "funded": chain.get("funded"),
+            "opted_in": chain.get("opted_in"),
+            "local_state_exists": chain.get("local_state_exists"),
+        },
     }
 
 
@@ -898,21 +1051,18 @@ def get_identity(body: IdentityIdRequest):
     chain = _read_on_chain_identity_status(address)
     canonical_id = resolved["identity_id"]
     qr_payload = json.dumps({"identity_id": canonical_id, "old_wallet": address})
+    profile = _build_refugee_profile_payload(resolved, chain)
 
     return {
         "success": True,
         "data": {
             "identity_id": canonical_id,
-            "name": resolved.get("name") or "Registered Refugee",
+            "name": profile["name"],
             "old_wallet": address,
-            "status": "migrated" if chain["migrated"] else "active",
+            "status": profile["status"],
             "created_at": resolved.get("created_at"),
             "app_id": chain.get("app_id"),
-            "verification_mode": (
-                "on_chain"
-                if chain["on_chain"]
-                else resolved.get("provisioning_status") or "backend_registry"
-            ),
+            "verification_mode": profile["verification_mode"],
             "blockchain": {
                 "funded": chain["funded"],
                 "amount_microalgos": chain["amount_microalgos"],
@@ -920,24 +1070,88 @@ def get_identity(body: IdentityIdRequest):
                 "local_state_exists": chain["local_state_exists"],
             },
             "qr_payload": qr_payload,
+            "profile": profile,
         },
     }
 
 
+@app.post("/api/refugees/lookup")
+def lookup_refugee(body: RefugeeLookupRequest):
+    """Resolve refugee profile by printed QR identity id and/or wallet address."""
+    identity_id = (body.identity_id or "").strip()
+    wallet = (body.wallet_address or "").strip()
+
+    if wallet:
+        try:
+            decode_address(wallet)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail="wallet_address must be a valid Algorand address") from e
+
+    if not identity_id and wallet:
+        registry_row = _find_refugee_by_wallet(wallet)
+        if registry_row and registry_row.get("id"):
+            identity_id = str(registry_row["id"])
+        if not identity_id:
+            found = _find_custodial_by_wallet(wallet)
+            if found:
+                key, crow = found
+                identity_id = str(crow.get("refugee_id") or key)
+
+    if not identity_id:
+        raise HTTPException(status_code=400, detail="identity_id or wallet_address is required")
+
+    resolved = _resolve_refugee_identity(identity_id)
+    if not resolved:
+        raise HTTPException(status_code=404, detail="Identity not found")
+
+    address = (resolved.get("address") or wallet or "").strip()
+    if address:
+        _require_algorand_address(address, "wallet_address")
+
+    chain = _read_on_chain_identity_status(address) if address else {}
+    profile = _build_refugee_profile_payload(resolved, chain)
+
+    return {"success": True, "data": profile}
+
+
+class DeployRequest(BaseModel):
+    """force_new: create a brand-new application id (required after mis-deployed refugee creator)."""
+    force_new: bool = False
+
+
 @app.post("/api/blockchain/deploy")
-def deploy():
-    """Deploy RefugeeContract and persist app_id."""
+def deploy(body: DeployRequest | None = None):
+    """Deploy RefugeeContract and persist app_id to Nexathon/.deployments.json."""
+    req = body or DeployRequest()
     try:
         algorand = _get_algorand()
         _ensure_deployer_funded_for_localnet(algorand)
         deployer = algorand.account.from_environment("DEPLOYER")
+
+        if req.force_new and _DEPLOYMENTS_FILE.exists():
+            _DEPLOYMENTS_FILE.unlink()
+
         factory = algorand.client.get_typed_app_factory(
             RefugeeContractFactory, default_sender=deployer.address
         )
-        app_client, result = factory.deploy(
-            on_update=algokit_utils.OnUpdate.AppendApp,
-            on_schema_break=algokit_utils.OnSchemaBreak.AppendApp,
-        )
+
+        deploy_kwargs: dict = {
+            "on_update": algokit_utils.OnUpdate.AppendApp,
+            "on_schema_break": algokit_utils.OnSchemaBreak.AppendApp,
+        }
+        if req.force_new:
+            deploy_kwargs.update(
+                {
+                    "app_name": f"RefugeeContract-{_utc_now_iso().replace(':', '').replace('-', '')[:15]}",
+                    "ignore_cache": True,
+                    "on_update": algokit_utils.OnUpdate.Fail,
+                    "on_schema_break": algokit_utils.OnSchemaBreak.Fail,
+                }
+            )
+
+        app_client, result = factory.deploy(**deploy_kwargs)
+        creator = _application_creator(app_client.app_id)
+
         if result.operation_performed in [
             algokit_utils.OperationPerformed.Create,
             algokit_utils.OperationPerformed.Replace,
@@ -949,10 +1163,30 @@ def deploy():
                     receiver=app_client.app_address,
                 )
             )
+
         _save_deployment(app_client.app_id, app_client.app_address)
-        return {"data": {"app_id": app_client.app_id, "app_address": app_client.app_address}}
+        warning = None
+        if creator and creator != deployer.address:
+            warning = (
+                f"App {app_client.app_id} creator is {creator}, not deployer {deployer.address}. "
+                "Check DEPLOYER_MNEMONIC in .env."
+            )
+
+        return {
+            "data": {
+                "app_id": app_client.app_id,
+                "app_address": app_client.app_address,
+                "creator": creator,
+                "deployer": deployer.address,
+                "operation": str(result.operation_performed),
+                "force_new": req.force_new,
+                "warning": warning,
+            }
+        }
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 class AddRegistrarRequest(BaseModel):
@@ -1017,32 +1251,176 @@ def register(body: dict):
     age_proof_hash = _hash_bytes(age_proof_hash)
     try:
         client = _get_client()
+        if not _account_opted_into_app(refugee, client.app_id):
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Refugee is not opted into contract app {client.app_id}. "
+                    "Complete Application Opt-In in Pera for this wallet before registering."
+                ),
+            )
+        deployer = _deployer_account()
         _ensure_deployer_is_registrar(client)
-        client.send.register((refugee, identity_hash, personhood_hash, age_proof_hash))
-        return {"ok": True}
+        print(
+            f"[register] refugee={refugee} app_id={client.app_id} "
+            f"deployer={deployer.address}",
+            flush=True,
+        )
+        send_result = client.send.register(
+            (refugee, identity_hash, personhood_hash, age_proof_hash),
+            params=algokit_utils.CommonAppCallParams(
+                sender=deployer.address,
+                signer=deployer.signer,
+                account_references=[refugee],
+            ),
+        )
+        tx_id = None
+        tx_ids = getattr(send_result, "tx_ids", None)
+        if tx_ids:
+            tx_id = tx_ids[-1] if isinstance(tx_ids, (list, tuple)) else tx_ids
+        if not tx_id:
+            tx_id = getattr(send_result, "tx_id", None) or getattr(send_result, "transaction_id", None)
+        print(f"[register] success tx_id={tx_id} app_id={client.app_id}", flush=True)
+        return {"ok": True, "tx_id": tx_id, "txHash": tx_id, "app_id": client.app_id}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"[register] failed refugee={refugee}: {e}", flush=True)
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 class ClaimAidRequest(BaseModel):
     address: str
 
 
+def _friendly_chain_error(exc: Exception, app_id: int | None = None) -> HTTPException:
+    message = str(exc)
+    lower = message.lower()
+    if "does not exist" in lower and "application" in lower:
+        return HTTPException(
+            status_code=503,
+            detail=(
+                f"Smart contract application #{app_id} is not on the configured Algorand network. "
+                "Redeploy from Admin → System Status, or set REFUGEE_APP_ID / .deployments.json to match TestNet."
+            ),
+        )
+    if "claim_aid: sender not authorized" in lower or (
+        "not authorized" in lower and "claim_aid" in lower
+    ):
+        return HTTPException(
+            status_code=503,
+            detail=(
+                "Backend deployer is not authorized to issue aid on this contract. "
+                "Ensure DEPLOYER in .env matches the account that deployed the app."
+            ),
+        )
+    if "claim_aid: refugee not opted in" in lower or (
+        "not opted in" in lower and "claim_aid" in lower
+    ):
+        return HTTPException(
+            status_code=400,
+            detail="This refugee is not opted into the identity contract. Complete on-chain registration first.",
+        )
+    if "claim_aid: already claimed" in lower or "already claimed" in lower:
+        return HTTPException(status_code=409, detail="Aid has already been claimed for this refugee on-chain.")
+    if "err opcode" in lower:
+        return HTTPException(
+            status_code=400,
+            detail=(
+                "The blockchain rejected this aid claim. The refugee may not be fully registered on-chain "
+                "(opt-in + register), or the backend deployer is not authorized for this contract."
+            ),
+        )
+    if "not opted in" in lower:
+        return HTTPException(
+            status_code=400,
+            detail="This refugee is not opted into the identity contract. Complete on-chain registration first.",
+        )
+    if "not authorized" in lower:
+        return HTTPException(
+            status_code=503,
+            detail="Backend deployer is not authorized as a registrar on the contract.",
+        )
+    return HTTPException(status_code=500, detail=message)
+
+
 @app.post("/api/blockchain/claim-aid")
 def claim_aid(req: ClaimAidRequest):
-    """Mark aid as claimed for a refugee."""
-    address = req.address
+    """Mark aid as claimed for a refugee on-chain and in the backend registry."""
+    address = (req.address or "").strip()
+    _require_algorand_address(address, "address")
+
+    app_id = _get_app_id()
+    if not app_id:
+        raise HTTPException(
+            status_code=503,
+            detail="Refugee contract is not deployed on this network. Deploy from Admin → System Status.",
+        )
+
     try:
         client = _get_client()
-        client.send.claim_aid((address,))
-        return {"ok": True}
+        deployer = _deployer_account()
+        _ensure_deployer_is_registrar(client)
+
+        local = _read_registered_refugee_state(client, address)
+        if not local:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "This refugee is not fully registered on the blockchain for the active contract. "
+                    "Re-run aid-worker registration (custodial or Pera) so opt-in and register complete, "
+                    "then try issuing aid again."
+                ),
+            )
+        if int(local.get("aid_claimed", 0) or 0) > 0:
+            raise HTTPException(status_code=409, detail="Aid has already been claimed for this refugee on-chain.")
+
+        client.send.claim_aid(
+            (address,),
+            params=algokit_utils.CommonAppCallParams(
+                sender=deployer.address,
+                signer=deployer.signer,
+                account_references=[address],
+            ),
+        )
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise _friendly_chain_error(e, app_id) from e
+
+    registry_row = _find_refugee_by_wallet(address)
+    if registry_row:
+        _save_refugee_record(
+            {
+                **registry_row,
+                "aidClaimed": True,
+                "aidClaimedAt": _utc_now_iso(),
+            }
+        )
+
+    return {"ok": True, "success": True}
+
+
+def _account_opted_into_app(address: str, app_id: int) -> bool:
+    """
+    True only when the account has local state for this app (real opt-in).
+
+    account_application_info returns 200 for app creators who are not opted in;
+    use apps-local-state from account_info instead.
+    """
+    try:
+        info = _get_algod().account_info(address)
+        for app in info.get("apps-local-state", []) or []:
+            if int(app.get("id", 0) or 0) == int(app_id):
+                return True
+        return False
+    except Exception:
+        return False
 
 
 def _read_local_state(client, address: str) -> dict | None:
     """Read local state for address; return None if not opted in or no data."""
     try:
+        if not _account_opted_into_app(address, client.app_id):
+            return None
         local = client.state.local_state(address)
         data = local.get_all()
         if not data:
@@ -1050,6 +1428,17 @@ def _read_local_state(client, address: str) -> dict | None:
         return data
     except Exception:
         return None
+
+
+def _read_registered_refugee_state(client, address: str) -> dict | None:
+    """Return local state only when the refugee is opted in and has identity hashes on-chain."""
+    data = _read_local_state(client, address)
+    if not data:
+        return None
+    identity_hash = data.get("identity_hash")
+    if not identity_hash or identity_hash == b"MIGRATED":
+        return None
+    return data
 
 
 @app.get("/api/blockchain/refugee/{address}")
@@ -1092,6 +1481,67 @@ def get_refugee(address: str):
 def get_refugee_state(address: str):
     """Get refugee state for AidDistribution search (same as get_refugee, different path)."""
     return get_refugee(address)
+
+
+def _identity_hash_nonempty(identity_hash) -> bool:
+    if identity_hash is None:
+        return False
+    if isinstance(identity_hash, (bytes, bytearray)):
+        return len(identity_hash) > 0
+    if isinstance(identity_hash, str):
+        return bool(identity_hash.strip())
+    return bool(identity_hash)
+
+
+@app.get("/api/blockchain/verify-onchain-status/{refugee_address}")
+def verify_onchain_status(refugee_address: str):
+    """
+    Report on-chain registration status for a refugee wallet.
+
+    Uses account_application_info + local state. Never raises; returns unknown on errors.
+    """
+    address = (refugee_address or "").strip()
+    out = {
+        "address": address,
+        "onchain_status": "unknown",
+        "identity_hash_present": False,
+        "aid_claimed": 0,
+    }
+    if not address:
+        return out
+    try:
+        app_id = _get_app_id()
+        if not app_id:
+            return out
+        if not _account_opted_into_app(address, app_id):
+            out["onchain_status"] = "not_registered"
+            return out
+
+        try:
+            client = _get_client()
+        except HTTPException:
+            return out
+
+        data = _read_local_state(client, address)
+        if not data:
+            out["onchain_status"] = "opted_in_only"
+            return out
+
+        identity_hash = data.get("identity_hash")
+        out["aid_claimed"] = int(data.get("aid_claimed", 0) or 0)
+
+        if identity_hash == b"MIGRATED":
+            out["onchain_status"] = "migrated"
+            out["identity_hash_present"] = True
+        elif _identity_hash_nonempty(identity_hash):
+            out["onchain_status"] = "confirmed"
+            out["identity_hash_present"] = True
+        else:
+            out["onchain_status"] = "opted_in_only"
+            out["identity_hash_present"] = False
+        return out
+    except Exception:
+        return out
 
 
 @app.get("/api/blockchain/refugees")
@@ -1586,7 +2036,15 @@ def generate_custodial_wallet(body: GenerateCustodialWalletRequest | None = None
         age_proof_hash = hashlib.sha256(f"age:{identity_id}".encode()).digest()
 
         # Register identity into W1 local state (sender must be registrar).
-        client.send.register((address, identity_hash, personhood_hash, age_proof_hash))
+        deployer = _deployer_account()
+        client.send.register(
+            (address, identity_hash, personhood_hash, age_proof_hash),
+            params=algokit_utils.CommonAppCallParams(
+                sender=deployer.address,
+                signer=deployer.signer,
+                account_references=[address],
+            ),
+        )
 
         # Store W1 private key securely in backend storage (prepare for encryption).
         # NOTE: For production, encrypt at rest (e.g., envelope encryption / KMS).

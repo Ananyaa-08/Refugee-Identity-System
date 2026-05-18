@@ -12,6 +12,10 @@ import algosdk from 'algosdk';
 import CryptoJS from 'crypto-js';
 import { REFUGEE_APP_ID, ALGOD_SERVER, ALGOD_PORT, ALGOD_TOKEN } from '../../contracts/config';
 import { useWallet } from '../../context/WalletContext';
+import {
+    connectRefugeePeraWallet,
+    killRefugeePeraWalletSession,
+} from '../../utils/wallet';
 import { FaceLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 import { api } from '../../utils/api';
 import { formatAddress } from '../../utils/format';
@@ -307,7 +311,9 @@ async function generateSHA256Hash(imageData) {
 // --- Registration Page ---
 
 const Register = () => {
-    const { account, signTransactions, connectWallet } = useWallet();
+    const { signTransactions, setManualAccount, disconnectWallet } = useWallet();
+    const [peraConnecting, setPeraConnecting] = useState(false);
+    const [peraConnectQrUrl, setPeraConnectQrUrl] = useState('');
     const { showToast } = useToast();
     const [step, setStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -677,9 +683,8 @@ const Register = () => {
             return;
         }
 
-        if (!account) {
-            showToast('info', 'Wallet Required', 'Please connect your Pera Wallet first.');
-            await connectWallet();
+        if (!formData.walletAddress) {
+            showToast('error', 'Wallet Required', 'Connect the refugee Pera Wallet before registering.');
             return;
         }
 
@@ -705,7 +710,7 @@ const Register = () => {
 
             // 4. Opt-in (must be signed by the refugee wallet)
             const algodClient = new algosdk.Algodv2(ALGOD_TOKEN, ALGOD_SERVER, ALGOD_PORT);
-            const targetRefugee = account;
+            const targetRefugee = formData.walletAddress;
 
             setSubmitStage(4);
             let optInTxHash = null;
@@ -853,6 +858,47 @@ const Register = () => {
     const prevStep = () => setStep(prev => prev - 1);
 
     const steps = ["Personal Info", "Liveness Check", "Wallet Setup", "Review & Submit"];
+
+    const canReviewRegistration =
+        formData.walletType === 'pera'
+            ? Boolean(formData.walletAddress)
+            : Boolean(formData.walletType);
+
+    useEffect(() => {
+        if (step !== 3) {
+            killRefugeePeraWalletSession();
+            setPeraConnectQrUrl('');
+        }
+    }, [step]);
+
+    const selectPeraFlow = async () => {
+        setCustodial({ identityId: '', qrPayload: '', isProvisioning: false });
+        setFormData((prev) => ({ ...prev, walletType: 'pera', walletAddress: '' }));
+        setPeraConnectQrUrl('');
+        await disconnectWallet();
+        await handlePeraConnect();
+    };
+
+    const handlePeraConnect = async () => {
+        setPeraConnecting(true);
+        setPeraConnectQrUrl('');
+        try {
+            await killRefugeePeraWalletSession();
+            const accounts = await connectRefugeePeraWallet({
+                onQrUri: setPeraConnectQrUrl,
+            });
+            const address = accounts[0];
+            setManualAccount(address);
+            setFormData((prev) => ({ ...prev, walletType: 'pera', walletAddress: address }));
+            showToast('success', 'Wallet connected', 'Refugee Pera Wallet is linked for registration.');
+        } catch (error) {
+            if (error?.message !== 'User closed modal') {
+                showToast('error', 'Connection Failed', error?.message || 'Could not connect Pera Wallet.');
+            }
+        } finally {
+            setPeraConnecting(false);
+        }
+    };
 
     const provisionCustodialWallet = async () => {
         setCustodial((p) => ({ ...p, isProvisioning: true }));
@@ -1166,19 +1212,14 @@ const Register = () => {
                 {step === 3 && (
                     <div className="space-y-8 animate-fadeIn">
                         <div className="grid grid-cols-2 gap-4">
-                            <div
-                                onClick={() => {
-                                    setCustodial({ identityId: '', qrPayload: '', isProvisioning: false });
-                                    if (!account) {
-                                        showToast('info', 'Wallet Required', 'Connect Pera Wallet first, then select this option again.');
-                                        connectWallet();
-                                        return;
-                                    }
-                                    setFormData({ ...formData, walletType: 'pera', walletAddress: account });
-                                }}
+                            <button
+                                type="button"
+                                onClick={selectPeraFlow}
                                 className={clsx(
-                                    "bg-[#0f1e38] border p-6 rounded-xl cursor-pointer transition-all duration-300 flex flex-col items-center text-center",
-                                    formData.walletType === 'pera' ? "border-[#00c9b1] shadow-[0_0_20px_rgba(0,201,177,0.1)]" : "border-[#1a2d4a] hover:border-[#3d5278]"
+                                    'bg-[#0f1e38] border p-6 rounded-xl cursor-pointer transition-all duration-300 flex flex-col items-center text-center',
+                                    formData.walletType === 'pera'
+                                        ? 'border-[#00c9b1] shadow-[0_0_20px_rgba(0,201,177,0.1)]'
+                                        : 'border-[#1a2d4a] hover:border-[#3d5278]',
                                 )}
                             >
                                 <div className="w-12 h-12 bg-[#3b82f620] text-[#3b82f6] rounded-full flex items-center justify-center mb-4">
@@ -1186,8 +1227,10 @@ const Register = () => {
                                 </div>
                                 <h3 className="text-white font-bold mb-2">Has Smartphone</h3>
                                 <p className="text-[#7a94bb] text-[11px]">Refugee installs Pera Wallet and controls their own digital identity.</p>
-                                {formData.walletType === 'pera' && <Check className="text-[#00c9b1] mt-4" size={20} />}
-                            </div>
+                                {formData.walletType === 'pera' && formData.walletAddress && (
+                                    <Check className="text-[#00c9b1] mt-4" size={20} />
+                                )}
+                            </button>
 
                             <div
                                 onClick={() => {
@@ -1195,8 +1238,10 @@ const Register = () => {
                                     provisionCustodialWallet();
                                 }}
                                 className={clsx(
-                                    "bg-[#0f1e38] border p-6 rounded-xl cursor-pointer transition-all duration-300 flex flex-col items-center text-center",
-                                    formData.walletType === 'custodial' ? "border-[#f59e0b] shadow-[0_0_20px_rgba(245,158,11,0.1)]" : "border-[#1a2d4a] hover:border-[#3d5278]"
+                                    'bg-[#0f1e38] border p-6 rounded-xl cursor-pointer transition-all duration-300 flex flex-col items-center text-center',
+                                    formData.walletType === 'custodial'
+                                        ? 'border-[#f59e0b] shadow-[0_0_20px_rgba(245,158,11,0.1)]'
+                                        : 'border-[#1a2d4a] hover:border-[#3d5278]',
                                 )}
                             >
                                 <div className="w-12 h-12 bg-[#f59e0b20] text-[#f59e0b] rounded-full flex items-center justify-center mb-4">
@@ -1212,24 +1257,85 @@ const Register = () => {
                             </div>
                         </div>
 
-                        {formData.walletType && (
+                        {formData.walletType === 'pera' && (
+                            <div className="bg-[#0f1e38] border border-[#00c9b140] rounded-xl p-8 animate-fadeSlideUp flex flex-col items-center text-center">
+                                <h4 className="text-[#e2eaf8] font-bold text-sm uppercase tracking-widest mb-2">
+                                    Connect refugee wallet
+                                </h4>
+                                <p className="text-[#7a94bb] text-xs mb-6 max-w-md">
+                                    Scan this QR with Pera Wallet on the refugee&apos;s smartphone, then confirm the
+                                    connection below.
+                                </p>
+                                {peraConnectQrUrl && !formData.walletAddress && (
+                                    <div className="bg-white p-4 rounded-xl mb-6">
+                                        <QRCodeSVG value={peraConnectQrUrl} size={180} level="M" />
+                                    </div>
+                                )}
+                                {!peraConnectQrUrl && !formData.walletAddress && (
+                                    <div className="bg-[#152342] border border-[#1a2d4a] rounded-xl mb-6 w-[212px] h-[212px] flex items-center justify-center">
+                                        {peraConnecting ? (
+                                            <Loader2 className="text-[#00c9b1] animate-spin" size={32} />
+                                        ) : (
+                                            <p className="text-[#7a94bb] text-xs px-4">Waiting for connection QR…</p>
+                                        )}
+                                    </div>
+                                )}
+                                {formData.walletAddress ? (
+                                    <div className="flex items-center gap-2 text-[#10b981] text-sm font-semibold">
+                                        <Check size={18} />
+                                        Pera Wallet connected
+                                    </div>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={handlePeraConnect}
+                                        disabled={peraConnecting}
+                                        className="bg-[#00c9b1] text-[#060d1f] font-bold py-3 px-8 rounded-lg hover:bg-[#00e0c5] transition-all disabled:opacity-50"
+                                    >
+                                        {peraConnecting ? 'CONNECTING…' : 'SHOW CONNECTION QR'}
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
+                        {formData.walletType === 'custodial' && (
                             <div className="bg-[#0f1e38] border border-[#1a2d4a] rounded-xl p-6 animate-fadeSlideUp">
-                                <label className="block text-[#7a94bb] text-[10px] font-bold uppercase tracking-widest mb-3">Linked Wallet Address</label>
+                                <label className="block text-[#7a94bb] text-[10px] font-bold uppercase tracking-widest mb-3">
+                                    Linked Wallet Address
+                                </label>
                                 <div className="bg-[#060d1f] p-4 rounded-lg flex items-center justify-between border border-[#1a2d4a]">
-                                    <span className="font-mono text-[#00c9b1] text-xs truncate mr-4" title={formData.walletAddress || ''}>
+                                    <span
+                                        className="font-mono text-[#00c9b1] text-xs truncate mr-4"
+                                        title={formData.walletAddress || ''}
+                                    >
                                         {formData.walletAddress ? formatAddress(formData.walletAddress) : '—'}
                                     </span>
-                                    <div className="px-2 py-0.5 rounded bg-[#10b98120] text-[#10b981] text-[10px] font-bold border border-[#10b98130]">READY</div>
+                                    <div className="px-2 py-0.5 rounded bg-[#10b98120] text-[#10b981] text-[10px] font-bold border border-[#10b98130]">
+                                        READY
+                                    </div>
                                 </div>
                                 <p className="mt-4 text-[11px] text-[#3d5278] leading-relaxed italic">
-                                    {formData.walletType === 'pera' ? "The refugee's device has been verified and linked." : "A secure custodial account has been provisioned on the blockchain."}
+                                    A secure custodial account has been provisioned on the blockchain.
                                 </p>
                             </div>
                         )}
 
                         <div className="flex gap-4">
-                            <button onClick={prevStep} className="flex-1 border border-[#1a2d4a] text-[#e2eaf8] font-bold py-4 px-6 rounded-lg hover:border-[#3d5278] transition-all">← BACK</button>
-                            <button onClick={nextStep} disabled={!formData.walletType} className="flex-[2] bg-[#00c9b1] text-[#060d1f] font-bold py-4 px-6 rounded-lg hover:bg-[#00e0c5] active:scale-95 transition-all disabled:opacity-40">REVIEW REGISTRATION</button>
+                            <button
+                                type="button"
+                                onClick={prevStep}
+                                className="flex-1 border border-[#1a2d4a] text-[#e2eaf8] font-bold py-4 px-6 rounded-lg hover:border-[#3d5278] transition-all"
+                            >
+                                ← BACK
+                            </button>
+                            <button
+                                type="button"
+                                onClick={nextStep}
+                                disabled={!canReviewRegistration}
+                                className="flex-[2] bg-[#00c9b1] text-[#060d1f] font-bold py-4 px-6 rounded-lg hover:bg-[#00e0c5] active:scale-95 transition-all disabled:opacity-40"
+                            >
+                                REVIEW REGISTRATION
+                            </button>
                         </div>
                     </div>
                 )}
@@ -1247,6 +1353,19 @@ const Register = () => {
                                         { label: 'Camp ID', value: formData.campId || 'Not set' },
                                         { label: 'Languages', value: formData.languages.join(', ') || 'None' },
                                         { label: 'Family Members', value: `${formData.familyMembers.length} member(s)` },
+                                        {
+                                            label: 'Wallet Type',
+                                            value: formData.walletType === 'pera' ? 'Pera (self-sovereign)' : 'Custodial (W1)',
+                                        },
+                                        {
+                                            label: 'Wallet Address',
+                                            value: formData.walletAddress
+                                                ? formatAddress(formData.walletAddress)
+                                                : '—',
+                                        },
+                                        ...(custodial.identityId
+                                            ? [{ label: 'Refugee ID', value: custodial.identityId }]
+                                            : []),
                                     ].map((row, i) => (
                                         <div key={i} className="flex justify-between items-center py-4 px-6 border-b border-[#1a2d4a] last:border-0 hover:bg-[#152342] transition-colors">
                                             <span className="text-[#7a94bb] text-xs font-bold uppercase tracking-wider">{row.label}</span>
@@ -1290,8 +1409,54 @@ const Register = () => {
                             </div>
                         </div>
 
+                        <div className="bg-[#0f1e38] border border-[#1a2d4a] rounded-xl p-6 space-y-6">
+                            <h3 className="text-[#e2eaf8] font-bold text-lg">Wallet &amp; identity details</h3>
+                            <div className="bg-[#060d1f] p-4 rounded-lg flex items-center justify-between border border-[#1a2d4a]">
+                                <span
+                                    className="font-mono text-[#00c9b1] text-xs truncate mr-4"
+                                    title={formData.walletAddress || ''}
+                                >
+                                    {formData.walletAddress ? formatAddress(formData.walletAddress) : '—'}
+                                </span>
+                                <div className="px-2 py-0.5 rounded bg-[#10b98120] text-[#10b981] text-[10px] font-bold border border-[#10b98130]">
+                                    READY
+                                </div>
+                            </div>
+                            <p className="text-[11px] text-[#7a94bb] leading-relaxed">
+                                {formData.walletType === 'pera'
+                                    ? "The refugee's Pera Wallet is linked and ready for on-chain registration."
+                                    : 'A secure custodial account (W1) has been provisioned. Print the QR card for the refugee.'}
+                            </p>
+                            {formData.walletType === 'custodial' && custodial.qrPayload && (
+                                <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start pt-2">
+                                    <div className="bg-white p-4 rounded-xl shrink-0">
+                                        <QRCodeSVG
+                                            value={custodial.qrPayload}
+                                            size={140}
+                                            level="H"
+                                        />
+                                    </div>
+                                    <div className="text-left space-y-2">
+                                        <p className="text-[#7a94bb] text-xs">
+                                            <span className="font-bold text-[#e2eaf8]">Refugee ID:</span>{' '}
+                                            <span className="font-mono">{custodial.identityId}</span>
+                                        </p>
+                                        <p className="text-[#3d5278] text-[11px] italic">
+                                            This QR will be printed on the refugee identity card after registration.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                         <div className="flex gap-4">
-                            <button onClick={prevStep} className="border border-[#1a2d4a] text-[#7a94bb] px-6 rounded-lg hover:border-[#3d5278] transition-all">← BACK</button>
+                            <button
+                                type="button"
+                                onClick={prevStep}
+                                className="border border-[#1a2d4a] text-[#7a94bb] px-6 rounded-lg hover:border-[#3d5278] transition-all"
+                            >
+                                ← BACK
+                            </button>
                         </div>
                     </div>
                 )}
@@ -1418,6 +1583,9 @@ const Register = () => {
                                         setNationalityCustomText('');
                                         setNationalityError(null);
                                         setCampIdError(null);
+                                        setPeraConnecting(false);
+                                        setPeraConnectQrUrl('');
+                                        killRefugeePeraWalletSession();
                                         setCustodial({ identityId: '', qrPayload: '', isProvisioning: false });
                                     }}
                                     className="bg-[#00c9b1] text-[#060d1f] font-bold py-4 rounded-xl hover:bg-[#00e0c5] transition-all"

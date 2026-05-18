@@ -92,19 +92,25 @@
   },
   {
     "walletAddress": "ATW2TKWSDBJDMAQINKJTBBWQUJQWEFSEFWCMR2RUQ7IPWIYOSO7MIAYJDI",
-    "name": "Kriti",
-    "nationality": "Somali",
-    "dob": "2006-04-13",
+    "name": "Aaradhya",
+    "nationality": "Indian",
+    "dob": "2001-11-19",
     "gender": "N/A",
-    "campID": "CAMP-15",
-    "registeredAt": "2026-04-16T13:14:55.758424+00:00",
+    "campID": "CAMP-IND-08",
+    "registeredAt": "2026-05-18T17:33:44.307309+00:00",
     "walletType": "pera",
     "aidClaimed": false,
-    "id": "251da0b5cd6c4d5aaf5b21f583283825",
+    "id": "REF-2026-007",
     "languages": [
-      "English"
+      "English",
+      "Hindi"
     ],
-    "familyMembers": [],
+    "familyMembers": [
+      {
+        "name": "Anant",
+        "relationship": "Sibling"
+      }
+    ],
     "txHash": null
   },
   {
@@ -173,6 +179,30 @@
       "english"
     ],
     "familyMembers": [],
+    "txHash": null
+  },
+  {
+    "walletAddress": "2R4GGNC3MG36RAOZ255VFHUQZVMJXRN6RVFYLR56WH26QK4ROEYTAGE72U",
+    "name": "Simran",
+    "nationality": "Syrian",
+    "dob": "2008-09-08",
+    "gender": "N/A",
+    "campID": "CAMP-IND-08",
+    "registeredAt": "2026-05-18T17:36:38.849543+00:00",
+    "walletType": "custodial",
+    "aidClaimed": false,
+    "id": "REF-2026-008",
+    "languages": [
+      "Hindi",
+      "Bengali",
+      "English"
+    ],
+    "familyMembers": [
+      {
+        "name": "",
+        "relationship": "Spouse"
+      }
+    ],
     "txHash": null
   }
 ]

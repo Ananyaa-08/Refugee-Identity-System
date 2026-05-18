@@ -1,12 +1,14 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Shield, LogOut } from 'lucide-react';
 import { useWallet } from '../../context/WalletContext';
 import { clearAdminSession } from '../../utils/adminAuth';
 
 export const Navbar = ({ role }) => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { account, connectWallet, disconnectWallet } = useWallet();
+    const hideWalletControls = location.pathname.startsWith('/aid-worker/register');
 
     const handleExit = async () => {
         if (role === 'admin') {
@@ -43,24 +45,27 @@ export const Navbar = ({ role }) => {
                     </span>
                 )}
 
-                <div className="flex items-center gap-2.5 bg-[#152342] border border-[#1a2d4a] rounded-lg px-3 py-1.5">
-                    <div className={account ? "w-2 h-2 bg-[#10b981] rounded-full glow-teal" : "w-2 h-2 bg-[#ef4444] rounded-full"}></div>
-                    <span className="font-mono text-[#00c9b1] text-xs font-medium tracking-tight">
-                        {account ? `${account.slice(0, 7)}...${account.slice(-4)}` : 'DISCONNECTED'}
-                    </span>
-                </div>
+                {!hideWalletControls && (
+                    <>
+                        <div className="flex items-center gap-2.5 bg-[#152342] border border-[#1a2d4a] rounded-lg px-3 py-1.5">
+                            <div className={account ? 'w-2 h-2 bg-[#10b981] rounded-full glow-teal' : 'w-2 h-2 bg-[#ef4444] rounded-full'} />
+                            <span className="font-mono text-[#00c9b1] text-xs font-medium tracking-tight">
+                                {account ? `${account.slice(0, 7)}...${account.slice(-4)}` : 'DISCONNECTED'}
+                            </span>
+                        </div>
 
-                {!account ? (
-                    <button onClick={connectWallet} className="text-xs font-bold bg-[#00c9b1] text-[#060d1f] px-4 py-1.5 rounded hover:bg-[#00e0c5] transition-colors shadow-[0_0_15px_rgba(0,201,177,0.2)]">
-                        CONNECT
-                    </button>
-                ) : (
-                    <button onClick={disconnectWallet} className="text-xs font-bold border border-[#ef4444] text-[#ef4444] px-4 py-1.5 rounded hover:bg-[#ef444420] transition-colors">
-                        DISCONNECT
-                    </button>
+                        {!account ? (
+                            <button onClick={connectWallet} className="text-xs font-bold bg-[#00c9b1] text-[#060d1f] px-4 py-1.5 rounded hover:bg-[#00e0c5] transition-colors shadow-[0_0_15px_rgba(0,201,177,0.2)]">
+                                CONNECT
+                            </button>
+                        ) : (
+                            <button onClick={disconnectWallet} className="text-xs font-bold border border-[#ef4444] text-[#ef4444] px-4 py-1.5 rounded hover:bg-[#ef444420] transition-colors">
+                                DISCONNECT
+                            </button>
+                        )}
+                    </>
                 )}
 
-                {/* Global Exit Button - ALWAYS VISIBLE IN PORTALS */}
                 <button
                     onClick={handleExit}
                     className="flex items-center gap-2 text-[#7a94bb] hover:text-[#ef4444] transition-colors border-l border-[#1a2d4a] pl-4 ml-2 group"

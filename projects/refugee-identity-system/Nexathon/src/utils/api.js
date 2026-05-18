@@ -4,9 +4,20 @@
  */
 const BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
-async function request(method, path, body = null) {
+function adminAuthHeaders() {
+    const token = localStorage.getItem('admin_session');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+async function request(method, path, body = null, options = {}) {
     const url = `${BASE}${path}`;
-    const opts = { method, headers: { 'Content-Type': 'application/json' } };
+    const opts = {
+        method,
+        headers: {
+            'Content-Type': 'application/json',
+            ...(options.auth ? adminAuthHeaders() : {}),
+        },
+    };
     if (body) opts.body = JSON.stringify(body);
     const res = await fetch(url, opts);
     const data = await res.json().catch(() => ({}));
@@ -31,7 +42,10 @@ export const api = {
     saveRefugeeRecord: (body) => request('POST', '/api/refugees/register-record', body),
     lookupRefugee: (body) => request('POST', '/api/refugees/lookup', body),
     getAuditLogs: () => request('GET', '/api/audit/logs'),
-    getAdminStats: () => request('GET', '/api/admin/stats'),
+    getAdminStats: () => request('GET', '/api/admin/stats', null, { auth: true }),
+    adminAuthChallenge: () => request('GET', '/api/admin/auth-challenge'),
+    adminVerifySignature: (body) => request('POST', '/api/admin/verify-signature', body),
+    adminLogin: (body) => request('POST', '/api/admin/login', body),
     getRefugeeState: (address) => request('GET', `/api/blockchain/refugee-state/${address}`),
     verifyOnchainStatus: (address, options = {}) => {
         const url = `${BASE}/api/blockchain/verify-onchain-status/${encodeURIComponent(address)}`;

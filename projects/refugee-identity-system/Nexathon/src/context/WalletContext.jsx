@@ -1,5 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { peraWallet, reconnectSession, signTransaction } from "../utils/wallet";
+import { peraWallet, reconnectSession, signTransaction, normalizePeraAccount } from "../utils/wallet";
+import {
+  getAdminLoginMethod,
+  getAdminWalletAddress,
+  isAdminAuthenticated,
+  setAdminWalletAddress,
+} from "../utils/adminAuth";
 
 const WalletContext = createContext(null);
 
@@ -9,14 +15,24 @@ export const WalletProvider = ({ children }) => {
   const [account, setAccount] = useState(null);
 
   useEffect(() => {
-    // 1. Check if we have a persisted session from local storage first (for demo)
+    if (isAdminAuthenticated()) {
+      const method = getAdminLoginMethod();
+      if (method === 'password') {
+        return;
+      }
+      const adminWallet = getAdminWalletAddress();
+      if (adminWallet) {
+        setAccount(adminWallet);
+        return;
+      }
+    }
+
     const savedAccount = localStorage.getItem('demo_account');
     if (savedAccount) {
       setAccount(savedAccount);
     }
 
-    // 2. Otherwise check Pera Wallet sessions
-    reconnectSession().then(accounts => {
+    reconnectSession().then((accounts) => {
       if (accounts && accounts.length > 0) {
         setAccount(accounts[0]);
       }
@@ -26,8 +42,12 @@ export const WalletProvider = ({ children }) => {
   const connectWallet = async () => {
     try {
       const newAccounts = await peraWallet.connect();
-      setAccount(newAccounts[0]);
-      localStorage.setItem('demo_account', newAccounts[0]);
+      const address = normalizePeraAccount(newAccounts[0]);
+      setAccount(address);
+      localStorage.setItem('demo_account', address);
+      if (isAdminAuthenticated()) {
+        setAdminWalletAddress(address);
+      }
     } catch (error) {
       if (error?.data?.type !== "CONNECT_MODAL_CLOSED") {
         console.error("Connection failed", error);
@@ -41,11 +61,23 @@ export const WalletProvider = ({ children }) => {
     localStorage.removeItem('demo_account');
     localStorage.removeItem('walletAddress');
     localStorage.removeItem('demo_aid_worker_name');
+    if (isAdminAuthenticated()) {
+      setAdminWalletAddress(null);
+    }
   };
 
   const setManualAccount = (address) => {
-    setAccount(address);
-    localStorage.setItem('demo_account', address);
+    const normalized = normalizePeraAccount(address);
+    setAccount(normalized);
+    localStorage.setItem('demo_account', normalized);
+    if (isAdminAuthenticated()) {
+      setAdminWalletAddress(normalized);
+    }
+  };
+
+  const clearAccount = () => {
+    setAccount(null);
+    localStorage.removeItem('demo_account');
   };
 
   return (
@@ -54,6 +86,7 @@ export const WalletProvider = ({ children }) => {
         connectWallet, 
         disconnectWallet, 
         setManualAccount,
+        clearAccount,
         signTransactions: signTransaction
     }}>
       {children}

@@ -9,10 +9,9 @@ import {
     getAidWorkerPasswordChecklist,
     validateAidWorkerPassword,
 } from '../utils/passwordValidation';
-import {
-    setAdminAuthenticated,
-    validateAdminCredentials,
-} from '../utils/adminAuth';
+import { setAdminAuthenticated } from '../utils/adminAuth';
+import { useWallet } from '../context/WalletContext';
+import { peraWallet, normalizePeraAccount } from '../utils/wallet';
 
 const LoginCard = ({ icon: Icon, title, description, badgeColor, buttonColor, onEnter }) => {
     return (
@@ -39,6 +38,7 @@ const LoginCard = ({ icon: Icon, title, description, badgeColor, buttonColor, on
 const LoginPage = () => {
     const navigate = useNavigate();
     const { showToast } = useToast();
+    const { setManualAccount, clearAccount } = useWallet();
 
     // Aid Worker State
     const [showWorkerForm, setShowWorkerForm] = useState(false);
@@ -56,11 +56,12 @@ const LoginPage = () => {
     const [refugeeId, setRefugeeId] = useState('');
     const [isVerifyingRefugee, setIsVerifyingRefugee] = useState(false);
 
-    // Admin login — only admin / 123456789
     const [showAdminForm, setShowAdminForm] = useState(false);
     const [adminId, setAdminId] = useState('');
     const [adminPass, setAdminPass] = useState('');
     const [adminAlert, setAdminAlert] = useState(null);
+    const [isAdminLoggingIn, setIsAdminLoggingIn] = useState(false);
+    const [walletAuthStatus, setWalletAuthStatus] = useState('');
 
     const handleRefugeeLogin = async (e) => {
         if (e) e.preventDefault();
@@ -84,25 +85,90 @@ const LoginPage = () => {
     };
 
     /* ... existing code ... */
-    const handleAdminLogin = (e) => {
+    const handleAdminLogin = async (e) => {
         e.preventDefault();
         const id = adminId.trim();
         const pass = adminPass;
 
-        if (!validateAdminCredentials(id, pass)) {
+        setIsAdminLoggingIn(true);
+        setAdminAlert(null);
+        try {
+            const res = await api.adminLogin({ username: id, password: pass });
+            if (!res?.authenticated || !res?.token) {
+                throw new Error('Invalid administrator credentials.');
+            }
+            clearAccount();
+            setAdminAuthenticated(res.token, { method: 'password' });
+            setShowAdminForm(false);
+            setAdminAlert(null);
+            setAdminId('');
+            setAdminPass('');
+            navigate('/admin/dashboard');
+        } catch (err) {
             setAdminAlert({
                 title: 'Access denied',
-                message: 'Invalid administrator credentials.',
+                message: err.message || 'Invalid administrator credentials.',
             });
-            return;
+        } finally {
+            setIsAdminLoggingIn(false);
         }
+    };
 
-        setAdminAuthenticated();
-        setShowAdminForm(false);
+    const handleAdminWalletLogin = async () => {
         setAdminAlert(null);
-        setAdminId('');
-        setAdminPass('');
-        navigate('/admin/dashboard');
+        setWalletAuthStatus('Waiting for Pera Wallet...');
+        try {
+            const accounts = await peraWallet.connect();
+            const address = normalizePeraAccount(accounts[0]);
+            if (!address) {
+                throw new Error('No wallet address returned from Pera Wallet.');
+            }
+
+            const { challenge } = await api.adminAuthChallenge();
+            if (!challenge) {
+                throw new Error('Failed to obtain authentication challenge.');
+            }
+
+            const msgBytes = new TextEncoder().encode(challenge);
+            const walletPrompt = `RIMS Admin Authentication
+
+Challenge: ${challenge}
+
+By signing you confirm you are the system administrator.`;
+
+            const signed = await peraWallet.signData([{ data: msgBytes, message: walletPrompt }], address);
+            const sigU8 = signed[0];
+            const signature = btoa(String.fromCharCode(...sigU8));
+
+            setWalletAuthStatus('Signature received, verifying...');
+            const res = await api.adminVerifySignature({ challenge, signature, address });
+            if (!res?.authenticated || !res?.token) {
+                throw new Error(
+                    'Wallet authentication failed. Only the deployer wallet can authenticate as admin.'
+                );
+            }
+
+            setWalletAuthStatus('Authentication successful');
+            setManualAccount(address);
+            setAdminAuthenticated(res.token, { method: 'wallet', walletAddress: address });
+            setTimeout(() => {
+                setShowAdminForm(false);
+                setWalletAuthStatus('');
+                navigate('/admin/dashboard');
+            }, 600);
+        } catch (err) {
+            if (err?.data?.type === 'CONNECT_MODAL_CLOSED') {
+                setWalletAuthStatus('');
+                return;
+            }
+            setWalletAuthStatus('');
+            setAdminAlert({
+                title: 'Wallet authentication failed',
+                message:
+                    err.message ||
+                    'Wallet authentication failed. Only the deployer wallet can authenticate as admin.',
+            });
+        }
     };
 
     // Aid Worker Registration Logic
@@ -381,7 +447,6 @@ const LoginPage = () => {
                 </Portal>
             )}
 
-            {/* Admin Login Form — portaled; only admin / 123456789 */}
             {showAdminForm && (
                 <Portal>
                 <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-[#000000dd] backdrop-blur-sm px-6">
@@ -395,6 +460,15 @@ const LoginPage = () => {
                             </div>
                         )}
 
+                        {walletAuthStatus && (
+                            <div className="mb-4 rounded-lg border px-4 py-3 text-left bg-[#8b5cf612] border-[#8b5cf640] text-[#c4b5fd]">
+                                <p className="text-xs font-medium">{walletAuthStatus}</p>
+                            </div>
+                        )}
+
+                        <p className="text-[#7a94bb] text-xs font-bold uppercase tracking-widest mb-3">
+                            Login with Password
+                        </p>
                         <form onSubmit={handleAdminLogin} className="space-y-4 mb-6">
                             <input
                                 placeholder="User ID"
@@ -413,17 +487,34 @@ const LoginPage = () => {
                             />
                             <button
                                 type="submit"
-                                className="w-full bg-[#8b5cf6] text-white font-bold py-3 rounded-xl hover:bg-[#7c3aed] transition-all"
+                                disabled={isAdminLoggingIn || Boolean(walletAuthStatus)}
+                                className="w-full bg-[#8b5cf6] text-white font-bold py-3 rounded-xl hover:bg-[#7c3aed] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                LOGIN
+                                {isAdminLoggingIn ? 'LOGGING IN…' : 'LOGIN'}
                             </button>
                         </form>
+
+                        <div className="relative flex items-center gap-3 mb-6">
+                            <div className="flex-1 h-px bg-[#1a2d4a]" />
+                            <span className="text-[#7a94bb] text-[10px] font-bold uppercase tracking-widest">or</span>
+                            <div className="flex-1 h-px bg-[#1a2d4a]" />
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={handleAdminWalletLogin}
+                            disabled={isAdminLoggingIn || Boolean(walletAuthStatus)}
+                            className="w-full py-3 mb-6 bg-[#152342] text-[#c4b5fd] font-bold rounded-xl border border-[#8b5cf640] hover:bg-[#1a2d4a] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Login with Deployer Wallet
+                        </button>
 
                         <button
                             type="button"
                             onClick={() => {
                                 setShowAdminForm(false);
                                 setAdminAlert(null);
+                                setWalletAuthStatus('');
                             }}
                             className="w-full py-3 bg-[#152342] text-white font-bold rounded-xl border border-[#1a2d4a] hover:bg-[#1a2d4a] transition-all"
                         >

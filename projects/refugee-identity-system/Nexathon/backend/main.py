@@ -4,6 +4,7 @@ Nexathon FastAPI backend - blockchain integration for RIMS.
 import base64
 import hashlib
 import json
+import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -76,6 +77,63 @@ _LEGACY_REGISTRY_FILE = Path(__file__).resolve().parent.parent / "blockchain" / 
 
 # Challenge TTL (seconds) — reject stale signature approvals
 _MIGRATION_CHALLENGE_TTL_S = 10 * 60
+
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "changeme")
+ADMIN_USER_ID = os.getenv("ADMIN_USER", "admin")
+_ADMIN_CHALLENGE_TTL_S = 5 * 60
+_ADMIN_SESSION_TTL_S = 4 * 60 * 60
+_admin_challenges: dict[str, float] = {}
+_admin_sessions: dict[str, float] = {}
+
+
+def _derive_deployer_address() -> str | None:
+    m = os.getenv("DEPLOYER_MNEMONIC", "").strip()
+    if not m:
+        return None
+    try:
+        pk = mnemonic.to_private_key(m)
+        return algo_account.address_from_private_key(pk)
+    except Exception:
+        return None
+
+
+DEPLOYER_ADDRESS = _derive_deployer_address()
+
+
+def _purge_expired_admin_challenges() -> None:
+    now = time.time()
+    expired = [k for k, exp in _admin_challenges.items() if exp <= now]
+    for k in expired:
+        del _admin_challenges[k]
+
+
+def _purge_expired_admin_sessions() -> None:
+    now = time.time()
+    expired = [k for k, exp in _admin_sessions.items() if exp <= now]
+    for k in expired:
+        del _admin_sessions[k]
+
+
+def _issue_admin_session_token() -> str:
+    _purge_expired_admin_sessions()
+    token = str(uuid.uuid4())
+    _admin_sessions[token] = time.time() + _ADMIN_SESSION_TTL_S
+    return token
+
+
+def _admin_challenge_valid(challenge: str) -> bool:
+    _purge_expired_admin_challenges()
+    expires_at = _admin_challenges.get(challenge)
+    if expires_at is None:
+        return False
+    if expires_at <= time.time():
+        del _admin_challenges[challenge]
+        return False
+    return True
+
+
+def _consume_admin_challenge(challenge: str) -> None:
+    _admin_challenges.pop(challenge, None)
 
 
 def _custodial_wallets_load() -> dict:
@@ -619,6 +677,10 @@ def _startup_log() -> None:
     server = os.getenv("ALGOD_SERVER")
     port = os.getenv("ALGOD_PORT")
     print(f"[startup] ALGOD_SERVER={server} ALGOD_PORT={port} APP_ID={app_id}")
+    if DEPLOYER_ADDRESS:
+        print(f"[startup] DEPLOYER_ADDRESS={DEPLOYER_ADDRESS}")
+    else:
+        print("[startup] DEPLOYER_ADDRESS=not configured (set DEPLOYER_MNEMONIC)")
 
 
 def _application_exists(app_id: int) -> bool:
@@ -1637,6 +1699,76 @@ def audit_logs():
 def admin_stats():
     """Return admin dashboard statistics derived from backend state."""
     return {"success": True, "data": _build_admin_stats()}
+
+
+class AdminLoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class AdminVerifySignatureRequest(BaseModel):
+    challenge: str
+    signature: str
+    address: str
+
+
+@app.get("/api/admin/auth-challenge")
+def admin_auth_challenge():
+    """Issue a short-lived challenge for deployer wallet admin login."""
+    _purge_expired_admin_challenges()
+    timestamp = _utc_now_iso()
+    nonce = _new_nonce()
+    challenge = f"RIMS Admin Login: {timestamp} nonce {nonce}"
+    expires_at = int(time.time()) + _ADMIN_CHALLENGE_TTL_S
+    _admin_challenges[challenge] = float(expires_at)
+    return {"challenge": challenge, "expires_at": expires_at}
+
+
+@app.post("/api/admin/verify-signature")
+def admin_verify_signature(body: AdminVerifySignatureRequest):
+    """Verify deployer wallet signature against a issued admin auth challenge."""
+    challenge = (body.challenge or "").strip()
+    address = (body.address or "").strip()
+    signature_b64 = (body.signature or "").strip()
+
+    if not challenge or not address or not signature_b64:
+        raise HTTPException(status_code=401, detail="Authentication failed")
+
+    if not _admin_challenge_valid(challenge):
+        raise HTTPException(status_code=401, detail="Authentication failed")
+
+    if not DEPLOYER_ADDRESS:
+        raise HTTPException(status_code=401, detail="Authentication failed")
+
+    _require_algorand_address(address, "address")
+
+    if address != DEPLOYER_ADDRESS:
+        raise HTTPException(status_code=401, detail="Authentication failed")
+
+    # Pera signData returns raw Ed25519 bytes; the frontend sends standard base64.
+    # algosdk.util.verify_bytes accepts that base64 string (same as migration-request).
+    if not util.verify_bytes(challenge.encode(), signature_b64, address):
+        try:
+            signature = base64.b64decode(signature_b64)
+            verified = util.verify_bytes(challenge.encode(), signature, address)
+        except Exception:
+            verified = False
+        if not verified:
+            raise HTTPException(status_code=401, detail="Authentication failed")
+
+    _consume_admin_challenge(challenge)
+    token = _issue_admin_session_token()
+    return {"authenticated": True, "token": token}
+
+
+@app.post("/api/admin/login")
+def admin_login(body: AdminLoginRequest):
+    """Password-based admin login (fallback when Pera Wallet is unavailable)."""
+    username = (body.username or "").strip()
+    if username != ADMIN_USER_ID or body.password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Invalid administrator credentials")
+    token = _issue_admin_session_token()
+    return {"authenticated": True, "token": token}
 
 
 @app.get("/api/blockchain/migration-message")

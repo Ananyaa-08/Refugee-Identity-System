@@ -73,14 +73,14 @@
     "txHash": null
   },
   {
-    "walletAddress": "5YH5ZGZ6UFKIQZ6P3Z4F44XUB5ZAKFWIXZUR42YQK7WCS3DLY5O2ONTYZY",
+    "walletAddress": "",
     "name": "Asmi",
     "nationality": "Venezuelan",
     "dob": "2005-10-12",
     "gender": "N/A",
     "campID": "CAMP-15",
     "registeredAt": "2026-04-16T13:07:52.199248+00:00",
-    "walletType": "custodial",
+    "walletType": "pera",
     "aidClaimed": false,
     "id": "dd42669da91e410080bc193bcaaa612c",
     "languages": [
@@ -88,7 +88,8 @@
       "English"
     ],
     "familyMembers": [],
-    "txHash": null
+    "txHash": null,
+    "aidClaimedAt": null
   },
   {
     "walletAddress": "ATW2TKWSDBJDMAQINKJTBBWQUJQWEFSEFWCMR2RUQ7IPWIYOSO7MIAYJDI",
@@ -208,21 +209,19 @@
   },
   {
     "walletAddress": "D5BG6K4KYOE3FYYOD3KBS4L7FTPTGVMUY5OBHC6DE2FMYDVG6TOVGRJSTQ",
-    "name": "Snigdha",
-    "nationality": "Afghan",
-    "dob": "2001-01-01",
+    "name": "Pushpa",
+    "nationality": "N/A",
+    "dob": "",
     "gender": "N/A",
-    "campID": "CAMP-AFG-03",
-    "registeredAt": "2026-05-18T20:59:08.611302+00:00",
+    "campID": "On-Chain",
+    "registeredAt": "2026-04-15T18:14:32.651424+00:00",
     "walletType": "pera",
-    "aidClaimed": true,
-    "aidClaimedAt": "2026-05-18T21:00:36.750491+00:00",
-    "id": "REF-2026-013",
-    "languages": [
-      "Japanese"
-    ],
+    "aidClaimed": false,
+    "aidClaimedAt": null,
+    "id": "96edf1e64c7946cbbe997c8c85022064",
+    "languages": [],
     "familyMembers": [],
-    "txHash": "MGF5CWJ7JENHCJ3IKCGIIUFUFMTYK2LHQYM63CHQ4YYNLTVVZ5MA"
+    "txHash": null
   },
   {
     "walletAddress": "UR2X6XZ22CEGXJGSAJAU27X556IJJSTXZDANB3J5QAEYWMKGZ3GPEAMRRM",
@@ -241,5 +240,130 @@
     ],
     "familyMembers": [],
     "txHash": "M64ZL3DFRBSPMFO3RA2EW264B63FTOSFWYUQQBAQXF7WDS2RBMWA"
+  },
+  {
+    "walletAddress": "CF2HN4QPUJIFBEMYFLXZRC6EHLCHFO3OELMUJSCOXSSA2LPOPJLOV2OJVY",
+    "name": "Ananya",
+    "nationality": "Congolese",
+    "dob": "2005-09-08",
+    "gender": "N/A",
+    "campID": "CAMP-COG-13",
+    "registeredAt": "2026-05-18T21:24:27.234064+00:00",
+    "walletType": "custodial",
+    "aidClaimed": true,
+    "aidClaimedAt": "2026-05-18T21:25:19.627067+00:00",
+    "id": "REF-2026-015",
+    "languages": [
+      "Congo"
+    ],
+    "familyMembers": [],
+    "txHash": null
+  },
+  {
+    "walletAddress": "BR3LJT5WFNL7NWC56F3WKO7QYXPEXSPO3JUSRVDZWVTECDBTJBNYYOCSEE",
+    "name": "Radha",
+    "nationality": "Indian",
+    "dob": "2003-08-04",
+    "gender": "N/A",
+    "campID": "CAMP-IND-08",
+    "registeredAt": "2026-05-18T21:40:15.671261+00:00",
+    "walletType": "custodial",
+    "aidClaimed": false,
+    "aidClaimedAt": null,
+    "id": "REF-2026-016",
+    "languages": [
+      "English",
+      "Hindi"
+    ],
+    "familyMembers": [],
+    "txHash": null
+  },
+  {
+    "walletAddress": "MVOQWL2LBO56OYMIFJXZFHGJ7PSRJAR57NCZ3JSBOQGM6N5WTBXXEV6MGM",
+    "name": "Shruti",
+    "nationality": "Myanmar",
+    "dob": "2004-04-02",
+    "gender": "N/A",
+    "campID": "CAMP-MYA-06",
+    "registeredAt": "2026-05-18T21:56:38.263442+00:00",
+    "walletType": "custodial",
+    "aidClaimed": false,
+    "aidClaimedAt": null,
+    "id": "REF-2026-017",
+    "languages": [
+      "English"
+    ],
+    "familyMembers": [],
+    "txHash": null
+  },
+  {
+    "walletAddress": "HOCLIGJBXVLFVB52DJF2HSWIU27GNQ473NBACHF4FZX4TEGMYE6O4E7S4U",
+    "name": "Sandhya",
+    "nationality": "Somali",
+    "dob": "2008-04-08",
+    "gender": "N/A",
+    "campID": "CAMP-SOM-10",
+    "registeredAt": "2026-05-18T21:59:29.803866+00:00",
+    "walletType": "custodial",
+    "aidClaimed": true,
+    "aidClaimedAt": "2026-05-18T22:18:41.563082+00:00",
+    "id": "REF-2026-018",
+    "languages": [
+      "Sompali"
+    ],
+    "familyMembers": [],
+    "txHash": null
+  },
+  {
+    "walletAddress": "WGLYZBRUUXSFVW34MTVTDVC6Y24BHHNJQK6UCHVTSUAYIW6ZHB7CVXNGAA",
+    "name": "Shraddha",
+    "nationality": "Ukrainian",
+    "dob": "2003-02-01",
+    "gender": "N/A",
+    "campID": "CAMP-UKR-01",
+    "registeredAt": "2026-05-18T22:07:19.991826+00:00",
+    "walletType": "custodial",
+    "aidClaimed": true,
+    "aidClaimedAt": "2026-05-18T22:13:58.130069+00:00",
+    "id": "REF-2026-019",
+    "languages": [
+      "English"
+    ],
+    "familyMembers": [],
+    "txHash": null
+  },
+  {
+    "walletAddress": "SVXWXU3VTCE5OX433CALDGVXAENKD2OD7JXR63QH5MOPXRY2HSBS4JYWYM",
+    "name": "Adi",
+    "nationality": "Indian",
+    "dob": "2015-12-15",
+    "gender": "N/A",
+    "campID": "CAMP-IND-08",
+    "registeredAt": "2026-05-18T22:25:38.376888+00:00",
+    "walletType": "custodial",
+    "aidClaimed": true,
+    "aidClaimedAt": "2026-05-18T22:26:33.614257+00:00",
+    "id": "REF-2026-020",
+    "languages": [
+      "English"
+    ],
+    "familyMembers": [],
+    "txHash": null
+  },
+  {
+    "walletAddress": "",
+    "name": "Krishna",
+    "nationality": "N/A",
+    "dob": "",
+    "gender": "N/A",
+    "campID": "On-Chain",
+    "registeredAt": "2026-04-16T12:15:57.850582+00:00",
+    "walletType": "pera",
+    "aidClaimed": false,
+    "aidClaimedAt": null,
+    "id": "1fe588916cdc4016a3dac717870a2dbd",
+    "languages": [],
+    "familyMembers": [],
+    "txHash": null
   }
 ]

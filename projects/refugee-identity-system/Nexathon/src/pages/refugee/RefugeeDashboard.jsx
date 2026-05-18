@@ -7,10 +7,12 @@ import {
 import { StatCard } from '../../components/ui/Common';
 import { useIdentity } from '../../context/IdentityContext';
 import { formatAddress } from '../../utils/format';
+import { canRequestWalletMigration } from '../../utils/refugeeMigration';
 
 const RefugeeDashboard = () => {
     const navigate = useNavigate();
     const { identity } = useIdentity();
+    const showMigration = canRequestWalletMigration(identity);
 
     return (
         <div className="page-enter space-y-8 pb-20">
@@ -87,7 +89,7 @@ const RefugeeDashboard = () => {
                 </p>
             </div>
 
-            {/* Action Cards */}
+            {showMigration && (
             <div className="grid md:grid-cols-2 gap-8">
                 <div
                     onClick={() => navigate('/refugee/migration')}
@@ -108,6 +110,7 @@ const RefugeeDashboard = () => {
                     </button>
                 </div>
             </div>
+            )}
         </div>
     );
 };

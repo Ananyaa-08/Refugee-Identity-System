@@ -1,12 +1,36 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-    ClipboardList, Download, ExternalLink, Search,
-    Filter, Calendar, ChevronLeft, ChevronRight, Loader2
+    Download, ExternalLink, ChevronLeft, ChevronRight, Loader2,
 } from 'lucide-react';
 import { api } from '../../utils/api';
 import { useToast } from '../../context/ToastContext';
 import { clsx } from 'clsx';
 import { formatAddress } from '../../utils/format';
+
+const TABS = [
+    { id: 'All', label: 'All' },
+    { id: 'Registration', label: 'Registration' },
+    { id: 'Aid Issued', label: 'Aid Issued' },
+    { id: 'Consent', label: 'Consent' },
+    { id: 'Migration', label: 'Migration' },
+];
+
+const normalizeType = (raw) => (raw || '').toString().trim().toLowerCase();
+
+const categoryOf = (logType) => {
+    const t = normalizeType(logType);
+    if (!t) return 'Unknown';
+    if (t === 'registration') return 'Registration';
+    if (t === 'aid issued' || t.startsWith('aid')) return 'Aid Issued';
+    if (t.startsWith('consent')) return 'Consent';
+    if (t === 'migration' || t.startsWith('migration')) return 'Migration';
+    return logType;
+};
+
+const matchesTab = (logType, tabId) => {
+    if (tabId === 'All') return true;
+    return categoryOf(logType) === tabId;
+};
 
 const AdminAudit = () => {
     const { showToast } = useToast();
@@ -14,7 +38,6 @@ const AdminAudit = () => {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const tabs = ['All', 'Registration', 'Aid Issued', 'Consent', 'Migration'];
 
     const fetchLogs = async () => {
         setLoading(true);
@@ -34,11 +57,23 @@ const AdminAudit = () => {
         fetchLogs();
     }, []);
 
-    const filteredLogs = logs.filter(log => {
-        if (activeTab === 'All') return true;
-        if (activeTab === 'Consent') return (log.type || '').startsWith('Consent');
-        return log.type === activeTab;
-    });
+    const counts = useMemo(() => {
+        const c = { All: logs.length, Registration: 0, 'Aid Issued': 0, Consent: 0, Migration: 0 };
+        for (const log of logs) {
+            const cat = categoryOf(log.type);
+            if (cat in c) c[cat] += 1;
+        }
+        return c;
+    }, [logs]);
+
+    const filteredLogs = useMemo(() => {
+        const matched = logs.filter((log) => matchesTab(log.type, activeTab));
+        return matched.sort((a, b) => {
+            const ta = new Date(a.timestamp || 0).getTime() || 0;
+            const tb = new Date(b.timestamp || 0).getTime() || 0;
+            return tb - ta;
+        });
+    }, [logs, activeTab]);
 
     const handleExport = () => {
         const header = ['Event Type', 'Refugee ID', 'Address', 'Timestamp UTC', 'Transaction Hash'];
@@ -77,22 +112,35 @@ const AdminAudit = () => {
                 </button>
             </div>
 
-            {/* Filter Tabs */}
             <div className="flex flex-wrap gap-2 pb-2 border-b border-[#1a2d4a]">
-                {tabs.map(tab => (
-                    <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={clsx(
-                            "px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all duration-200",
-                            activeTab === tab
-                                ? "bg-[#8b5cf620] text-[#8b5cf6] border border-[#8b5cf640]"
-                                : "text-[#3d5278] hover:text-[#e2eaf8] hover:bg-[#152342]"
-                        )}
-                    >
-                        {tab}
-                    </button>
-                ))}
+                {TABS.map((tab) => {
+                    const isActive = activeTab === tab.id;
+                    return (
+                        <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => setActiveTab(tab.id)}
+                            className={clsx(
+                                'px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all duration-200 flex items-center gap-2 border',
+                                isActive
+                                    ? 'bg-[#8b5cf620] text-[#8b5cf6] border-[#8b5cf640]'
+                                    : 'text-[#3d5278] border-transparent hover:text-[#e2eaf8] hover:bg-[#152342]',
+                            )}
+                        >
+                            {tab.label}
+                            <span
+                                className={clsx(
+                                    'px-1.5 py-0.5 rounded text-[9px] font-bold border',
+                                    isActive
+                                        ? 'bg-[#8b5cf615] border-[#8b5cf640]'
+                                        : 'bg-[#152342] border-[#1a2d4a] text-[#7a94bb]',
+                                )}
+                            >
+                                {counts[tab.id] ?? 0}
+                            </span>
+                        </button>
+                    );
+                })}
             </div>
 
             {/* Audit Table */}
@@ -128,10 +176,11 @@ const AdminAudit = () => {
                                     <td className="py-5 px-6 whitespace-nowrap">
                                         <span className={clsx(
                                             "px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-tight border",
-                                            log.type === 'Registration' ? "bg-[#00c9b110] text-[#00c9b1] border-[#00c9b120]" :
-                                                log.type === 'Aid Issued' ? "bg-[#10b98110] text-[#10b981] border-[#10b98120]" :
-                                                    log.type === 'Consent Approved' ? "bg-[#8b5cf610] text-[#8b5cf6] border-[#8b5cf620]" :
-                                                        "bg-[#f59e0b10] text-[#f59e0b] border-[#f59e0b20]"
+                                            categoryOf(log.type) === 'Registration' ? "bg-[#00c9b110] text-[#00c9b1] border-[#00c9b120]" :
+                                                categoryOf(log.type) === 'Aid Issued' ? "bg-[#10b98110] text-[#10b981] border-[#10b98120]" :
+                                                    categoryOf(log.type) === 'Consent' ? "bg-[#8b5cf610] text-[#8b5cf6] border-[#8b5cf620]" :
+                                                        categoryOf(log.type) === 'Migration' ? "bg-[#3b82f610] text-[#3b82f6] border-[#3b82f620]" :
+                                                            "bg-[#f59e0b10] text-[#f59e0b] border-[#f59e0b20]"
                                         )}>
                                             {log.type}
                                         </span>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Fingerprint, Hash, Wallet, Calendar } from 'lucide-react';
 import { useIdentity } from '../../context/IdentityContext';
+import { canRequestWalletMigration } from '../../utils/refugeeMigration';
 import { formatAddress } from '../../utils/format';
 
 const Row = ({ label, value, mono }) => (
@@ -14,6 +15,7 @@ const Row = ({ label, value, mono }) => (
 
 const RefugeeIdentityDetails = () => {
     const { identity } = useIdentity();
+    const showMigration = canRequestWalletMigration(identity);
 
     return (
         <div className="page-enter space-y-8 pb-20">
@@ -51,7 +53,11 @@ const RefugeeIdentityDetails = () => {
                             <Wallet size={14} /> Custodial custody
                         </div>
                         <p className="text-[#3d5278] text-[11px] leading-relaxed">
-                            Your wallet (W1) private key never leaves the backend. You can request migration to a self-sovereign wallet (W2).
+                            {showMigration
+                                ? 'Your wallet (W1) private key never leaves the backend. You can request migration to a self-sovereign wallet (W2).'
+                                : identity?.status === 'migrated'
+                                  ? 'Your identity has been migrated to a self-sovereign wallet (W2).'
+                                  : 'Your identity uses a self-sovereign wallet managed in your smartphone app.'}
                         </p>
                     </div>
                     <div className="bg-[#060d1f] border border-[#1a2d4a] rounded-xl p-5">

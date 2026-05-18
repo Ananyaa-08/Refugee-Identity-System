@@ -3,7 +3,9 @@ Nexathon FastAPI backend - blockchain integration for RIMS.
 """
 import base64
 import hashlib
+import hmac
 import json
+import re
 import time
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -36,7 +38,7 @@ if os.getenv("RIMS_NETWORK", "").lower() == "localnet" and _env_localnet.exists(
 
 from algosdk import util
 from algosdk.error import AlgodHTTPError
-from algosdk.encoding import decode_address
+from algosdk.encoding import decode_address, encode_address
 from algosdk.logic import get_application_address
 from algosdk import account as algo_account
 from algosdk import mnemonic
@@ -74,9 +76,15 @@ _MIGRATION_CHALLENGES_FILE = Path(__file__).resolve().parent.parent / "blockchai
 _ACCESS_REQUESTS_FILE = Path(__file__).resolve().parent.parent / "blockchain" / ".access-requests.json"
 _CUSTODIAL_WALLETS_FILE = Path(__file__).resolve().parent.parent / "backend" / ".custodial-wallets.json"
 _LEGACY_REGISTRY_FILE = Path(__file__).resolve().parent.parent / "blockchain" / ".registry.json"
+_REFUGEE_LOGIN_CODES_FILE = Path(__file__).resolve().parent.parent / "backend" / ".refugee-login-codes.json"
+
+# Refugee login code: 4 alphabets + 2 digits (e.g. ABCD12). Case-insensitive.
+_LOGIN_CODE_PATTERN = re.compile(r"^[A-Za-z]{4}\d{2}$")
 
 # Challenge TTL (seconds) — reject stale signature approvals
 _MIGRATION_CHALLENGE_TTL_S = 10 * 60
+
+VALID_AID_TYPES: tuple[str, ...] = ("food", "medicine", "shelter", "cash", "clothing")
 
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "changeme")
 ADMIN_USER_ID = os.getenv("ADMIN_USER", "admin")
@@ -150,6 +158,46 @@ def _custodial_wallets_save(data: dict) -> None:
     _CUSTODIAL_WALLETS_FILE.write_text(json.dumps(data, indent=2))
 
 
+def _login_codes_load() -> dict:
+    if not _REFUGEE_LOGIN_CODES_FILE.exists():
+        return {}
+    try:
+        return json.loads(_REFUGEE_LOGIN_CODES_FILE.read_text())
+    except Exception:
+        return {}
+
+
+def _login_codes_save(data: dict) -> None:
+    _REFUGEE_LOGIN_CODES_FILE.parent.mkdir(parents=True, exist_ok=True)
+    _REFUGEE_LOGIN_CODES_FILE.write_text(json.dumps(data, indent=2))
+
+
+def _normalize_login_code(code: str) -> str:
+    return (code or "").strip().upper()
+
+
+def _hash_login_code(identity_id: str, code: str) -> str:
+    """Salt the hash with the refugee id so the digest is unique per refugee."""
+    payload = f"{(identity_id or '').strip().upper()}:{_normalize_login_code(code)}".encode()
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _get_stored_login_code_hash(identity_id: str) -> str | None:
+    rid = (identity_id or "").strip().upper()
+    if not rid:
+        return None
+    return (_login_codes_load() or {}).get(rid) or None
+
+
+def _set_login_code_hash(identity_id: str, code: str) -> None:
+    rid = (identity_id or "").strip().upper()
+    if not rid:
+        return
+    rows = _login_codes_load() or {}
+    rows[rid] = _hash_login_code(rid, code)
+    _login_codes_save(rows)
+
+
 def _migration_load() -> list[dict]:
     if not _MIGRATION_REQUESTS_FILE.exists():
         return []
@@ -166,21 +214,31 @@ def _migration_save(rows: list[dict]) -> None:
 
 def _access_load() -> list[dict]:
     if not _ACCESS_REQUESTS_FILE.exists():
-        # INITIAL DEMO DATA SEEDING
-        return [
-            {
-                "id": "REQ-001",
-                "name": "Aid Worker Maria Santos",
-                "requestedField": "Age Verification",
-                "requestedBy": "Border Control",
-                "requestedAt": datetime.now(timezone.utc).isoformat(),
-                "status": "pending"
-            }
-        ]
+        return []
     try:
         return json.loads(_ACCESS_REQUESTS_FILE.read_text())
     except Exception:
         return []
+
+
+def _next_access_request_id(rows: list[dict]) -> str:
+    nums = []
+    for row in rows:
+        rid = str(row.get("id") or "")
+        if rid.startswith("REQ-"):
+            try:
+                nums.append(int(rid.replace("REQ-", "")))
+            except Exception:
+                continue
+    return f"REQ-{(max(nums) if nums else 0) + 1:03d}"
+
+
+_ACCESS_FIELD_LABELS = {
+    "ageProof": "Age Verification",
+    "nationality": "Nationality Proof",
+    "identity": "Full Identity",
+    "record": "Registration Record",
+}
 
 
 def _access_save(rows: list[dict]) -> None:
@@ -964,6 +1022,7 @@ def _resolve_refugee_identity(identity_id: str) -> dict | None:
     return {
         "identity_id": canonical_id,
         "address": address,
+        "custodial_key": custodial_key,
         "custodial_row": custodial_row,
         "registry_row": registry_row,
         "provisioning_status": (custodial_row or {}).get("provisioning_status"),
@@ -1045,17 +1104,52 @@ def _read_on_chain_identity_status(address: str) -> dict:
     return result
 
 
-@app.post("/api/blockchain/verify-identity")
-def verify_identity(body: IdentityIdRequest):
-    """
-    Verify refugee portal login id against registry + custodial storage.
+class RefugeeLoginRequest(BaseModel):
+    identity_id: str
+    login_code: str
 
-    On-chain registration is preferred but not required when the record exists
-    in the backend (e.g. local_only provisioning or registry-only legacy rows).
+
+@app.get("/api/blockchain/refugee-login-status/{identity_id}")
+def refugee_login_status(identity_id: str):
+    """Return whether the refugee needs to set up a login code or just enter it."""
+    rid = (identity_id or "").strip()
+    if not rid:
+        raise HTTPException(status_code=400, detail="identity_id is required")
+
+    resolved = _resolve_refugee_identity(rid)
+    if not resolved:
+        raise HTTPException(
+            status_code=404,
+            detail="Identity not found. Use the Refugee ID from registration (e.g. REF-2026-001).",
+        )
+
+    canonical_id = resolved["identity_id"]
+    return {
+        "success": True,
+        "data": {
+            "identity_id": canonical_id,
+            "requires_setup": _get_stored_login_code_hash(canonical_id) is None,
+        },
+    }
+
+
+@app.post("/api/blockchain/verify-identity")
+def verify_identity(body: RefugeeLoginRequest):
+    """
+    Verify refugee portal login id + 6-char private key (4 letters + 2 digits).
+
+    First-time logins (no stored code) store the provided code; subsequent logins
+    must supply the same code.
     """
     identity_id = (body.identity_id or "").strip()
+    login_code = _normalize_login_code(body.login_code)
     if not identity_id:
         raise HTTPException(status_code=400, detail="identity_id is required")
+    if not _LOGIN_CODE_PATTERN.match(login_code or ""):
+        raise HTTPException(
+            status_code=400,
+            detail="Private key must be 4 letters followed by 2 digits (e.g. ABCD12).",
+        )
 
     resolved = _resolve_refugee_identity(identity_id)
     if not resolved:
@@ -1067,9 +1161,18 @@ def verify_identity(body: IdentityIdRequest):
     address = resolved["address"]
     _require_algorand_address(address, "old_wallet")
 
+    canonical_id = resolved["identity_id"]
+    stored_hash = _get_stored_login_code_hash(canonical_id)
+    first_login = stored_hash is None
+    if first_login:
+        _set_login_code_hash(canonical_id, login_code)
+    else:
+        provided_hash = _hash_login_code(canonical_id, login_code)
+        if not hmac.compare_digest(stored_hash, provided_hash):
+            raise HTTPException(status_code=401, detail="Incorrect private key for this Refugee ID.")
+
     chain = _read_on_chain_identity_status(address)
-    if chain["migrated"]:
-        raise HTTPException(status_code=400, detail="Identity has already been migrated")
+    profile = _build_refugee_profile_payload(resolved, chain)
 
     if chain["on_chain"]:
         mode = "on_chain"
@@ -1080,7 +1183,6 @@ def verify_identity(body: IdentityIdRequest):
     else:
         raise HTTPException(status_code=400, detail="Identity wallet is not registered on-chain")
 
-    canonical_id = resolved["identity_id"]
     return {
         "success": True,
         "data": {
@@ -1088,6 +1190,10 @@ def verify_identity(body: IdentityIdRequest):
             "old_wallet": address,
             "app_id": chain.get("app_id"),
             "verification_mode": mode,
+            "status": profile["status"],
+            "walletType": profile["walletType"],
+            "wallet_type": profile["walletType"],
+            "first_login": first_login,
         },
     }
 
@@ -1121,7 +1227,10 @@ def get_identity(body: IdentityIdRequest):
             "identity_id": canonical_id,
             "name": profile["name"],
             "old_wallet": address,
+            "walletAddress": profile.get("walletAddress") or address,
             "status": profile["status"],
+            "walletType": profile["walletType"],
+            "wallet_type": profile["walletType"],
             "created_at": resolved.get("created_at"),
             "app_id": chain.get("app_id"),
             "verification_mode": profile["verification_mode"],
@@ -1133,6 +1242,7 @@ def get_identity(body: IdentityIdRequest):
             },
             "qr_payload": qr_payload,
             "profile": profile,
+            "authorized_consent_wallets": sorted(_authorized_refugee_wallets(canonical_id)),
         },
     }
 
@@ -1349,12 +1459,43 @@ def register(body: dict):
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
+def _decode_aid_claimed_types(raw: object) -> list[str]:
+    """Parse comma-separated aid types from on-chain local state bytes."""
+    if raw is None:
+        return []
+    if isinstance(raw, (bytes, bytearray)):
+        text = bytes(raw).decode("utf-8", errors="replace")
+    else:
+        text = str(raw)
+    text = text.strip()
+    if not text:
+        return []
+    return [part.strip() for part in text.split(",") if part.strip()]
+
+
+def _on_chain_aid_types(client, address: str) -> tuple[list[str], dict | None]:
+    """Return claimed aid types and local state for a registered refugee."""
+    local = _read_registered_refugee_state(client, address)
+    if not local:
+        return [], None
+    return _decode_aid_claimed_types(local.get("aid_claimed_types")), local
+
+
 class ClaimAidRequest(BaseModel):
-    address: str
+    aid_type: str
+    refugee_address: str | None = None
+    address: str | None = None  # legacy alias
 
 
 def _friendly_chain_error(exc: Exception, app_id: int | None = None) -> HTTPException:
     message = str(exc)
+    # Prefer the contract assert / logic-eval message when present (AlgoKit LogicError).
+    for needle in ("claim_aid:", "register:", "migrate_wallet:", "logic eval error", "assert failed"):
+        if needle in message.lower():
+            idx = message.lower().find(needle)
+            if idx >= 0:
+                message = message[idx:].split("\n")[0].strip()
+            break
     lower = message.lower()
     if "does not exist" in lower and "application" in lower:
         return HTTPException(
@@ -1381,14 +1522,24 @@ def _friendly_chain_error(exc: Exception, app_id: int | None = None) -> HTTPExce
             status_code=400,
             detail="This refugee is not opted into the identity contract. Complete on-chain registration first.",
         )
+    if "aid type already claimed" in lower:
+        return HTTPException(
+            status_code=409,
+            detail="Aid type already claimed for this refugee on-chain.",
+        )
     if "claim_aid: already claimed" in lower or "already claimed" in lower:
         return HTTPException(status_code=409, detail="Aid has already been claimed for this refugee on-chain.")
-    if "err opcode" in lower:
+    if "err opcode" in lower or "logic eval error" in lower:
         return HTTPException(
             status_code=400,
             detail=(
-                "The blockchain rejected this aid claim. The refugee may not be fully registered on-chain "
-                "(opt-in + register), or the backend deployer is not authorized for this contract."
+                message
+                if len(message) < 300
+                else (
+                    "The blockchain rejected this aid claim. The refugee may not be fully registered "
+                    f"on contract app {app_id} (opt-in + register after redeploy), or the aid type was "
+                    "already claimed."
+                )
             ),
         )
     if "not opted in" in lower:
@@ -1404,11 +1555,48 @@ def _friendly_chain_error(exc: Exception, app_id: int | None = None) -> HTTPExce
     return HTTPException(status_code=500, detail=message)
 
 
+@app.get("/api/blockchain/aid-status/{refugee_address}")
+def aid_status(refugee_address: str):
+    """Return per-type aid claim status from on-chain local state."""
+    address = (refugee_address or "").strip()
+    _require_algorand_address(address, "refugee_address")
+
+    app_id = _get_app_id()
+    if not app_id:
+        raise HTTPException(
+            status_code=503,
+            detail="Refugee contract is not deployed on this network. Deploy from Admin → System Status.",
+        )
+
+    try:
+        client = _get_client()
+        claimed, local = _on_chain_aid_types(client, address)
+        if local is None and not _account_opted_into_app(address, client.app_id):
+            claimed = []
+        unclaimed = [t for t in VALID_AID_TYPES if t not in claimed]
+        return {
+            "refugee_address": address,
+            "claimed_types": claimed,
+            "unclaimed_types": unclaimed,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
 @app.post("/api/blockchain/claim-aid")
 def claim_aid(req: ClaimAidRequest):
-    """Mark aid as claimed for a refugee on-chain and in the backend registry."""
-    address = (req.address or "").strip()
-    _require_algorand_address(address, "address")
+    """Mark a specific aid type as claimed for a refugee on-chain and in the backend registry."""
+    address = (req.refugee_address or req.address or "").strip()
+    aid_type = (req.aid_type or "").strip().lower()
+    _require_algorand_address(address, "refugee_address")
+
+    if aid_type not in VALID_AID_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"aid_type must be one of: {', '.join(VALID_AID_TYPES)}",
+        )
 
     app_id = _get_app_id()
     if not app_id:
@@ -1422,7 +1610,7 @@ def claim_aid(req: ClaimAidRequest):
         deployer = _deployer_account()
         _ensure_deployer_is_registrar(client)
 
-        local = _read_registered_refugee_state(client, address)
+        claimed_before, local = _on_chain_aid_types(client, address)
         if not local:
             raise HTTPException(
                 status_code=400,
@@ -1432,17 +1620,21 @@ def claim_aid(req: ClaimAidRequest):
                     "then try issuing aid again."
                 ),
             )
-        if int(local.get("aid_claimed", 0) or 0) > 0:
-            raise HTTPException(status_code=409, detail="Aid has already been claimed for this refugee on-chain.")
+        if aid_type in claimed_before:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Aid type '{aid_type}' has already been claimed for this refugee.",
+            )
 
         client.send.claim_aid(
-            (address,),
+            (address, aid_type),
             params=algokit_utils.CommonAppCallParams(
                 sender=deployer.address,
                 signer=deployer.signer,
                 account_references=[address],
             ),
         )
+        claimed_after, _ = _on_chain_aid_types(client, address)
     except HTTPException:
         raise
     except Exception as e:
@@ -1450,15 +1642,24 @@ def claim_aid(req: ClaimAidRequest):
 
     registry_row = _find_refugee_by_wallet(address)
     if registry_row:
+        types = list(registry_row.get("aidClaimedTypes") or [])
+        if aid_type not in types:
+            types.append(aid_type)
         _save_refugee_record(
             {
                 **registry_row,
-                "aidClaimed": True,
+                "aidClaimed": bool(types),
+                "aidClaimedTypes": types,
                 "aidClaimedAt": _utc_now_iso(),
             }
         )
 
-    return {"ok": True, "success": True}
+    return {
+        "ok": True,
+        "success": True,
+        "aid_type_claimed": aid_type,
+        "all_claimed_types": claimed_after,
+    }
 
 
 def _account_opted_into_app(address: str, app_id: int) -> bool:
@@ -1508,9 +1709,19 @@ def get_refugee(address: str):
     """Get refugee on-chain state by address."""
     try:
         client = _get_client()
-        data = _read_local_state(client, address)
-        if not data:
+        registered = _read_registered_refugee_state(client, address)
+        if not registered:
+            if _account_opted_into_app(address, client.app_id):
+                return {
+                    "success": False,
+                    "data": None,
+                    "detail": (
+                        "Wallet is opted into the contract but not registered. "
+                        "Complete aid-worker registration (register step) on the current app."
+                    ),
+                }
             return {"success": False, "data": None}
+        data = registered
         wallet = data.get("wallet_address")
         id_h = data.get("identity_hash")
         ph_h = data.get("personhood_hash")
@@ -1521,6 +1732,8 @@ def get_refugee(address: str):
                 return v.hex()
             return v
 
+        claimed_types = _decode_aid_claimed_types(data.get("aid_claimed_types"))
+
         return {
             "success": True,
             "data": {
@@ -1529,6 +1742,7 @@ def get_refugee(address: str):
                 "personhood_hash": _hex_if_bytes(ph_h),
                 "age_proof_hash": _hex_if_bytes(age_h),
                 "aid_claimed": int(data.get("aid_claimed", 0) or 0),
+                "aid_claimed_types": claimed_types,
             },
         }
     except HTTPException as e:
@@ -1986,6 +2200,14 @@ def migration_request_lite(body: IdentityIdRequest):
     display_name = resolved.get("name")
     _require_algorand_address(old_wallet, "old_wallet")
 
+    registry = resolved.get("registry_row") or {}
+    wallet_type = str(registry.get("walletType") or "").strip().lower()
+    if wallet_type == "pera":
+        raise HTTPException(
+            status_code=400,
+            detail="Wallet migration is not available for self-sovereign (smartphone) registrations.",
+        )
+
     # If on-chain is available, enforce it isn't already migrated; otherwise allow backend registry only.
     source = ""
     try:
@@ -2230,30 +2452,269 @@ def generate_custodial_wallet(body: GenerateCustodialWalletRequest | None = None
             }
         }
 
+
+class CompleteCustodialOnchainRequest(BaseModel):
+    identity_id: str
+
+
+@app.post("/api/blockchain/complete-custodial-onchain")
+def complete_custodial_onchain(body: CompleteCustodialOnchainRequest):
+    """
+    Finish on-chain setup for a custodial wallet that was saved as local_only
+    (fund, opt-in, register on the active contract).
+    """
+    identity_id = (body.identity_id or "").strip()
+    if not identity_id:
+        raise HTTPException(status_code=400, detail="identity_id is required")
+
+    resolved = _resolve_refugee_identity(identity_id)
+    if not resolved or not resolved.get("custodial_row"):
+        raise HTTPException(status_code=404, detail="Custodial identity not found")
+
+    row = dict(resolved["custodial_row"])
+    address = str(row.get("address") or "").strip()
+    _require_algorand_address(address, "address")
+    pk_b64 = row.get("private_key_b64")
+    if not pk_b64:
+        raise HTTPException(status_code=400, detail="Custodial private key missing on server")
+
+    try:
+        private_key = base64.b64decode(pk_b64, validate=True)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Invalid custodial private key") from e
+
+    client = _get_client()
+    _ensure_deployer_is_registrar(client)
+
+    if _read_registered_refugee_state(client, address):
+        wallets = _custodial_wallets_load()
+        key = resolved.get("custodial_key") or identity_id
+        if key in wallets:
+            wallets[key] = {**wallets[key], "app_id": client.app_id, "provisioning_status": "on_chain"}
+            wallets[key].pop("provisioning_error", None)
+            _custodial_wallets_save(wallets)
+        return {"ok": True, "address": address, "status": "already_registered"}
+
+    deployer_pk = _deployer_private_key()
+    try:
+        info = _get_algod().account_info(address)
+        amount = int(info.get("amount", 0) or 0)
+    except Exception:
+        amount = 0
+    if amount < 300_000:
+        _fund_account(deployer_pk, address, 500_000)
+
+    if not _account_opted_into_app(address, client.app_id):
+        _opt_in_app(private_key, client.app_id)
+
+    identity_hash = hashlib.sha256(f"identity:{identity_id}".encode()).digest()
+    personhood_hash = hashlib.sha256(f"personhood:{identity_id}".encode()).digest()
+    age_proof_hash = hashlib.sha256(f"age:{identity_id}".encode()).digest()
+
+    deployer = _deployer_account()
+    client.send.register(
+        (address, identity_hash, personhood_hash, age_proof_hash),
+        params=algokit_utils.CommonAppCallParams(
+            sender=deployer.address,
+            signer=deployer.signer,
+            account_references=[address],
+        ),
+    )
+
+    wallets = _custodial_wallets_load()
+    key = resolved.get("custodial_key") or identity_id
+    if key in wallets:
+        wallets[key] = {
+            **wallets[key],
+            "app_id": client.app_id,
+            "provisioning_status": "on_chain",
+        }
+        wallets[key].pop("provisioning_error", None)
+        _custodial_wallets_save(wallets)
+
+    return {"ok": True, "address": address, "status": "registered", "app_id": client.app_id}
+
+
 # --- ACCESS REQUESTS (Data Governance) ---
 
-@app.get("/api/access/requests")
-def get_access_requests():
-    """Fetch all data access requests."""
-    return _access_load()
+
+def _canonical_algo_address(address: str) -> str:
+    """Normalize an Algorand address for reliable equality checks."""
+    return encode_address(decode_address((address or "").strip()))
+
+
+def _authorized_refugee_wallets(identity_id: str) -> set[str]:
+    """
+    Wallets allowed to approve data-access requests for a refugee:
+    - Registered custodial/Pera wallet (W1)
+    - Current registry wallet (W2 after migration)
+    - Approved migration newWallet
+    """
+    rid = (identity_id or "").strip().upper()
+    if not rid:
+        return set()
+
+    authorized: set[str] = set()
+
+    def add(addr: str | None) -> None:
+        if not addr or not str(addr).strip():
+            return
+        try:
+            authorized.add(_canonical_algo_address(str(addr).strip()))
+        except Exception:
+            pass
+
+    resolved = _resolve_refugee_identity(rid)
+    if resolved:
+        add(resolved.get("address"))
+
+    registry = _find_refugee_by_identity(rid)
+    if not registry and resolved:
+        registry = resolved.get("registry_row")
+    if registry:
+        add(registry.get("walletAddress"))
+
+    for row in _migration_load():
+        row_id = (str(row.get("identity_id") or row.get("refugeeID") or "")).strip().upper()
+        if row_id != rid:
+            continue
+        if (row.get("status") or "").lower() == "approved":
+            add(row.get("newWallet"))
+            add(row.get("oldWallet"))
+
+    return authorized
+
+
+class CreateAccessRequest(BaseModel):
+    refugee_id: str
+    requestedField: str
+    purpose: str
+    requestedBy: str | None = "Aid Worker"
 
 
 class AccessActionRequest(BaseModel):
     requestId: str
 
 
-@app.post("/api/access/approve")
-def approve_access(req: AccessActionRequest):
-    """Approve a data access request."""
+class AccessApproveRequest(BaseModel):
+    requestId: str
+    signer_address: str
+
+
+@app.get("/api/access/requests")
+def get_access_requests(refugee_id: str | None = None):
+    """Fetch data access requests; optional refugee_id filters to one refugee."""
     rows = _access_load()
-    found = False
+    rid = (refugee_id or "").strip()
+    if not rid:
+        return rows
+    rid_upper = rid.upper()
+    return [
+        r
+        for r in rows
+        if (str(r.get("refugee_id") or "").upper() == rid_upper)
+        or (str(r.get("refugeeId") or "").upper() == rid_upper)
+    ]
+
+
+@app.post("/api/access/request")
+def create_access_request(body: CreateAccessRequest):
+    """Create a pending data-access request for a refugee (by REF id)."""
+    refugee_id = (body.refugee_id or "").strip().upper()
+    if not refugee_id:
+        raise HTTPException(status_code=400, detail="refugee_id is required")
+    if not refugee_id.startswith("REF-"):
+        raise HTTPException(status_code=400, detail="refugee_id must look like REF-2026-001")
+
+    purpose = (body.purpose or "").strip()
+    if len(purpose) < 3:
+        raise HTTPException(status_code=400, detail="purpose must be at least 3 characters")
+
+    field_key = (body.requestedField or "").strip()
+    field_label = _ACCESS_FIELD_LABELS.get(field_key) or field_key
+    if field_key not in _ACCESS_FIELD_LABELS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"requestedField must be one of: {', '.join(_ACCESS_FIELD_LABELS.keys())}",
+        )
+
+    resolved = _resolve_refugee_identity(refugee_id)
+    registry_row = _find_refugee_by_identity(refugee_id)
+    if not resolved and not registry_row:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No refugee found for id {refugee_id}. Register the refugee first.",
+        )
+
+    wallet = ""
+    name = "Registered Refugee"
+    if resolved:
+        wallet = (resolved.get("address") or "").strip()
+        name = resolved.get("name") or name
+    if registry_row:
+        wallet = wallet or str(registry_row.get("walletAddress") or "").strip()
+        name = registry_row.get("name") or name
+
+    rows = _access_load()
+    row = {
+        "id": _next_access_request_id(rows),
+        "refugee_id": refugee_id,
+        "refugeeId": refugee_id,
+        "walletAddress": wallet,
+        "name": name,
+        "requestedField": field_label,
+        "requestedFieldKey": field_key,
+        "purpose": purpose,
+        "requestedBy": (body.requestedBy or "Aid Worker").strip() or "Aid Worker",
+        "requestedAt": _utc_now_iso(),
+        "status": "pending",
+    }
+    rows.append(row)
+    _access_save(rows)
+    return {"ok": True, "data": row}
+
+
+@app.post("/api/access/approve")
+def approve_access(req: AccessApproveRequest):
+    """Approve a data access request; signer must own the refugee identity (W1 or post-migration W2)."""
+    signer = (req.signer_address or "").strip()
+    if not signer:
+        raise HTTPException(status_code=400, detail="signer_address is required")
+    _require_algorand_address(signer, "signer_address")
+
+    rows = _access_load()
+    target: dict | None = None
     for r in rows:
         if r["id"] == req.requestId:
-            r["status"] = "approved"
-            found = True
+            target = r
             break
-    if not found:
+    if not target:
         raise HTTPException(status_code=404, detail="Request not found")
+    if (target.get("status") or "").lower() != "pending":
+        raise HTTPException(status_code=400, detail="Only pending requests can be approved")
+
+    refugee_id = (target.get("refugee_id") or target.get("refugeeId") or "").strip()
+    if not refugee_id:
+        raise HTTPException(status_code=400, detail="Request is missing refugee_id")
+
+    allowed = _authorized_refugee_wallets(refugee_id)
+    try:
+        signer_canonical = _canonical_algo_address(signer)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid signer_address") from e
+
+    if signer_canonical not in allowed:
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Connected Pera wallet does not match your registered identity wallet "
+                "or your wallet after migration."
+            ),
+        )
+
+    target["status"] = "approved"
+    target["approved_at"] = _utc_now_iso()
+    target["approved_by_wallet"] = signer_canonical
     _access_save(rows)
     return {"ok": True}
 

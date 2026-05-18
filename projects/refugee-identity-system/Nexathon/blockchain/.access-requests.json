@@ -6,5 +6,31 @@
     "requestedBy": "Border Control",
     "requestedAt": "2026-04-15T14:32:51.781238+00:00",
     "status": "rejected"
+  },
+  {
+    "id": "REQ-002",
+    "refugee_id": "REF-2026-020",
+    "refugeeId": "REF-2026-020",
+    "walletAddress": "SVXWXU3VTCE5OX433CALDGVXAENKD2OD7JXR63QH5MOPXRY2HSBS4JYWYM",
+    "name": "Adi",
+    "requestedField": "Age Verification",
+    "requestedFieldKey": "ageProof",
+    "purpose": "To verify age",
+    "requestedBy": "Aid Worker",
+    "requestedAt": "2026-05-18T22:52:13.593886+00:00",
+    "status": "approved"
+  },
+  {
+    "id": "REQ-003",
+    "refugee_id": "REF-2026-020",
+    "refugeeId": "REF-2026-020",
+    "walletAddress": "SVXWXU3VTCE5OX433CALDGVXAENKD2OD7JXR63QH5MOPXRY2HSBS4JYWYM",
+    "name": "Adi",
+    "requestedField": "Full Identity",
+    "requestedFieldKey": "identity",
+    "purpose": "KOESKDO",
+    "requestedBy": "Aid Worker",
+    "requestedAt": "2026-05-18T23:01:32.603954+00:00",
+    "status": "rejected"
   }
 ]

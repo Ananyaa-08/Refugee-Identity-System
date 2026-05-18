@@ -1,12 +1,14 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
-    UserPlus, QrCode, Search, Key, Package, ArrowLeftRight,
+    UserPlus, QrCode, Key, Package, ArrowLeftRight,
     LayoutDashboard, ShieldCheck, RefreshCw, Link as LinkIcon,
     ClipboardList, Users, Settings, Shield, Fingerprint, Activity
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { formatAddress } from '../../utils/format';
+import { useIdentity } from '../../context/IdentityContext';
+import { canRequestWalletMigration } from '../../utils/refugeeMigration';
 
 const NavItem = ({ to, icon: Icon, label, badge, amberDot, activeColor = 'text-[#00c9b1]', activeBg = 'bg-[#00c9b115]', activeBorder = 'border-[#00c9b1]' }) => {
     return (
@@ -35,6 +37,8 @@ const NavItem = ({ to, icon: Icon, label, badge, amberDot, activeColor = 'text-[
 
 export const Sidebar = ({ role, pendingRequests, pendingMigrations, walletAddress }) => {
     const isAdmin = role === 'admin';
+    const { identity } = useIdentity();
+    const showRefugeeMigration = role === 'refugee' && canRequestWalletMigration(identity);
 
     return (
         <aside className="fixed left-0 top-0 bottom-0 w-[240px] bg-[#0a1428] border-r border-[#1a2d4a] flex flex-col z-30 pt-20">
@@ -54,7 +58,6 @@ export const Sidebar = ({ role, pendingRequests, pendingMigrations, walletAddres
                         <>
                             <NavItem to="/aid-worker/register" icon={UserPlus} label="Register Refugee" />
                             <NavItem to="/aid-worker/scan" icon={QrCode} label="Scan QR" />
-                            <NavItem to="/aid-worker/search" icon={Search} label="Search Refugee" />
                             <NavItem to="/aid-worker/access" icon={Key} label="Request Access" amberDot={pendingRequests > 0} />
                             <NavItem to="/aid-worker/distribution" icon={Package} label="Aid Distribution" />
                             <NavItem to="/aid-worker/migration-requests" icon={ArrowLeftRight} label="Migration Requests" />
@@ -65,7 +68,10 @@ export const Sidebar = ({ role, pendingRequests, pendingMigrations, walletAddres
                             <NavItem to="/refugee/dashboard" icon={LayoutDashboard} label="Dashboard" />
                             <NavItem to="/refugee/identity" icon={Fingerprint} label="Identity Details" />
                             <NavItem to="/refugee/blockchain" icon={Activity} label="Blockchain Status" />
-                            <NavItem to="/refugee/migration" icon={RefreshCw} label="Request Wallet Migration" />
+                            {showRefugeeMigration && (
+                                <NavItem to="/refugee/migration" icon={RefreshCw} label="Request Wallet Migration" />
+                            )}
+                            <NavItem to="/refugee/governance" icon={ShieldCheck} label="Data Governance" />
                         </>
                     ) : (
                         <>

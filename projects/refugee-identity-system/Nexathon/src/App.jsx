@@ -17,7 +17,6 @@ import AdminRefugees from './pages/admin/AdminRefugees';
 
 // Aid Worker Pages
 import AidWorkerLayout from './components/layout/AidWorkerLayout';
-import SearchRefugee from './pages/aid-worker/SearchRefugee';
 import Register from './pages/aid-worker/Register';
 import AidDistribution from './pages/aid-worker/AidDistribution';
 import ScanQR from './pages/aid-worker/ScanQR';
@@ -31,6 +30,7 @@ import WalletMigration from './pages/refugee/WalletMigration';
 import RefugeeIdentityDetails from './pages/refugee/RefugeeIdentityDetails';
 import RefugeeBlockchainStatus from './pages/refugee/RefugeeBlockchainStatus';
 import RefugeeMigrationRequest from './pages/refugee/RefugeeMigrationRequest';
+import AccessRequests from './pages/refugee/AccessRequests';
 
 const App = () => {
   return (
@@ -54,7 +54,6 @@ const App = () => {
             {/* Aid Worker Routes */}
             <Route path="/aid-worker" element={<AidWorkerLayout />}>
               <Route index element={<Navigate to="register" replace />} />
-              <Route path="search" element={<SearchRefugee />} />
               <Route path="register" element={<Register />} />
               <Route path="distribution" element={<AidDistribution />} />
               {/* Backward-compatible alias used by older sidebar links */}
@@ -74,6 +73,7 @@ const App = () => {
               <Route path="blockchain" element={<RefugeeBlockchainStatus />} />
               {/* Refugee portal uses backend-only request flow (no on-chain txs here) */}
               <Route path="migration" element={<RefugeeMigrationRequest />} />
+              <Route path="governance" element={<AccessRequests />} />
             </Route>
 
             {/* Fallback */}

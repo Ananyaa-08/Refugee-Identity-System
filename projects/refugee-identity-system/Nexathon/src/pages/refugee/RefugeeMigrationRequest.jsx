@@ -1,12 +1,15 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { RefreshCw, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useToast } from '../../context/ToastContext';
 import { api } from '../../utils/api';
 import { useIdentity } from '../../context/IdentityContext';
 import { formatAddress } from '../../utils/format';
+import { canRequestWalletMigration } from '../../utils/refugeeMigration';
 
 const RefugeeMigrationRequest = () => {
+    const navigate = useNavigate();
     const { showToast } = useToast();
     const { identity } = useIdentity();
 
@@ -16,9 +19,16 @@ const RefugeeMigrationRequest = () => {
     const w1 = identity?.old_wallet || '';
     const identityId = identity?.identity_id || '';
 
-    const canRequest = useMemo(() => {
-        return !!identityId && !!w1 && (identity?.status !== 'migrated');
-    }, [identityId, w1, identity?.status]);
+    const canRequest = useMemo(
+        () => !!identityId && !!w1 && canRequestWalletMigration(identity),
+        [identityId, w1, identity],
+    );
+
+    useEffect(() => {
+        if (identity && !canRequestWalletMigration(identity)) {
+            navigate('/refugee/dashboard', { replace: true });
+        }
+    }, [identity, navigate]);
 
     const submit = async () => {
         if (!canRequest) return;
@@ -27,7 +37,11 @@ const RefugeeMigrationRequest = () => {
             await api.migrationSubmitLite(identityId);
 
             setSent(true);
-            showToast('success', 'Request submitted', 'Your migration request is pending admin approval.');
+            showToast(
+                'success',
+                'Request submitted',
+                'Your migration request is pending aid worker approval. Contact your aid worker.',
+            );
         } catch (e) {
             showToast('error', 'Migration request failed', e.message || 'Could not submit request.');
         } finally {
@@ -52,7 +66,7 @@ const RefugeeMigrationRequest = () => {
                     <div className="space-y-1">
                         <p className="text-[#e2eaf8] text-sm font-semibold">Migration not available</p>
                         <p className="text-[#7a94bb] text-xs">
-                            Your identity is missing, not active, or already migrated.
+                            Migration is only available for custodial (no smartphone) accounts that have not migrated yet.
                         </p>
                     </div>
                 </div>
@@ -71,6 +85,15 @@ const RefugeeMigrationRequest = () => {
                         </div>
                     </div>
                 </div>
+
+                {sent && (
+                    <div className="bg-[#10b98110] border border-[#10b98130] rounded-xl p-4 flex gap-4 items-start">
+                        <CheckCircle className="text-[#10b981] shrink-0" size={20} />
+                        <p className="text-[#7a94bb] text-sm leading-relaxed">
+                            Your migration request is pending aid worker approval. Contact your aid worker.
+                        </p>
+                    </div>
+                )}
 
                 <div className="flex justify-end">
                     <button

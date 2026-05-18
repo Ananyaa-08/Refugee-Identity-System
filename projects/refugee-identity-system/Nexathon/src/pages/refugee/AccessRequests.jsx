@@ -6,11 +6,15 @@ import {
 import { clsx } from 'clsx';
 import { useToast } from '../../context/ToastContext';
 import { useWallet } from '../../context/WalletContext';
+import { useIdentity } from '../../context/IdentityContext';
 import { api } from '../../utils/api';
+import { peraWallet, normalizePeraAccount } from '../../utils/wallet';
+import { isWalletAuthorizedForConsent } from '../../utils/refugeeConsent';
 
 const AccessRequests = () => {
     const { showToast } = useToast();
-    const { account, connectWallet } = useWallet();
+    const { account } = useWallet();
+    const { identity } = useIdentity();
     const [activeTab, setActiveTab] = useState('Pending');
     const [requests, setRequests] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -20,14 +24,20 @@ const AccessRequests = () => {
 
     const tabs = ['Pending', 'Approved', 'Rejected', 'All'];
 
+    const refugeeId = (identity?.identity_id || localStorage.getItem('refugee_identity_id') || '').trim();
+
     const fetchRequests = async () => {
+        if (!refugeeId) {
+            setRequests([]);
+            setIsLoading(false);
+            return;
+        }
         try {
-            const data = await api.getAccessRequests();
-            // Data is expected to be an array directly based on main.py implementation
+            const data = await api.getAccessRequests({ refugee_id: refugeeId });
             setRequests(Array.isArray(data) ? data : []);
         } catch (error) {
-            console.error("Fetch error:", error);
-            showToast('error', 'Sync Error', 'Could not sync with the blockchain ledger.');
+            console.error('Fetch error:', error);
+            setRequests([]);
         } finally {
             setIsLoading(false);
         }
@@ -35,10 +45,9 @@ const AccessRequests = () => {
 
     useEffect(() => {
         fetchRequests();
-        // Refresh every 30 seconds for the demo
-        const interval = setInterval(fetchRequests, 30000);
+        const interval = setInterval(fetchRequests, 15000);
         return () => clearInterval(interval);
-    }, []);
+    }, [refugeeId]);
 
     const filteredRequests = requests.filter(r =>
         activeTab === 'All' ? true : r.status.toLowerCase() === activeTab.toLowerCase()
@@ -49,25 +58,40 @@ const AccessRequests = () => {
         setSigningStage(1);
 
         try {
-            // Stage 1: Ensure wallet is connected
-            if (!account) {
-                await connectWallet();
+            let signerAddress = normalizePeraAccount(account);
+            if (!signerAddress) {
+                const accounts = await peraWallet.connect();
+                signerAddress = normalizePeraAccount(accounts?.[0]);
+            }
+            if (!signerAddress) {
+                throw new Error('Connect your Pera Wallet to approve this request.');
             }
 
             setSigningStage(2);
-            // In a real demo, we'd sign a challenge here. 
-            // For now, we simulate the signing delay then hit the backend.
-            await new Promise(r => setTimeout(r, 1500));
-            setSigningStage(3);
-            await new Promise(r => setTimeout(r, 1000));
+            if (!isWalletAuthorizedForConsent(identity, signerAddress)) {
+                throw new Error(
+                    'This Pera wallet does not match your registered identity or your wallet after migration. ' +
+                        'Connect the correct wallet and try again.'
+                );
+            }
 
-            await api.approveAccessRequest(req.id);
+            await new Promise((r) => setTimeout(r, 800));
+            setSigningStage(3);
+            await new Promise((r) => setTimeout(r, 600));
+
+            await api.approveAccessRequest(req.id, signerAddress);
 
             showToast('success', 'Consent Granted', `Access authorized for ${req.requestedField}.`);
-            fetchRequests(); // Refresh the list immediately
+            fetchRequests();
         } catch (error) {
-            console.error("Approve Error:", error);
-            showToast('error', 'Signature Failed', 'User rejected the request or backend error.');
+            console.error('Approve Error:', error);
+            const msg = error?.message || 'Could not approve this request.';
+            const isWalletMismatch = msg.toLowerCase().includes('wallet');
+            showToast(
+                'error',
+                isWalletMismatch ? 'Wallet mismatch' : 'Approval failed',
+                msg,
+            );
         } finally {
             setIsSigning(false);
             setSigningStage(0);
@@ -170,6 +194,9 @@ const AccessRequests = () => {
                                             </span>
                                         </div>
                                         <p className="text-[#7a94bb] text-sm">Component: <span className="text-[#e2eaf8] font-semibold">{req.requestedField}</span></p>
+                                        {req.purpose ? (
+                                            <p className="text-[#7a94bb] text-xs mt-1 italic line-clamp-2">&ldquo;{req.purpose}&rdquo;</p>
+                                        ) : null}
                                         <div className="flex items-center gap-4 pt-1">
                                             <span className="text-[#3d5278] text-[10px] uppercase font-bold tracking-widest flex items-center gap-1.5">
                                                 <User className="w-3 h-3" /> By: {req.requestedBy}

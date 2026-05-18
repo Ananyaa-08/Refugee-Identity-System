@@ -400,6 +400,7 @@ const Register = () => {
         identityId: '',
         qrPayload: '',
         isProvisioning: false,
+        provisioningStatus: '',
     });
     
     // Liveness State
@@ -953,7 +954,7 @@ const Register = () => {
     }, [step]);
 
     const selectPeraFlow = async () => {
-        setCustodial({ identityId: '', qrPayload: '', isProvisioning: false });
+        setCustodial({ identityId: '', qrPayload: '', isProvisioning: false, provisioningStatus: '' });
         setFormData((prev) => ({ ...prev, walletType: 'pera', walletAddress: '' }));
         setPeraConnectQrUrl('');
         await disconnectWallet();
@@ -998,8 +999,21 @@ const Register = () => {
                 identityId: payload.identity_id,
                 qrPayload: payload.qr_payload,
                 isProvisioning: false,
+                provisioningStatus: payload.provisioning_status || 'on_chain',
             });
-            showToast('success', 'Custodial wallet created', 'A real Algorand account (W1) was funded, opted-in, and registered on-chain.');
+            if (payload.provisioning_status === 'local_only') {
+                showToast(
+                    'warning',
+                    'On-chain setup incomplete',
+                    'The wallet was saved locally but could not be funded/registered on-chain. Retry provisioning or check deployer balance and API logs.'
+                );
+            } else {
+                showToast(
+                    'success',
+                    'Custodial wallet created',
+                    'A real Algorand account (W1) was funded, opted-in, and registered on-chain.'
+                );
+            }
         } catch (e) {
             setCustodial((p) => ({ ...p, isProvisioning: false }));
             showToast('error', 'Custodial wallet failed', e?.message || 'Could not provision custodial wallet (W1).');
@@ -1391,13 +1405,58 @@ const Register = () => {
                                     >
                                         {formData.walletAddress ? formatAddress(formData.walletAddress) : '—'}
                                     </span>
-                                    <div className="px-2 py-0.5 rounded bg-[#10b98120] text-[#10b981] text-[10px] font-bold border border-[#10b98130]">
-                                        READY
+                                    <div
+                                        className={clsx(
+                                            'px-2 py-0.5 rounded text-[10px] font-bold border',
+                                            custodial.provisioningStatus === 'local_only'
+                                                ? 'bg-[#f59e0b20] text-[#f59e0b] border-[#f59e0b30]'
+                                                : 'bg-[#10b98120] text-[#10b981] border-[#10b98130]',
+                                        )}
+                                    >
+                                        {custodial.provisioningStatus === 'local_only' ? 'OFFLINE' : 'READY'}
                                     </div>
                                 </div>
-                                <p className="mt-4 text-[11px] text-[#3d5278] leading-relaxed italic">
-                                    A secure custodial account has been provisioned on the blockchain.
-                                </p>
+                                {custodial.provisioningStatus === 'local_only' ? (
+                                    <>
+                                        <p className="mt-4 text-[11px] text-[#f59e0b] leading-relaxed">
+                                            Wallet saved locally but not registered on-chain. Aid cannot be issued until setup completes.
+                                        </p>
+                                        <button
+                                            type="button"
+                                            disabled={custodial.isProvisioning || !custodial.identityId}
+                                            onClick={async () => {
+                                                setCustodial((p) => ({ ...p, isProvisioning: true }));
+                                                try {
+                                                    await api.completeCustodialOnchain(custodial.identityId);
+                                                    setCustodial((p) => ({
+                                                        ...p,
+                                                        isProvisioning: false,
+                                                        provisioningStatus: 'on_chain',
+                                                    }));
+                                                    showToast(
+                                                        'success',
+                                                        'On-chain setup complete',
+                                                        'Custodial wallet is funded, opted-in, and registered.'
+                                                    );
+                                                } catch (e) {
+                                                    setCustodial((p) => ({ ...p, isProvisioning: false }));
+                                                    showToast(
+                                                        'error',
+                                                        'On-chain setup failed',
+                                                        e?.message || 'Could not complete custodial registration.'
+                                                    );
+                                                }
+                                            }}
+                                            className="mt-4 w-full bg-[#f59e0b] text-[#060d1f] font-bold py-3 rounded-lg text-xs uppercase tracking-widest disabled:opacity-50"
+                                        >
+                                            {custodial.isProvisioning ? 'Completing…' : 'Complete on-chain setup'}
+                                        </button>
+                                    </>
+                                ) : (
+                                    <p className="mt-4 text-[11px] text-[#3d5278] leading-relaxed italic">
+                                        A secure custodial account has been provisioned on the blockchain.
+                                    </p>
+                                )}
                             </div>
                         )}
 
@@ -1667,7 +1726,7 @@ const Register = () => {
                                         setPeraConnecting(false);
                                         setPeraConnectQrUrl('');
                                         killRefugeePeraWalletSession();
-                                        setCustodial({ identityId: '', qrPayload: '', isProvisioning: false });
+                                        setCustodial({ identityId: '', qrPayload: '', isProvisioning: false, provisioningStatus: '' });
                                     }}
                                     className="bg-[#00c9b1] text-[#060d1f] font-bold py-4 rounded-xl hover:bg-[#00e0c5] transition-all"
                                 >

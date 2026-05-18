@@ -4,7 +4,7 @@ Refugee identity contract — Algorand Python (PuyaPy) implementation.
 This contract matches the current app + backend flows:
 - Registrar authorization via BoxMap (registrar_<address>)
 - Local state stores hashed identity signals (no raw PII on-chain)
-- Aid claiming
+- Per-type aid claiming (comma-separated list in local state)
 - Wallet migration (custodial W1 → self-sovereign W2), with W1 marked MIGRATED
 """
 
@@ -41,6 +41,7 @@ class RefugeeContract(ARC4Contract):
         self.personhood_hash = LocalState(Bytes, key="personhood_hash")
         self.age_proof_hash = LocalState(Bytes, key="age_proof_hash")
         self.aid_claimed = LocalState(UInt64, key="aid_claimed")
+        self.aid_claimed_types = LocalState(Bytes, key="aid_claimed_types")
 
     @arc4.baremethod(create="require")
     def create(self) -> None:
@@ -65,6 +66,25 @@ class RefugeeContract(ARC4Contract):
         if Txn.sender in self.registrars:
             return self.registrars[Txn.sender] == UInt64(1)
         return False
+
+    @subroutine
+    def _type_in_claimed_list(self, current: Bytes, aid_type: String) -> bool:
+        """Return True if aid_type is already present in the comma-separated UTF-8 list."""
+        at = aid_type.bytes
+        if not current:
+            return False
+        if current == at:
+            return True
+        wrapped = b"," + at + b","
+        inner = b"," + current + b","
+        return wrapped in inner
+
+    @subroutine
+    def _append_aid_type(self, current: Bytes, aid_type: String) -> Bytes:
+        at = aid_type.bytes
+        if not current:
+            return at
+        return current + b"," + at
 
     @arc4.abimethod
     def add_registrar(self, registrar: Account, action: arc4.String) -> None:
@@ -96,21 +116,29 @@ class RefugeeContract(ARC4Contract):
         self.personhood_hash[refugee] = personhood_hash.native
         self.age_proof_hash[refugee] = age_proof_hash.native
         self.aid_claimed[refugee] = UInt64(0)
+        self.aid_claimed_types[refugee] = Bytes(b"")
 
     @arc4.abimethod
-    def claim_aid(self, refugee: Account) -> None:
+    def claim_aid(self, refugee: Account, aid_type: arc4.String) -> None:
         assert self._is_authorized(), "claim_aid: sender not authorized"
         assert refugee.is_opted_in(Global.current_application_id), "claim_aid: refugee not opted in"
 
-        val, has_val = self.aid_claimed.maybe(refugee)
-        assert not has_val or val == UInt64(0), "claim_aid: already claimed"
+        at = aid_type.native
+        current = Bytes(b"")
+        types_bytes, has_types = self.aid_claimed_types.maybe(refugee)
+        if has_types:
+            current = types_bytes
+
+        assert not self._type_in_claimed_list(current, at), "claim_aid: aid type already claimed"
+
+        self.aid_claimed_types[refugee] = self._append_aid_type(current, at)
         self.aid_claimed[refugee] = UInt64(1)
 
     @arc4.abimethod
     def migrate_wallet(self, old_wallet: Account, new_wallet: Account) -> None:
         """
         Admin migrates identity from W1 → W2.
-        - Copies identity/personhood/age/aid_claimed to W2
+        - Copies identity/personhood/age/aid_claimed/aid_claimed_types to W2
         - Sets wallet_address(W2) = W2 bytes
         - Marks identity_hash(W1) = MIGRATED sentinel
         """
@@ -126,6 +154,11 @@ class RefugeeContract(ARC4Contract):
         self.personhood_hash[new_wallet] = self.personhood_hash[old_wallet]
         self.age_proof_hash[new_wallet] = self.age_proof_hash[old_wallet]
         self.aid_claimed[new_wallet] = self.aid_claimed[old_wallet]
+        types_bytes, has_types = self.aid_claimed_types.maybe(old_wallet)
+        if has_types:
+            self.aid_claimed_types[new_wallet] = types_bytes
+        else:
+            self.aid_claimed_types[new_wallet] = Bytes(b"")
         self.wallet_address[new_wallet] = new_wallet.bytes
 
         # Mark old as migrated

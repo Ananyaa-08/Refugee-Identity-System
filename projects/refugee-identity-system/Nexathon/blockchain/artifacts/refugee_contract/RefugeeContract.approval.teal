@@ -4,7 +4,7 @@
 // algopy.arc4.ARC4Contract.approval_program() -> uint64:
 main:
     intcblock 0 1 32 2
-    bytecblock "identity_hash" "aid_claimed" 0x7265676973747261725f "personhood_hash" "age_proof_hash" "admin" "wallet_address" 0x4d49475241544544
+    bytecblock "aid_claimed_types" "identity_hash" 0x2c 0x7265676973747261725f "aid_claimed" "personhood_hash" "age_proof_hash" "admin" "wallet_address" 0x4d49475241544544
     // Nexathon/blockchain/refugee_contract/contract.py:30
     // class RefugeeContract(ARC4Contract):
     txn NumAppArgs
@@ -14,7 +14,7 @@ main:
     assert
     txn ApplicationID
     assert
-    pushbytess 0xa6ed480f 0x7bfcace9 0x79b8c4ee 0xa38b785d // method "add_registrar(address,string)void", method "register(address,byte[],byte[],byte[])void", method "claim_aid(address)void", method "migrate_wallet(address,address)void"
+    pushbytess 0xa6ed480f 0x7bfcace9 0x3eb028af 0xa38b785d // method "add_registrar(address,string)void", method "register(address,byte[],byte[],byte[])void", method "claim_aid(address,string)void", method "migrate_wallet(address,address)void"
     txna ApplicationArgs 0
     match add_registrar register claim_aid migrate_wallet
     err
@@ -27,23 +27,23 @@ main_bare_routing@13:
     err
 
 main_opt_in@15:
-    // Nexathon/blockchain/refugee_contract/contract.py:49
+    // Nexathon/blockchain/refugee_contract/contract.py:50
     // @arc4.baremethod(allow_actions=["OptIn"])
     txn ApplicationID
     return
 
 main_create@14:
-    // Nexathon/blockchain/refugee_contract/contract.py:45
+    // Nexathon/blockchain/refugee_contract/contract.py:46
     // @arc4.baremethod(create="require")
     txn ApplicationID
     !
     assert
-    // Nexathon/blockchain/refugee_contract/contract.py:47
+    // Nexathon/blockchain/refugee_contract/contract.py:48
     // self.admin.value = Txn.sender.bytes
-    bytec 5 // "admin"
+    bytec 7 // "admin"
     txn Sender
     app_global_put
-    // Nexathon/blockchain/refugee_contract/contract.py:45
+    // Nexathon/blockchain/refugee_contract/contract.py:46
     // @arc4.baremethod(create="require")
     intc_1 // 1
     return
@@ -51,7 +51,7 @@ main_create@14:
 
 // Nexathon.blockchain.refugee_contract.contract.RefugeeContract.add_registrar[routing]() -> void:
 add_registrar:
-    // Nexathon/blockchain/refugee_contract/contract.py:69
+    // Nexathon/blockchain/refugee_contract/contract.py:89
     // @arc4.abimethod
     txna ApplicationArgs 1
     dup
@@ -69,23 +69,23 @@ add_registrar:
     len
     ==
     assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
-    // Nexathon/blockchain/refugee_contract/contract.py:71
+    // Nexathon/blockchain/refugee_contract/contract.py:91
     // assert self._is_admin(), "add_registrar: sender not admin"
     callsub _is_admin
     assert // add_registrar: sender not admin
-    // Nexathon/blockchain/refugee_contract/contract.py:72
+    // Nexathon/blockchain/refugee_contract/contract.py:92
     // act = action.native
     extract 2 0
     dup
     cover 2
-    // Nexathon/blockchain/refugee_contract/contract.py:73
+    // Nexathon/blockchain/refugee_contract/contract.py:93
     // if act == String("add"):
     pushbytes "add"
     ==
     bz add_registrar_else_body@3
-    // Nexathon/blockchain/refugee_contract/contract.py:74
+    // Nexathon/blockchain/refugee_contract/contract.py:94
     // self.registrars[registrar] = UInt64(1)
-    bytec_2 // 0x7265676973747261725f
+    bytec_3 // 0x7265676973747261725f
     swap
     concat
     intc_1 // 1
@@ -93,21 +93,21 @@ add_registrar:
     box_put
 
 add_registrar_after_if_else@4:
-    // Nexathon/blockchain/refugee_contract/contract.py:69
+    // Nexathon/blockchain/refugee_contract/contract.py:89
     // @arc4.abimethod
     intc_1 // 1
     return
 
 add_registrar_else_body@3:
-    // Nexathon/blockchain/refugee_contract/contract.py:76
+    // Nexathon/blockchain/refugee_contract/contract.py:96
     // assert act == String("remove"), "add_registrar: invalid action"
     dig 1
     pushbytes "remove"
     ==
     assert // add_registrar: invalid action
-    // Nexathon/blockchain/refugee_contract/contract.py:77
+    // Nexathon/blockchain/refugee_contract/contract.py:97
     // self.registrars[registrar] = UInt64(0)
-    bytec_2 // 0x7265676973747261725f
+    bytec_3 // 0x7265676973747261725f
     swap
     concat
     intc_0 // 0
@@ -118,7 +118,7 @@ add_registrar_else_body@3:
 
 // Nexathon.blockchain.refugee_contract.contract.RefugeeContract.register[routing]() -> void:
 register:
-    // Nexathon/blockchain/refugee_contract/contract.py:79
+    // Nexathon/blockchain/refugee_contract/contract.py:99
     // @arc4.abimethod
     txna ApplicationArgs 1
     dup
@@ -156,63 +156,69 @@ register:
     len
     ==
     assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
-    // Nexathon/blockchain/refugee_contract/contract.py:87
+    // Nexathon/blockchain/refugee_contract/contract.py:107
     // assert self._is_authorized(), "register: sender not authorized"
     callsub _is_authorized
     assert // register: sender not authorized
-    // Nexathon/blockchain/refugee_contract/contract.py:88
+    // Nexathon/blockchain/refugee_contract/contract.py:108
     // assert refugee.is_opted_in(Global.current_application_id), "register: refugee not opted in"
     dig 3
     global CurrentApplicationID
     app_opted_in
     assert // register: refugee not opted in
-    // Nexathon/blockchain/refugee_contract/contract.py:90-91
+    // Nexathon/blockchain/refugee_contract/contract.py:110-111
     // # Duplicate prevention: reject if already registered
     // existing_identity, has_value = self.identity_hash.maybe(refugee)
     dig 3
     intc_0 // 0
-    bytec_0 // "identity_hash"
+    bytec_1 // "identity_hash"
     app_local_get_ex
     bury 1
-    // Nexathon/blockchain/refugee_contract/contract.py:92
+    // Nexathon/blockchain/refugee_contract/contract.py:112
     // assert not has_value, "register: refugee already registered"
     !
     assert // register: refugee already registered
-    // Nexathon/blockchain/refugee_contract/contract.py:94
+    // Nexathon/blockchain/refugee_contract/contract.py:114
     // self.wallet_address[refugee] = refugee.bytes
     dig 3
-    bytec 6 // "wallet_address"
+    bytec 8 // "wallet_address"
     dig 5
     app_local_put
-    // Nexathon/blockchain/refugee_contract/contract.py:95
+    // Nexathon/blockchain/refugee_contract/contract.py:115
     // self.identity_hash[refugee] = identity_hash.native
     uncover 2
     extract 2 0
     dig 3
-    bytec_0 // "identity_hash"
+    bytec_1 // "identity_hash"
     uncover 2
     app_local_put
-    // Nexathon/blockchain/refugee_contract/contract.py:96
+    // Nexathon/blockchain/refugee_contract/contract.py:116
     // self.personhood_hash[refugee] = personhood_hash.native
     swap
     extract 2 0
     dig 2
-    bytec_3 // "personhood_hash"
+    bytec 5 // "personhood_hash"
     uncover 2
     app_local_put
-    // Nexathon/blockchain/refugee_contract/contract.py:97
+    // Nexathon/blockchain/refugee_contract/contract.py:117
     // self.age_proof_hash[refugee] = age_proof_hash.native
     extract 2 0
     dig 1
-    bytec 4 // "age_proof_hash"
+    bytec 6 // "age_proof_hash"
     uncover 2
     app_local_put
-    // Nexathon/blockchain/refugee_contract/contract.py:98
+    // Nexathon/blockchain/refugee_contract/contract.py:118
     // self.aid_claimed[refugee] = UInt64(0)
-    bytec_1 // "aid_claimed"
+    dup
+    bytec 4 // "aid_claimed"
     intc_0 // 0
     app_local_put
-    // Nexathon/blockchain/refugee_contract/contract.py:79
+    // Nexathon/blockchain/refugee_contract/contract.py:119
+    // self.aid_claimed_types[refugee] = Bytes(b"")
+    bytec_0 // "aid_claimed_types"
+    pushbytes 0x
+    app_local_put
+    // Nexathon/blockchain/refugee_contract/contract.py:99
     // @arc4.abimethod
     intc_1 // 1
     return
@@ -220,7 +226,11 @@ register:
 
 // Nexathon.blockchain.refugee_contract.contract.RefugeeContract.claim_aid[routing]() -> void:
 claim_aid:
-    // Nexathon/blockchain/refugee_contract/contract.py:100
+    intc_0 // 0
+    dup
+    pushbytes ""
+    dupn 2
+    // Nexathon/blockchain/refugee_contract/contract.py:121
     // @arc4.abimethod
     txna ApplicationArgs 1
     dupn 2
@@ -228,160 +238,307 @@ claim_aid:
     intc_2 // 32
     ==
     assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
-    // Nexathon/blockchain/refugee_contract/contract.py:102
+    txna ApplicationArgs 2
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_3 // 2
+    +
+    dig 1
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    // Nexathon/blockchain/refugee_contract/contract.py:123
     // assert self._is_authorized(), "claim_aid: sender not authorized"
     callsub _is_authorized
     assert // claim_aid: sender not authorized
-    // Nexathon/blockchain/refugee_contract/contract.py:103
+    // Nexathon/blockchain/refugee_contract/contract.py:124
     // assert refugee.is_opted_in(Global.current_application_id), "claim_aid: refugee not opted in"
-    dup
+    dig 1
     global CurrentApplicationID
     app_opted_in
     assert // claim_aid: refugee not opted in
-    // Nexathon/blockchain/refugee_contract/contract.py:105
-    // val, has_val = self.aid_claimed.maybe(refugee)
+    // Nexathon/blockchain/refugee_contract/contract.py:126
+    // at = aid_type.native
+    extract 2 0
+    swap
+    // Nexathon/blockchain/refugee_contract/contract.py:127
+    // current = Bytes(b"")
+    pushbytes 0x
+    swap
+    // Nexathon/blockchain/refugee_contract/contract.py:128
+    // types_bytes, has_types = self.aid_claimed_types.maybe(refugee)
     intc_0 // 0
-    bytec_1 // "aid_claimed"
+    bytec_0 // "aid_claimed_types"
     app_local_get_ex
-    // Nexathon/blockchain/refugee_contract/contract.py:106
-    // assert not has_val or val == UInt64(0), "claim_aid: already claimed"
-    bz claim_aid_bool_true@3
+    // Nexathon/blockchain/refugee_contract/contract.py:129
+    // if has_types:
+    bz claim_aid_after_if_else@3
     dup
-    bnz claim_aid_bool_false@4
+    bury 2
 
-claim_aid_bool_true@3:
-    intc_1 // 1
-
-claim_aid_bool_merge@5:
-    // Nexathon/blockchain/refugee_contract/contract.py:106
-    // assert not has_val or val == UInt64(0), "claim_aid: already claimed"
-    assert // claim_aid: already claimed
-    // Nexathon/blockchain/refugee_contract/contract.py:107
-    // self.aid_claimed[refugee] = UInt64(1)
+claim_aid_after_if_else@3:
+    // Nexathon/blockchain/refugee_contract/contract.py:74
+    // if not current:
     dig 1
-    bytec_1 // "aid_claimed"
+    len
+    dup
+    bury 7
+    bnz claim_aid_after_if_else@6
+    // Nexathon/blockchain/refugee_contract/contract.py:75
+    // return False
+    intc_0 // 0
+
+claim_aid_after_inlined_Nexathon.blockchain.refugee_contract.contract.RefugeeContract._type_in_claimed_list@15:
+    // Nexathon/blockchain/refugee_contract/contract.py:132
+    // assert not self._type_in_claimed_list(current, at), "claim_aid: aid type already claimed"
+    !
+    assert // claim_aid: aid type already claimed
+    // Nexathon/blockchain/refugee_contract/contract.py:85
+    // if not current:
+    dig 5
+    bnz claim_aid_after_if_else@18
+    dig 2
+
+claim_aid_after_inlined_Nexathon.blockchain.refugee_contract.contract.RefugeeContract._append_aid_type@19:
+    // Nexathon/blockchain/refugee_contract/contract.py:134
+    // self.aid_claimed_types[refugee] = self._append_aid_type(current, at)
+    dig 4
+    dup
+    bytec_0 // "aid_claimed_types"
+    uncover 3
+    app_local_put
+    // Nexathon/blockchain/refugee_contract/contract.py:135
+    // self.aid_claimed[refugee] = UInt64(1)
+    bytec 4 // "aid_claimed"
     intc_1 // 1
     app_local_put
-    // Nexathon/blockchain/refugee_contract/contract.py:100
+    // Nexathon/blockchain/refugee_contract/contract.py:121
     // @arc4.abimethod
     intc_1 // 1
     return
 
-claim_aid_bool_false@4:
+claim_aid_after_if_else@18:
+    // Nexathon/blockchain/refugee_contract/contract.py:87
+    // return current + b"," + at
+    dig 1
+    bytec_2 // 0x2c
+    concat
+    dig 3
+    concat
+    // Nexathon/blockchain/refugee_contract/contract.py:134
+    // self.aid_claimed_types[refugee] = self._append_aid_type(current, at)
+    b claim_aid_after_inlined_Nexathon.blockchain.refugee_contract.contract.RefugeeContract._append_aid_type@19
+
+claim_aid_after_if_else@6:
+    // Nexathon/blockchain/refugee_contract/contract.py:76
+    // if current == at:
+    dig 1
+    dig 3
+    ==
+    bz claim_aid_after_if_else@8
+    // Nexathon/blockchain/refugee_contract/contract.py:77
+    // return True
+    intc_1 // 1
+    // Nexathon/blockchain/refugee_contract/contract.py:132
+    // assert not self._type_in_claimed_list(current, at), "claim_aid: aid type already claimed"
+    b claim_aid_after_inlined_Nexathon.blockchain.refugee_contract.contract.RefugeeContract._type_in_claimed_list@15
+
+claim_aid_after_if_else@8:
+    // Nexathon/blockchain/refugee_contract/contract.py:78
+    // wrapped = b"," + at + b","
+    bytec_2 // 0x2c
+    dig 3
+    concat
+    bytec_2 // 0x2c
+    concat
+    bury 8
+    // Nexathon/blockchain/refugee_contract/contract.py:79
+    // inner = b"," + current + b","
+    bytec_2 // 0x2c
+    dig 2
+    concat
+    bytec_2 // 0x2c
+    concat
+    bury 9
     intc_0 // 0
-    b claim_aid_bool_merge@5
+    bury 7
+
+claim_aid_while_top@9:
+    dig 7
+    len
+    dig 7
+    +
+    dup
+    bury 6
+    dig 9
+    len
+    <=
+    bz claim_aid_after_while@13
+    dig 8
+    dig 7
+    dig 6
+    substring3
+    dig 8
+    ==
+    bz claim_aid_after_if_else@12
+    intc_1 // 1
+    // Nexathon/blockchain/refugee_contract/contract.py:132
+    // assert not self._type_in_claimed_list(current, at), "claim_aid: aid type already claimed"
+    b claim_aid_after_inlined_Nexathon.blockchain.refugee_contract.contract.RefugeeContract._type_in_claimed_list@15
+
+claim_aid_after_if_else@12:
+    dig 6
+    intc_1 // 1
+    +
+    bury 7
+    b claim_aid_while_top@9
+
+claim_aid_after_while@13:
+    intc_0 // 0
+    // Nexathon/blockchain/refugee_contract/contract.py:132
+    // assert not self._type_in_claimed_list(current, at), "claim_aid: aid type already claimed"
+    b claim_aid_after_inlined_Nexathon.blockchain.refugee_contract.contract.RefugeeContract._type_in_claimed_list@15
 
 
 // Nexathon.blockchain.refugee_contract.contract.RefugeeContract.migrate_wallet[routing]() -> void:
 migrate_wallet:
-    // Nexathon/blockchain/refugee_contract/contract.py:109
+    // Nexathon/blockchain/refugee_contract/contract.py:137
     // @arc4.abimethod
     txna ApplicationArgs 1
-    dup
+    dupn 2
     len
     intc_2 // 32
     ==
     assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
     txna ApplicationArgs 2
     dup
+    cover 2
+    dup
     len
     intc_2 // 32
     ==
     assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
-    // Nexathon/blockchain/refugee_contract/contract.py:117
+    // Nexathon/blockchain/refugee_contract/contract.py:145
     // assert self._is_admin(), "migrate_wallet: sender not admin"
     callsub _is_admin
     assert // migrate_wallet: sender not admin
-    // Nexathon/blockchain/refugee_contract/contract.py:118
+    // Nexathon/blockchain/refugee_contract/contract.py:146
     // assert old_wallet.is_opted_in(Global.current_application_id), "migrate_wallet: old not opted in"
     dig 1
     global CurrentApplicationID
     app_opted_in
     assert // migrate_wallet: old not opted in
-    // Nexathon/blockchain/refugee_contract/contract.py:119
+    // Nexathon/blockchain/refugee_contract/contract.py:147
     // assert new_wallet.is_opted_in(Global.current_application_id), "migrate_wallet: new not opted in"
     dup
     global CurrentApplicationID
     app_opted_in
     assert // migrate_wallet: new not opted in
-    // Nexathon/blockchain/refugee_contract/contract.py:121
+    // Nexathon/blockchain/refugee_contract/contract.py:149
     // old_identity = self.identity_hash[old_wallet]
     dig 1
     intc_0 // 0
-    bytec_0 // "identity_hash"
+    bytec_1 // "identity_hash"
     app_local_get_ex
     assert // check self.identity_hash exists for account
-    // Nexathon/blockchain/refugee_contract/contract.py:122
+    // Nexathon/blockchain/refugee_contract/contract.py:150
     // assert old_identity != Bytes(MIGRATED_SENTINEL), "migrate_wallet: already migrated"
     dup
-    bytec 7 // 0x4d49475241544544
+    bytec 9 // 0x4d49475241544544
     !=
     assert // migrate_wallet: already migrated
-    // Nexathon/blockchain/refugee_contract/contract.py:124-125
+    // Nexathon/blockchain/refugee_contract/contract.py:152-153
     // # Copy state
     // self.identity_hash[new_wallet] = old_identity
     dig 1
-    bytec_0 // "identity_hash"
+    bytec_1 // "identity_hash"
     uncover 2
     app_local_put
-    // Nexathon/blockchain/refugee_contract/contract.py:126
+    // Nexathon/blockchain/refugee_contract/contract.py:154
     // self.personhood_hash[new_wallet] = self.personhood_hash[old_wallet]
     dig 1
     intc_0 // 0
-    bytec_3 // "personhood_hash"
+    bytec 5 // "personhood_hash"
     app_local_get_ex
     assert // check self.personhood_hash exists for account
     dig 1
-    bytec_3 // "personhood_hash"
+    bytec 5 // "personhood_hash"
     uncover 2
     app_local_put
-    // Nexathon/blockchain/refugee_contract/contract.py:127
+    // Nexathon/blockchain/refugee_contract/contract.py:155
     // self.age_proof_hash[new_wallet] = self.age_proof_hash[old_wallet]
     dig 1
     intc_0 // 0
-    bytec 4 // "age_proof_hash"
+    bytec 6 // "age_proof_hash"
     app_local_get_ex
     assert // check self.age_proof_hash exists for account
     dig 1
-    bytec 4 // "age_proof_hash"
+    bytec 6 // "age_proof_hash"
     uncover 2
     app_local_put
-    // Nexathon/blockchain/refugee_contract/contract.py:128
+    // Nexathon/blockchain/refugee_contract/contract.py:156
     // self.aid_claimed[new_wallet] = self.aid_claimed[old_wallet]
     dig 1
     intc_0 // 0
-    bytec_1 // "aid_claimed"
+    bytec 4 // "aid_claimed"
     app_local_get_ex
     assert // check self.aid_claimed exists for account
+    bytec 4 // "aid_claimed"
+    swap
+    app_local_put
+    // Nexathon/blockchain/refugee_contract/contract.py:157
+    // types_bytes, has_types = self.aid_claimed_types.maybe(old_wallet)
+    intc_0 // 0
+    bytec_0 // "aid_claimed_types"
+    app_local_get_ex
+    // Nexathon/blockchain/refugee_contract/contract.py:158
+    // if has_types:
+    bz migrate_wallet_else_body@3
+    // Nexathon/blockchain/refugee_contract/contract.py:159
+    // self.aid_claimed_types[new_wallet] = types_bytes
     dig 1
-    bytec_1 // "aid_claimed"
-    uncover 2
+    bytec_0 // "aid_claimed_types"
+    dig 2
     app_local_put
-    // Nexathon/blockchain/refugee_contract/contract.py:129
+
+migrate_wallet_after_if_else@4:
+    // Nexathon/blockchain/refugee_contract/contract.py:162
     // self.wallet_address[new_wallet] = new_wallet.bytes
+    dig 1
     dup
-    bytec 6 // "wallet_address"
+    bytec 8 // "wallet_address"
     uncover 2
     app_local_put
-    // Nexathon/blockchain/refugee_contract/contract.py:131-132
+    // Nexathon/blockchain/refugee_contract/contract.py:164-165
     // # Mark old as migrated
     // self.identity_hash[old_wallet] = Bytes(MIGRATED_SENTINEL)
-    bytec_0 // "identity_hash"
-    bytec 7 // 0x4d49475241544544
+    dig 2
+    bytec_1 // "identity_hash"
+    bytec 9 // 0x4d49475241544544
     app_local_put
-    // Nexathon/blockchain/refugee_contract/contract.py:109
+    // Nexathon/blockchain/refugee_contract/contract.py:137
     // @arc4.abimethod
     intc_1 // 1
     return
 
+migrate_wallet_else_body@3:
+    // Nexathon/blockchain/refugee_contract/contract.py:161
+    // self.aid_claimed_types[new_wallet] = Bytes(b"")
+    dig 1
+    bytec_0 // "aid_claimed_types"
+    pushbytes 0x
+    app_local_put
+    b migrate_wallet_after_if_else@4
+
 
 // Nexathon.blockchain.refugee_contract.contract.RefugeeContract._is_admin() -> uint64:
 _is_admin:
-    // Nexathon/blockchain/refugee_contract/contract.py:59
+    // Nexathon/blockchain/refugee_contract/contract.py:60
     // return Txn.sender.bytes == self.admin.value
     txn Sender
     intc_0 // 0
-    bytec 5 // "admin"
+    bytec 7 // "admin"
     app_global_get_ex
     assert // check self.admin exists
     ==
@@ -390,27 +547,27 @@ _is_admin:
 
 // Nexathon.blockchain.refugee_contract.contract.RefugeeContract._is_authorized() -> uint64:
 _is_authorized:
-    // Nexathon/blockchain/refugee_contract/contract.py:63
+    // Nexathon/blockchain/refugee_contract/contract.py:64
     // if self._is_admin():
     callsub _is_admin
     bz _is_authorized_after_if_else@2
-    // Nexathon/blockchain/refugee_contract/contract.py:64
+    // Nexathon/blockchain/refugee_contract/contract.py:65
     // return True
     intc_1 // 1
     retsub
 
 _is_authorized_after_if_else@2:
-    // Nexathon/blockchain/refugee_contract/contract.py:65
+    // Nexathon/blockchain/refugee_contract/contract.py:66
     // if Txn.sender in self.registrars:
-    bytec_2 // 0x7265676973747261725f
+    bytec_3 // 0x7265676973747261725f
     txn Sender
     concat
     box_len
     bury 1
     bz _is_authorized_after_if_else@4
-    // Nexathon/blockchain/refugee_contract/contract.py:66
+    // Nexathon/blockchain/refugee_contract/contract.py:67
     // return self.registrars[Txn.sender] == UInt64(1)
-    bytec_2 // 0x7265676973747261725f
+    bytec_3 // 0x7265676973747261725f
     txn Sender
     concat
     box_get
@@ -421,7 +578,7 @@ _is_authorized_after_if_else@2:
     retsub
 
 _is_authorized_after_if_else@4:
-    // Nexathon/blockchain/refugee_contract/contract.py:67
+    // Nexathon/blockchain/refugee_contract/contract.py:68
     // return False
     intc_0 // 0
     retsub

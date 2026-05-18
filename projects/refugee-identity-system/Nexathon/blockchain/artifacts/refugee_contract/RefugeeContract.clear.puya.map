@@ -3,7 +3,7 @@
   "sources": [
     "../../refugee_contract/contract.py"
   ],
-  "mappings": ";AAsDe;;AAAP",
+  "mappings": ";AAuDe;;AAAP",
   "op_pc_offset": 0,
   "pc_events": {
     "1": {

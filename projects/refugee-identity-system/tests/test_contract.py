@@ -179,32 +179,47 @@ class TestRefugeeContract:
         assert aid_claimed == 0
 
     @pytest.mark.order(5)
-    def test_5_claim_aid(self, client, aid_worker, refugee):
-        """Aid worker claims aid for refugee."""
+    def test_5_claim_aid_food(self, client, aid_worker, refugee):
+        """Aid worker claims food aid for refugee."""
         client.send.claim_aid(
-            args=(refugee.address,),
+            args=(refugee.address, "food"),
             params=algokit_utils.CommonAppCallParams(
                 sender=aid_worker.address,
                 signer=aid_worker.signer,
             ),
         )
-        aid_claimed = client.state.local_state(refugee.address).aid_claimed
-        assert aid_claimed == 1
+        local = client.state.local_state(refugee.address)
+        assert local.aid_claimed == 1
+        assert local.aid_claimed_types == b"food"
 
     @pytest.mark.order(6)
-    def test_6_duplicate_aid_claim_rejected(self, client, aid_worker, refugee):
-        """Duplicate aid claim is rejected."""
+    def test_6_claim_aid_medicine(self, client, aid_worker, refugee):
+        """Second aid type (medicine) can be claimed for the same refugee."""
+        client.send.claim_aid(
+            args=(refugee.address, "medicine"),
+            params=algokit_utils.CommonAppCallParams(
+                sender=aid_worker.address,
+                signer=aid_worker.signer,
+            ),
+        )
+        local = client.state.local_state(refugee.address)
+        assert local.aid_claimed == 1
+        assert local.aid_claimed_types == b"food,medicine"
+
+    @pytest.mark.order(7)
+    def test_7_duplicate_aid_type_rejected(self, client, aid_worker, refugee):
+        """Duplicate claim of the same aid type is rejected."""
         with pytest.raises(Exception):
             client.send.claim_aid(
-                args=(refugee.address,),
+                args=(refugee.address, "food"),
                 params=algokit_utils.CommonAppCallParams(
                     sender=aid_worker.address,
                     signer=aid_worker.signer,
                 ),
             )
 
-    @pytest.mark.order(7)
-    def test_7_duplicate_register_rejected(self, client, aid_worker, refugee):
+    @pytest.mark.order(8)
+    def test_8_duplicate_register_rejected(self, client, aid_worker, refugee):
         """Duplicate registration is rejected."""
         with pytest.raises(Exception):
             client.send.register(
@@ -215,8 +230,8 @@ class TestRefugeeContract:
                 ),
             )
 
-    @pytest.mark.order(8)
-    def test_8_wallet_migration(
+    @pytest.mark.order(9)
+    def test_9_wallet_migration(
         self, client, algorand, deployer, aid_worker, refugee
     ):
         """Admin migrates identity from custodial to new self-sovereign wallet."""
@@ -225,6 +240,7 @@ class TestRefugeeContract:
         assert w1_before.personhood_hash == PERSONHOOD_HASH
         assert w1_before.age_proof_hash == AGE_PROOF_HASH
         assert w1_before.aid_claimed == 1
+        assert w1_before.aid_claimed_types == b"food,medicine"
 
         new_wallet = algorand.account.random()
         algorand.send.payment(
@@ -263,6 +279,7 @@ class TestRefugeeContract:
         assert w2.personhood_hash == PERSONHOOD_HASH
         assert w2.age_proof_hash == AGE_PROOF_HASH
         assert w2.aid_claimed == 1
+        assert w2.aid_claimed_types == b"food,medicine"
         assert w2.wallet_address == encoding.decode_address(new_wallet.address)
 
         old_after = client.state.local_state(refugee.address)

@@ -51,10 +51,15 @@ const LoginPage = () => {
     const passwordChecklist = getAidWorkerPasswordChecklist(workerPass);
     const passwordValid = validateAidWorkerPassword(workerPass).valid;
 
-    // Refugee login is ID-only and must be verified via backend (no manual wallet entry).
+    // Refugee login: Refugee ID + 6-char private key (4 letters + 2 digits).
+    // First-time logins set the code; subsequent logins verify it.
     const [showRefugeeForm, setShowRefugeeForm] = useState(false);
     const [refugeeId, setRefugeeId] = useState('');
+    const [refugeeCode, setRefugeeCode] = useState('');
+    const [refugeeStage, setRefugeeStage] = useState('id'); // 'id' | 'enter' | 'setup'
+    const [refugeeStatusLoading, setRefugeeStatusLoading] = useState(false);
     const [isVerifyingRefugee, setIsVerifyingRefugee] = useState(false);
+    const REFUGEE_CODE_PATTERN = /^[A-Za-z]{4}\d{2}$/;
 
     const [showAdminForm, setShowAdminForm] = useState(false);
     const [adminId, setAdminId] = useState('');
@@ -63,22 +68,65 @@ const LoginPage = () => {
     const [isAdminLoggingIn, setIsAdminLoggingIn] = useState(false);
     const [walletAuthStatus, setWalletAuthStatus] = useState('');
 
-    const handleRefugeeLogin = async (e) => {
+    const closeRefugeeForm = () => {
+        setShowRefugeeForm(false);
+        setRefugeeId('');
+        setRefugeeCode('');
+        setRefugeeStage('id');
+    };
+
+    const handleRefugeeIdContinue = async (e) => {
         if (e) e.preventDefault();
         const id = refugeeId.trim();
         if (!id) {
             showToast('error', 'Missing ID', 'Please enter your refugee ID.');
             return;
         }
-        setIsVerifyingRefugee(true);
+        setRefugeeStatusLoading(true);
         try {
-            const res = await api.verifyIdentity(id);
+            const res = await api.refugeeLoginStatus(id);
             const canonicalId = res?.data?.identity_id || id;
-            localStorage.setItem('refugee_identity_id', canonicalId);
-            setShowRefugeeForm(false);
-            navigate('/refugee/dashboard');
+            setRefugeeId(canonicalId);
+            setRefugeeStage(res?.data?.requires_setup ? 'setup' : 'enter');
         } catch (err) {
             showToast('error', 'Access denied', err.message || 'Invalid or unregistered ID.');
+        } finally {
+            setRefugeeStatusLoading(false);
+        }
+    };
+
+    const handleRefugeeLogin = async (e) => {
+        if (e) e.preventDefault();
+        const id = refugeeId.trim();
+        const code = refugeeCode.trim().toUpperCase();
+        if (!id) {
+            showToast('error', 'Missing ID', 'Please enter your refugee ID.');
+            return;
+        }
+        if (!REFUGEE_CODE_PATTERN.test(code)) {
+            showToast(
+                'error',
+                'Invalid private key',
+                'Private key must be 4 letters followed by 2 digits (e.g. ABCD12).',
+            );
+            return;
+        }
+        setIsVerifyingRefugee(true);
+        try {
+            const res = await api.verifyIdentity(id, code);
+            const canonicalId = res?.data?.identity_id || id;
+            localStorage.setItem('refugee_identity_id', canonicalId);
+            if (res?.data?.first_login) {
+                showToast(
+                    'success',
+                    'Private key set',
+                    'Save your private key — you will need it to log in next time.',
+                );
+            }
+            closeRefugeeForm();
+            navigate('/refugee/dashboard');
+        } catch (err) {
+            showToast('error', 'Access denied', err.message || 'Invalid Refugee ID or private key.');
         } finally {
             setIsVerifyingRefugee(false);
         }
@@ -531,32 +579,92 @@ By signing you confirm you are the system administrator.`;
                 <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-[#000000dd] backdrop-blur-sm px-6">
                     <div className="bg-[#0f1e38] border border-[#1a2d4a] rounded-2xl p-8 max-w-sm w-full shadow-2xl animate-fadeSlideUp relative">
                         <button
-                            onClick={() => setShowRefugeeForm(false)}
+                            onClick={closeRefugeeForm}
                             className="absolute top-4 right-4 text-[#3d5278] hover:text-white transition-colors"
                         >
                             <X size={20} />
                         </button>
 
                         <h3 className="text-[#e2eaf8] text-xl font-bold mb-2 text-center">Refugee Portal</h3>
-                        <p className="text-[#7a94bb] text-sm text-center mb-6">
-                            Enter the refugee ID issued during registration. Wallet entry is not allowed.
-                        </p>
 
-                        <form onSubmit={handleRefugeeLogin} className="space-y-4">
-                            <input
-                                placeholder="Refugee ID"
-                                className="w-full bg-[#060d1f] border border-[#1a2d4a] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#00c9b1] font-mono"
-                                value={refugeeId}
-                                onChange={(e) => setRefugeeId(e.target.value)}
-                            />
-                            <button
-                                type="submit"
-                                disabled={isVerifyingRefugee}
-                                className="w-full py-3 bg-[#00c9b1] text-[#060d1f] text-sm font-bold uppercase tracking-widest rounded-lg hover:bg-[#00e0c5] transition-all disabled:opacity-60"
-                            >
-                                {isVerifyingRefugee ? 'VERIFYING…' : 'ENTER'}
-                            </button>
-                        </form>
+                        {refugeeStage === 'id' && (
+                            <>
+                                <p className="text-[#7a94bb] text-sm text-center mb-6">
+                                    Enter the refugee ID issued during registration.
+                                </p>
+                                <form onSubmit={handleRefugeeIdContinue} className="space-y-4">
+                                    <input
+                                        placeholder="Refugee ID (e.g. REF-2026-001)"
+                                        className="w-full bg-[#060d1f] border border-[#1a2d4a] rounded-lg px-4 py-3 text-sm text-white placeholder:text-[#3d5278] focus:outline-none focus:border-[#00c9b1] font-mono"
+                                        value={refugeeId}
+                                        onChange={(e) => setRefugeeId(e.target.value)}
+                                        autoFocus
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={refugeeStatusLoading || !refugeeId.trim()}
+                                        className="w-full py-3 bg-[#00c9b1] text-[#060d1f] text-sm font-bold uppercase tracking-widest rounded-lg hover:bg-[#00e0c5] transition-all disabled:opacity-60"
+                                    >
+                                        {refugeeStatusLoading ? 'CHECKING…' : 'CONTINUE'}
+                                    </button>
+                                </form>
+                            </>
+                        )}
+
+                        {(refugeeStage === 'enter' || refugeeStage === 'setup') && (
+                            <>
+                                <p className="text-[#7a94bb] text-sm text-center mb-2">
+                                    Signed in as <span className="font-mono text-[#e2eaf8]">{refugeeId}</span>
+                                </p>
+                                <p
+                                    className={`text-sm text-center mb-6 ${
+                                        refugeeStage === 'setup' ? 'text-[#00c9b1]' : 'text-[#7a94bb]'
+                                    }`}
+                                >
+                                    {refugeeStage === 'setup'
+                                        ? 'First-time login — create your 6-character private key (4 letters + 2 digits).'
+                                        : 'Enter your 6-character private key (4 letters + 2 digits).'}
+                                </p>
+                                <form onSubmit={handleRefugeeLogin} className="space-y-4">
+                                    <input
+                                        placeholder="ABCD12"
+                                        maxLength={6}
+                                        autoComplete="off"
+                                        className="w-full bg-[#060d1f] border border-[#1a2d4a] rounded-lg px-4 py-3 text-base text-white placeholder:text-[#3d5278] focus:outline-none focus:border-[#00c9b1] font-mono tracking-[0.2em] text-center uppercase"
+                                        value={refugeeCode}
+                                        onChange={(e) =>
+                                            setRefugeeCode(
+                                                e.target.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 6).toUpperCase(),
+                                            )
+                                        }
+                                        autoFocus
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={isVerifyingRefugee || !REFUGEE_CODE_PATTERN.test(refugeeCode)}
+                                        className="w-full py-3 bg-[#00c9b1] text-[#060d1f] text-sm font-bold uppercase tracking-widest rounded-lg hover:bg-[#00e0c5] transition-all disabled:opacity-60"
+                                    >
+                                        {isVerifyingRefugee
+                                            ? refugeeStage === 'setup'
+                                                ? 'SAVING…'
+                                                : 'VERIFYING…'
+                                            : refugeeStage === 'setup'
+                                                ? 'SET PRIVATE KEY & ENTER'
+                                                : 'ENTER'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setRefugeeCode('');
+                                            setRefugeeStage('id');
+                                        }}
+                                        className="w-full text-xs text-[#7a94bb] hover:text-[#e2eaf8] transition-colors"
+                                    >
+                                        ← Use a different Refugee ID
+                                    </button>
+                                </form>
+                            </>
+                        )}
                     </div>
                 </div>
                 </Portal>

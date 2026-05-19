@@ -67,7 +67,7 @@ export const Sidebar = ({ role, pendingRequests, pendingMigrations, walletAddres
                         <>
                             <NavItem to="/refugee/dashboard" icon={LayoutDashboard} label="Dashboard" />
                             <NavItem to="/refugee/identity" icon={Fingerprint} label="Identity Details" />
-                            <NavItem to="/refugee/blockchain" icon={Activity} label="Blockchain Status" />
+                            <NavItem to="/refugee/blockchain" icon={ShieldCheck} label="Identity Recovery" />
                             {showRefugeeMigration && (
                                 <NavItem to="/refugee/migration" icon={RefreshCw} label="Request Wallet Migration" />
                             )}

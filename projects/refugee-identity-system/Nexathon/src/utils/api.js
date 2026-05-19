@@ -116,10 +116,34 @@ export const api = {
         request('POST', '/api/blockchain/complete-custodial-onchain', { identity_id }),
     refugeeLoginStatus: (identity_id) =>
         request('GET', `/api/blockchain/refugee-login-status/${encodeURIComponent((identity_id || '').trim())}`),
-    verifyIdentity: (identity_id, login_code) =>
+    /**
+     * First-phase login probe — discloses identity state used to render the
+     * correct authentication flow (PIN for custodial W1, Pera Wallet signature
+     * for migrated W2). Never authenticates the caller.
+     */
+    verifyIdentity: (identity_id) =>
         request('POST', '/api/blockchain/verify-identity', {
             identity_id: (identity_id || '').trim(),
-            login_code: (login_code || '').trim().toUpperCase(),
+        }),
+    /** Custodial (W1) login: Refugee ID + 6-character PIN. */
+    refugeeLoginPin: (identity_id, pin) =>
+        request('POST', '/api/blockchain/refugee-login-pin', {
+            identity_id: (identity_id || '').trim(),
+            pin: (pin || '').trim().toUpperCase(),
+        }),
+    /** Request a one-time challenge for W2 (self-sovereign) wallet login. */
+    loginChallenge: (identity_id) =>
+        request(
+            'GET',
+            `/api/blockchain/login-challenge?identity_id=${encodeURIComponent((identity_id || '').trim())}`,
+        ),
+    /** Submit a Pera-Wallet-signed challenge to authenticate a W2 refugee. */
+    verifyLoginSignature: ({ identity_id, challenge, signature, address }) =>
+        request('POST', '/api/blockchain/verify-login-signature', {
+            identity_id: (identity_id || '').trim(),
+            challenge: (challenge || '').trim(),
+            signature: (signature || '').trim(),
+            address: (address || '').trim(),
         }),
     getIdentity: (identity_id) => request('POST', '/api/blockchain/get-identity', { identity_id }),
     migrationMessage: ({ identity_id, old_wallet, new_wallet }) =>

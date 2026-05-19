@@ -1,17 +1,70 @@
 import React, { useEffect, useState } from 'react';
 import {
     Users, Search, Filter, ChevronRight, X,
-    ShieldCheck, MapPin, Hash, Lock, Copy, CheckCircle, Loader2
+    ShieldCheck, MapPin, Hash, Lock, Copy, Check, CheckCircle, XCircle, Loader2,
+    Eye, EyeOff, QrCode,
 } from 'lucide-react';
 import { api } from '../../utils/api';
 import { clsx } from 'clsx';
 import { formatAddress } from '../../utils/format';
 
 const RefugeeProfileDrawer = ({ refugee, onClose }) => {
+    const [identity, setIdentity] = useState(null);
+    const [loadingIdentity, setLoadingIdentity] = useState(false);
+    const [identityError, setIdentityError] = useState('');
+    const [showTechnical, setShowTechnical] = useState(false);
+    const [copied, setCopied] = useState(false);
+
+    useEffect(() => {
+        if (!refugee?.id) {
+            setIdentity(null);
+            setShowTechnical(false);
+            setIdentityError('');
+            return;
+        }
+        let cancelled = false;
+        setLoadingIdentity(true);
+        setIdentityError('');
+        api.getIdentity(refugee.id)
+            .then((res) => {
+                if (cancelled) return;
+                setIdentity(res?.data || null);
+            })
+            .catch((err) => {
+                if (cancelled) return;
+                setIdentityError(err?.message || 'Unable to load identity details.');
+            })
+            .finally(() => {
+                if (!cancelled) setLoadingIdentity(false);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [refugee?.id]);
+
     if (!refugee) return null;
 
+    const copyToClipboard = async (value) => {
+        if (!value) return;
+        try {
+            await navigator.clipboard.writeText(value);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+        } catch (_) {
+            /* clipboard may not be available */
+        }
+    };
+
+    const bc = identity?.blockchain || {};
+    const linkedWallet =
+        identity?.linked_wallet ||
+        identity?.walletAddress ||
+        refugee.walletAddress ||
+        '';
+    const qrPayload = identity?.qr_payload || '';
+
     return (
-        <div className="fixed inset-y-0 right-0 w-[400px] bg-[#0a1428] border-l border-[#1a2d4a] shadow-2xl z-50 animate-slideInRight overflow-y-auto">
+        <div className="fixed inset-y-0 right-0 w-[460px] bg-[#0a1428] border-l border-[#1a2d4a] shadow-2xl z-50 animate-slideInRight overflow-y-auto">
             <div className="sticky top-0 bg-[#0a1428/80] backdrop-blur-md p-6 border-b border-[#1a2d4a] flex items-center justify-between z-10">
                 <h3 className="text-[#e2eaf8] font-bold uppercase tracking-wider">Identity Profile</h3>
                 <button onClick={onClose} className="p-2 hover:bg-[#152342] rounded-lg transition-colors text-[#3d5278] hover:text-[#e2eaf8]">
@@ -49,17 +102,135 @@ const RefugeeProfileDrawer = ({ refugee, onClose }) => {
                     ))}
                 </div>
 
-                {/* Wallet Address - identity/personhood hashes stored on blockchain only */}
+                {/* Wallet Address — masked by default */}
                 <div className="space-y-6 pt-6 border-t border-[#1a2d4a]">
                     <div className="space-y-3">
                         <label className="block text-[#3d5278] text-[9px] font-bold uppercase tracking-[0.2em]">Wallet Address</label>
                         <div className="flex items-center gap-3 p-3 bg-[#060d1f] rounded-xl border border-[#1a2d4a]">
-                            <span className="font-mono text-[#00c9b1] text-xs truncate flex-1 leading-relaxed" title={refugee.walletAddress || ''}>
-                                {refugee.walletAddress ? formatAddress(refugee.walletAddress) : '—'}
+                            <span className="font-mono text-[#00c9b1] text-xs truncate flex-1 leading-relaxed" title={linkedWallet || ''}>
+                                {linkedWallet ? formatAddress(linkedWallet) : '—'}
                             </span>
-                            <button className="text-[#3d5278] hover:text-[#00c9b1] transition-colors"><Copy size={16} /></button>
+                            <button
+                                type="button"
+                                onClick={() => copyToClipboard(linkedWallet)}
+                                disabled={!linkedWallet}
+                                className="text-[#3d5278] hover:text-[#00c9b1] transition-colors disabled:opacity-40"
+                            >
+                                {copied ? <Check size={16} /> : <Copy size={16} />}
+                            </button>
                         </div>
                     </div>
+                </div>
+
+                {/* Technical Details — operator-only */}
+                <div className="pt-6 border-t border-[#1a2d4a]">
+                    <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-lg bg-[#8b5cf615] border border-[#8b5cf640] flex items-center justify-center shrink-0">
+                                <Lock size={16} className="text-[#8b5cf6]" />
+                            </div>
+                            <div>
+                                <p className="text-[#e2eaf8] text-xs font-bold uppercase tracking-[0.2em]">
+                                    Technical Details
+                                </p>
+                                <p className="text-[#3d5278] text-[10px] mt-0.5">
+                                    Operator view · Not shown to refugees
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowTechnical((value) => !value)}
+                            disabled={loadingIdentity || (!identity && !identityError)}
+                            className="shrink-0 inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-[#8b5cf640] bg-[#8b5cf612] text-[#c4b5fd] text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-[#8b5cf620] transition-colors disabled:opacity-50"
+                        >
+                            {loadingIdentity ? (
+                                <Loader2 size={12} className="animate-spin" />
+                            ) : showTechnical ? (
+                                <EyeOff size={12} />
+                            ) : (
+                                <Eye size={12} />
+                            )}
+                            {loadingIdentity ? 'Loading' : showTechnical ? 'Hide' : 'Show'}
+                        </button>
+                    </div>
+
+                    {showTechnical && (
+                        <div className="mt-5 space-y-4">
+                            {identityError ? (
+                                <div className="rounded-xl border border-[#ef444440] bg-[#ef444412] px-4 py-3 text-[#fca5a5] text-xs">
+                                    {identityError}
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="flex flex-wrap gap-2">
+                                        <BlockchainPill ok={!!bc.funded} label={bc.funded ? 'Wallet funded' : 'Not funded'} />
+                                        <BlockchainPill ok={!!bc.opted_in} label={bc.opted_in ? 'Opted into app' : 'Not opted in'} />
+                                        <BlockchainPill
+                                            ok={!!bc.local_state_exists}
+                                            label={bc.local_state_exists ? 'Local state exists' : 'No local state'}
+                                        />
+                                        <BlockchainPill
+                                            ok={!!bc.on_chain}
+                                            label={bc.on_chain ? 'On-chain verified' : 'Backend only'}
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <TechCell
+                                            label="Application ID"
+                                            value={bc.app_id || identity?.app_id || '—'}
+                                            mono
+                                        />
+                                        <TechCell
+                                            label="W1 Balance (µAlgos)"
+                                            value={
+                                                typeof bc.amount_microalgos === 'number'
+                                                    ? bc.amount_microalgos.toLocaleString()
+                                                    : '—'
+                                            }
+                                            mono
+                                        />
+                                    </div>
+
+                                    <TechCell
+                                        label="Full W1 Address"
+                                        value={linkedWallet || '—'}
+                                        mono
+                                        breakAll
+                                        copyable
+                                        onCopy={() => copyToClipboard(linkedWallet)}
+                                    />
+
+                                    <div>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <label className="text-[#3d5278] text-[10px] font-bold uppercase tracking-[0.2em] flex items-center gap-2">
+                                                <QrCode size={12} /> Raw QR Payload (JSON)
+                                            </label>
+                                            <button
+                                                type="button"
+                                                onClick={() => copyToClipboard(qrPayload)}
+                                                disabled={!qrPayload}
+                                                className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-[#7a94bb] hover:text-[#e2eaf8] disabled:opacity-40 transition-colors"
+                                            >
+                                                {copied ? <Check size={12} /> : <Copy size={12} />}
+                                                {copied ? 'Copied' : 'Copy'}
+                                            </button>
+                                        </div>
+                                        <textarea
+                                            readOnly
+                                            value={qrPayload}
+                                            className="w-full min-h-[96px] bg-[#0f1e38] border border-[#1a2d4a] rounded-lg p-3 font-mono text-[11px] text-[#e2eaf8]"
+                                        />
+                                        <p className="text-[#3d5278] text-[10px] mt-2 leading-relaxed">
+                                            Contains <code>identity_id</code> + <code>old_wallet</code> only.
+                                            Compatible with the wallet-migration scanner workflow.
+                                        </p>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Meta Badge */}
@@ -76,6 +247,47 @@ const RefugeeProfileDrawer = ({ refugee, onClose }) => {
         </div>
     );
 };
+
+const BlockchainPill = ({ ok, label }) => (
+    <div
+        className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border flex items-center gap-2 ${
+            ok
+                ? 'bg-[#10b98115] text-[#10b981] border-[#10b98130]'
+                : 'bg-[#ef444415] text-[#ef4444] border-[#ef444430]'
+        }`}
+    >
+        {ok ? <CheckCircle size={12} /> : <XCircle size={12} />}
+        <span>{label}</span>
+    </div>
+);
+
+const TechCell = ({ label, value, mono, breakAll, copyable, onCopy }) => (
+    <div className="bg-[#060d1f] border border-[#1a2d4a] rounded-xl p-4">
+        <div className="flex items-center justify-between mb-2">
+            <label className="block text-[#3d5278] text-[10px] font-bold uppercase tracking-[0.2em]">
+                {label}
+            </label>
+            {copyable && (
+                <button
+                    type="button"
+                    onClick={onCopy}
+                    className="text-[#3d5278] hover:text-[#e2eaf8] transition-colors"
+                >
+                    <Copy size={12} />
+                </button>
+            )}
+        </div>
+        <div
+            className={
+                (mono ? 'font-mono ' : '') +
+                'text-xs text-[#e2eaf8] ' +
+                (breakAll ? 'break-all' : '')
+            }
+        >
+            {value}
+        </div>
+    </div>
+);
 
 const AdminRefugees = () => {
     const [searchTerm, setSearchTerm] = useState('');

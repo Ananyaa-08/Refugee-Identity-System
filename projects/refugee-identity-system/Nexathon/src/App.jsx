@@ -6,6 +6,7 @@ import { IdentityProvider } from './context/IdentityContext';
 
 // Pages
 import LoginPage from './pages/LoginPage';
+import RefugeeLoginPage from './pages/RefugeeLoginPage';
 
 // Admin Pages
 import AdminLayout from './components/layout/AdminLayout';
@@ -40,6 +41,7 @@ const App = () => {
           <Router>
             <Routes>
               <Route path="/" element={<LoginPage />} />
+              <Route path="/refugee/login" element={<RefugeeLoginPage />} />
 
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminLayout />}>

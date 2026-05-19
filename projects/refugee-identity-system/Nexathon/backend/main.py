@@ -84,6 +84,11 @@ _LOGIN_CODE_PATTERN = re.compile(r"^[A-Za-z]{4}\d{2}$")
 # Challenge TTL (seconds) — reject stale signature approvals
 _MIGRATION_CHALLENGE_TTL_S = 10 * 60
 
+# Refugee wallet-login challenge TTL (seconds). Short-lived, one-time-use.
+_LOGIN_CHALLENGE_TTL_S = 5 * 60
+# In-memory store: challenge string -> {identity_id, expected_address, expires_at}
+_login_challenges: dict[str, dict] = {}
+
 VALID_AID_TYPES: tuple[str, ...] = ("food", "medicine", "shelter", "cash", "clothing")
 
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "changeme")
@@ -1106,29 +1111,200 @@ def _read_on_chain_identity_status(address: str) -> dict:
 
 class RefugeeLoginRequest(BaseModel):
     identity_id: str
-    login_code: str
+    login_code: str | None = None
+
+
+class IdentityProbeRequest(BaseModel):
+    identity_id: str
+
+
+class RefugeePinLoginRequest(BaseModel):
+    identity_id: str
+    pin: str
+
+
+class LoginVerifySignatureRequest(BaseModel):
+    identity_id: str
+    challenge: str
+    signature: str
+    address: str
+
+
+def _identity_login_state(identity_id: str) -> dict | None:
+    """
+    Determine the current login state for a refugee identity.
+
+    Combines custodial storage, registry storage, and migration history to
+    decide which wallet is currently linked to the identity and how the
+    refugee should authenticate.
+
+    Returns None if no identity matches the provided id.
+
+    Output:
+      {
+        "identity_id": canonical REF id,
+        "name": human-readable display name,
+        "status": "active" | "pending_migration" | "migrated" | "disabled",
+        "wallet_type": "custodial" | "pera",
+        "linked_wallet": currently authoritative wallet address,
+        "custodial_wallet": original W1 (if any),
+        "migrated_wallet": post-migration W2 (if any),
+        "requires_pin_setup": True if no PIN hash is stored (custodial only),
+        "is_active": bool,
+        "created_at": ISO timestamp (if known),
+      }
+    """
+    rid = (identity_id or "").strip()
+    if not rid:
+        return None
+
+    resolved = _resolve_refugee_identity(rid)
+    if not resolved:
+        return None
+
+    canonical_id = resolved["identity_id"]
+    custodial_row = resolved.get("custodial_row") or {}
+    registry_row = resolved.get("registry_row") or {}
+
+    custodial_wallet = (custodial_row.get("address") or "").strip()
+    registry_wallet = str(registry_row.get("walletAddress") or "").strip()
+    registry_wallet_type = (registry_row.get("walletType") or "").lower()
+
+    # Identify any migration history for this identity (latest first).
+    migrations = _migration_load()
+    rid_upper = canonical_id.upper()
+
+    def _row_matches(row: dict) -> bool:
+        rid_in_row = str(row.get("identity_id") or row.get("refugeeID") or "").upper()
+        if rid_in_row == rid_upper:
+            return True
+        if custodial_wallet and (row.get("oldWallet") or "") == custodial_wallet:
+            return True
+        return False
+
+    approved_migration = None
+    pending_migration = None
+    for row in migrations:
+        if not _row_matches(row):
+            continue
+        status = (row.get("status") or "").lower()
+        if status == "approved" and approved_migration is None:
+            approved_migration = row
+        elif status == "pending" and pending_migration is None:
+            pending_migration = row
+
+    # Disabled flag (future-proof; not yet written by any flow).
+    is_active = registry_row.get("isActive", True) if registry_row else True
+
+    if not is_active:
+        return {
+            "identity_id": canonical_id,
+            "name": resolved.get("name") or "Registered Refugee",
+            "status": "disabled",
+            "wallet_type": registry_wallet_type or "custodial",
+            "linked_wallet": registry_wallet or custodial_wallet,
+            "custodial_wallet": custodial_wallet or None,
+            "migrated_wallet": registry_wallet if registry_wallet_type == "pera" else None,
+            "requires_pin_setup": False,
+            "is_active": False,
+            "created_at": resolved.get("created_at"),
+        }
+
+    if approved_migration:
+        new_wallet = str(approved_migration.get("newWallet") or "").strip() or registry_wallet
+        return {
+            "identity_id": canonical_id,
+            "name": resolved.get("name") or "Registered Refugee",
+            "status": "migrated",
+            "wallet_type": "pera",
+            "linked_wallet": new_wallet,
+            "custodial_wallet": custodial_wallet or None,
+            "migrated_wallet": new_wallet,
+            "requires_pin_setup": False,
+            "is_active": True,
+            "created_at": resolved.get("created_at"),
+        }
+
+    # No approved migration. If the registry says the wallet type is "pera" and
+    # there is no custodial row, treat it as a self-sovereign identity that
+    # authenticates with the Pera wallet from day one.
+    if not custodial_wallet and registry_wallet_type == "pera":
+        return {
+            "identity_id": canonical_id,
+            "name": resolved.get("name") or "Registered Refugee",
+            "status": "active",
+            "wallet_type": "pera",
+            "linked_wallet": registry_wallet,
+            "custodial_wallet": None,
+            "migrated_wallet": registry_wallet,
+            "requires_pin_setup": False,
+            "is_active": True,
+            "created_at": resolved.get("created_at"),
+        }
+
+    # Custodial (W1) — possibly with a pending migration.
+    linked = custodial_wallet or registry_wallet
+    status = "pending_migration" if pending_migration else "active"
+    return {
+        "identity_id": canonical_id,
+        "name": resolved.get("name") or "Registered Refugee",
+        "status": status,
+        "wallet_type": "custodial",
+        "linked_wallet": linked,
+        "custodial_wallet": linked or None,
+        "migrated_wallet": None,
+        "requires_pin_setup": _get_stored_login_code_hash(canonical_id) is None,
+        "is_active": True,
+        "created_at": resolved.get("created_at"),
+    }
+
+
+def _purge_expired_login_challenges() -> None:
+    now = time.time()
+    for key in [k for k, v in _login_challenges.items() if v.get("expires_at", 0) <= now]:
+        del _login_challenges[key]
+
+
+def _issue_login_challenge(identity_id: str, expected_address: str) -> tuple[str, int]:
+    _purge_expired_login_challenges()
+    timestamp = _utc_now_iso()
+    nonce = _new_nonce()
+    challenge = f"RIMS Refugee Login: {identity_id} at {timestamp} nonce {nonce}"
+    expires_at = int(time.time()) + _LOGIN_CHALLENGE_TTL_S
+    _login_challenges[challenge] = {
+        "identity_id": identity_id,
+        "expected_address": expected_address,
+        "expires_at": float(expires_at),
+        "issued_at": timestamp,
+    }
+    return challenge, expires_at
+
+
+def _consume_login_challenge(challenge: str) -> dict | None:
+    """Return the challenge record if valid and remove it (single-use)."""
+    _purge_expired_login_challenges()
+    record = _login_challenges.pop(challenge, None)
+    if not record:
+        return None
+    if record.get("expires_at", 0) <= time.time():
+        return None
+    return record
 
 
 @app.get("/api/blockchain/refugee-login-status/{identity_id}")
 def refugee_login_status(identity_id: str):
-    """Return whether the refugee needs to set up a login code or just enter it."""
-    rid = (identity_id or "").strip()
-    if not rid:
-        raise HTTPException(status_code=400, detail="identity_id is required")
-
-    resolved = _resolve_refugee_identity(rid)
-    if not resolved:
+    """Backward-compatible: returns whether a custodial PIN needs to be set up."""
+    state = _identity_login_state(identity_id)
+    if not state:
         raise HTTPException(
             status_code=404,
             detail="Identity not found. Use the Refugee ID from registration (e.g. REF-2026-001).",
         )
-
-    canonical_id = resolved["identity_id"]
     return {
         "success": True,
         "data": {
-            "identity_id": canonical_id,
-            "requires_setup": _get_stored_login_code_hash(canonical_id) is None,
+            "identity_id": state["identity_id"],
+            "requires_setup": state.get("requires_pin_setup", False),
         },
     }
 
@@ -1136,64 +1312,221 @@ def refugee_login_status(identity_id: str):
 @app.post("/api/blockchain/verify-identity")
 def verify_identity(body: RefugeeLoginRequest):
     """
-    Verify refugee portal login id + 6-char private key (4 letters + 2 digits).
+    First-phase login probe.
 
-    First-time logins (no stored code) store the provided code; subsequent logins
-    must supply the same code.
+    Send the Refugee ID; the response describes which authentication flow the
+    frontend should render (PIN for custodial W1, Pera Wallet signature for
+    migrated W2). This endpoint NEVER authenticates the user — it only
+    discloses the identity state required to drive the UI.
+
+    The legacy `login_code` field is ignored here; the dedicated
+    `/api/blockchain/refugee-login-pin` endpoint handles PIN validation.
     """
-    identity_id = (body.identity_id or "").strip()
-    login_code = _normalize_login_code(body.login_code)
-    if not identity_id:
-        raise HTTPException(status_code=400, detail="identity_id is required")
-    if not _LOGIN_CODE_PATTERN.match(login_code or ""):
-        raise HTTPException(
-            status_code=400,
-            detail="Private key must be 4 letters followed by 2 digits (e.g. ABCD12).",
-        )
-
-    resolved = _resolve_refugee_identity(identity_id)
-    if not resolved:
+    state = _identity_login_state(body.identity_id)
+    if not state:
         raise HTTPException(
             status_code=404,
             detail="Identity not found. Use the Refugee ID from registration (e.g. REF-2026-001).",
         )
 
-    address = resolved["address"]
-    _require_algorand_address(address, "old_wallet")
+    if not state["is_active"]:
+        raise HTTPException(
+            status_code=403,
+            detail="This identity has been disabled. Contact an administrator for assistance.",
+        )
 
-    canonical_id = resolved["identity_id"]
+    linked = state.get("linked_wallet") or ""
+    has_linked_wallet = False
+    if linked:
+        try:
+            _require_algorand_address(linked, "linked_wallet")
+            has_linked_wallet = True
+        except HTTPException:
+            # An identity may be registered without a wallet yet (legacy rows).
+            # Return state so UI can show a friendly message instead of crashing.
+            has_linked_wallet = False
+
+    # SECURITY: do NOT leak the linked wallet address from the unauthenticated
+    # probe — disclosing it would aid impersonation and tracking. The backend
+    # alone enforces address matching at signature verification time.
+    return {
+        "success": True,
+        "data": {
+            "identity_id": state["identity_id"],
+            "name": state["name"],
+            "status": state["status"],
+            "wallet_type": state["wallet_type"],
+            "has_linked_wallet": has_linked_wallet,
+            "requires_pin_setup": state["requires_pin_setup"],
+            "is_migrated": state["status"] == "migrated",
+            "is_custodial": state["wallet_type"] == "custodial",
+            "auth_method": "wallet" if state["wallet_type"] == "pera" else "pin",
+        },
+    }
+
+
+@app.post("/api/blockchain/refugee-login-pin")
+def refugee_login_pin(body: RefugeePinLoginRequest):
+    """
+    Second-phase login for custodial (W1) identities.
+
+    Accepts a 6-character PIN (4 letters + 2 digits). On first login the PIN
+    is stored as a salted SHA-256 hash; subsequent logins verify the hash with
+    a constant-time comparison.
+
+    Migrated identities are rejected — they must use wallet-based login.
+    """
+    state = _identity_login_state(body.identity_id)
+    if not state:
+        raise HTTPException(status_code=404, detail="Identity not found.")
+
+    if not state["is_active"]:
+        raise HTTPException(status_code=403, detail="This identity has been disabled.")
+
+    if state["status"] == "migrated" or state["wallet_type"] != "custodial":
+        raise HTTPException(
+            status_code=403,
+            detail="This identity has migrated to a self-sovereign wallet. Use Pera Wallet to log in.",
+        )
+
+    pin = _normalize_login_code(body.pin)
+    if not _LOGIN_CODE_PATTERN.match(pin or ""):
+        raise HTTPException(
+            status_code=400,
+            detail="PIN must be 4 letters followed by 2 digits (e.g. ABCD12).",
+        )
+
+    canonical_id = state["identity_id"]
     stored_hash = _get_stored_login_code_hash(canonical_id)
     first_login = stored_hash is None
     if first_login:
-        _set_login_code_hash(canonical_id, login_code)
+        _set_login_code_hash(canonical_id, pin)
     else:
-        provided_hash = _hash_login_code(canonical_id, login_code)
+        provided_hash = _hash_login_code(canonical_id, pin)
         if not hmac.compare_digest(stored_hash, provided_hash):
-            raise HTTPException(status_code=401, detail="Incorrect private key for this Refugee ID.")
-
-    chain = _read_on_chain_identity_status(address)
-    profile = _build_refugee_profile_payload(resolved, chain)
-
-    if chain["on_chain"]:
-        mode = "on_chain"
-    elif resolved.get("provisioning_status") == "local_only":
-        mode = "local_only"
-    elif resolved.get("registry_row") or resolved.get("custodial_row"):
-        mode = "backend_registry"
-    else:
-        raise HTTPException(status_code=400, detail="Identity wallet is not registered on-chain")
+            raise HTTPException(status_code=401, detail="Invalid credentials.")
 
     return {
         "success": True,
         "data": {
             "identity_id": canonical_id,
-            "old_wallet": address,
-            "app_id": chain.get("app_id"),
-            "verification_mode": mode,
-            "status": profile["status"],
-            "walletType": profile["walletType"],
-            "wallet_type": profile["walletType"],
+            "linked_wallet": state["linked_wallet"],
+            "wallet_type": state["wallet_type"],
+            "status": state["status"],
             "first_login": first_login,
+        },
+    }
+
+
+@app.get("/api/blockchain/login-challenge")
+def login_challenge(identity_id: str):
+    """
+    Issue a one-time, short-lived challenge message for wallet-based login.
+
+    Only available for identities authenticated via Pera Wallet (self-sovereign
+    initial registration or post-migration W2). Custodial identities must use
+    PIN login.
+    """
+    state = _identity_login_state(identity_id)
+    if not state:
+        raise HTTPException(status_code=404, detail="Identity not found.")
+    if not state["is_active"]:
+        raise HTTPException(status_code=403, detail="This identity has been disabled.")
+    if state["wallet_type"] != "pera":
+        raise HTTPException(
+            status_code=400,
+            detail="Wallet login is only available for self-sovereign identities. Use your PIN to log in.",
+        )
+
+    linked = state.get("linked_wallet") or ""
+    _require_algorand_address(linked, "linked_wallet")
+    challenge, expires_at = _issue_login_challenge(state["identity_id"], linked)
+    # SECURITY: do not return the linked wallet address. The frontend connects
+    # whatever wallet the refugee opens in Pera, signs the challenge, and
+    # submits it to the backend. The backend is the sole authority that
+    # compares the signing address against the linked W2 wallet.
+    return {
+        "success": True,
+        "data": {
+            "identity_id": state["identity_id"],
+            "challenge": challenge,
+            "expires_at": expires_at,
+            "expires_in_seconds": _LOGIN_CHALLENGE_TTL_S,
+        },
+    }
+
+
+@app.post("/api/blockchain/verify-login-signature")
+def verify_login_signature(body: LoginVerifySignatureRequest):
+    """
+    Verify a Pera Wallet signature against a previously issued challenge.
+
+    Authenticates the refugee for W2 (self-sovereign) login by checking:
+      1) The challenge exists, is unexpired, and has not been reused.
+      2) The challenge was issued for this Refugee ID.
+      3) The signing address matches the wallet currently linked to the
+         identity (post-migration W2 or original Pera registration).
+      4) The Ed25519 signature is valid for the challenge bytes.
+
+    Any failure returns "Wallet verification failed." with HTTP 401.
+    """
+    state = _identity_login_state(body.identity_id)
+    if not state:
+        raise HTTPException(status_code=401, detail="Wallet verification failed.")
+    if not state["is_active"]:
+        raise HTTPException(status_code=403, detail="This identity has been disabled.")
+    if state["wallet_type"] != "pera":
+        raise HTTPException(status_code=403, detail="Wallet verification failed.")
+
+    challenge = (body.challenge or "").strip()
+    address = (body.address or "").strip()
+    signature_b64 = (body.signature or "").strip()
+    if not challenge or not address or not signature_b64:
+        raise HTTPException(status_code=401, detail="Wallet verification failed.")
+
+    _require_algorand_address(address, "address")
+
+    record = _consume_login_challenge(challenge)
+    if not record:
+        raise HTTPException(
+            status_code=401,
+            detail="Login challenge expired or already used. Request a new challenge and try again.",
+        )
+
+    if (record.get("identity_id") or "").strip() != state["identity_id"]:
+        raise HTTPException(status_code=401, detail="Wallet verification failed.")
+
+    expected_wallet = state["linked_wallet"]
+    try:
+        if _canonical_algo_address(address) != _canonical_algo_address(expected_wallet):
+            raise HTTPException(status_code=401, detail="Wallet verification failed.")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Wallet verification failed.") from e
+
+    # Pera signData returns raw Ed25519 bytes; the frontend sends standard base64.
+    verified = False
+    try:
+        verified = util.verify_bytes(challenge.encode(), signature_b64, address)
+    except Exception:
+        verified = False
+    if not verified:
+        try:
+            signature = base64.b64decode(signature_b64)
+            verified = util.verify_bytes(challenge.encode(), signature, address)
+        except Exception:
+            verified = False
+    if not verified:
+        raise HTTPException(status_code=401, detail="Wallet verification failed.")
+
+    return {
+        "success": True,
+        "data": {
+            "identity_id": state["identity_id"],
+            "linked_wallet": expected_wallet,
+            "wallet_type": state["wallet_type"],
+            "status": state["status"],
         },
     }
 
@@ -1220,6 +1553,40 @@ def get_identity(body: IdentityIdRequest):
     canonical_id = resolved["identity_id"]
     qr_payload = json.dumps({"identity_id": canonical_id, "old_wallet": address})
     profile = _build_refugee_profile_payload(resolved, chain)
+    login_state = _identity_login_state(canonical_id) or {}
+
+    linked_wallet = login_state.get("linked_wallet") or address
+    custodial_wallet = login_state.get("custodial_wallet") or address if login_state.get("wallet_type") == "custodial" else login_state.get("custodial_wallet")
+    migrated_wallet = login_state.get("migrated_wallet")
+
+    # Aid history for the authoritative wallet (W2 if migrated, W1 otherwise).
+    aid_claimed_types: list[str] = []
+    aid_history_wallet = linked_wallet or address
+    try:
+        client = _get_client()
+        types, _ = _on_chain_aid_types(client, aid_history_wallet)
+        aid_claimed_types = types
+    except Exception:
+        aid_claimed_types = []
+
+    # Migration history (timeline shown on the dashboard).
+    migration_history = []
+    for row in _migration_load():
+        rid_in_row = str(row.get("identity_id") or row.get("refugeeID") or "").upper()
+        if rid_in_row != canonical_id.upper():
+            continue
+        migration_history.append(
+            {
+                "id": row.get("id"),
+                "status": (row.get("status") or "").lower(),
+                "oldWallet": row.get("oldWallet"),
+                "newWallet": row.get("newWallet"),
+                "requestedAt": row.get("requestedAt") or row.get("requested_at"),
+                "approvedAt": row.get("approved_at"),
+                "rejectedAt": row.get("rejected_at"),
+            }
+        )
+    migration_history.sort(key=lambda r: r.get("requestedAt") or "", reverse=True)
 
     return {
         "success": True,
@@ -1228,9 +1595,13 @@ def get_identity(body: IdentityIdRequest):
             "name": profile["name"],
             "old_wallet": address,
             "walletAddress": profile.get("walletAddress") or address,
-            "status": profile["status"],
+            "linked_wallet": linked_wallet,
+            "custodial_wallet": custodial_wallet,
+            "migrated_wallet": migrated_wallet,
+            "status": login_state.get("status") or profile["status"],
+            "is_migrated": (login_state.get("status") == "migrated") or (profile["status"] == "migrated"),
             "walletType": profile["walletType"],
-            "wallet_type": profile["walletType"],
+            "wallet_type": login_state.get("wallet_type") or profile["walletType"],
             "created_at": resolved.get("created_at"),
             "app_id": chain.get("app_id"),
             "verification_mode": profile["verification_mode"],
@@ -1239,7 +1610,11 @@ def get_identity(body: IdentityIdRequest):
                 "amount_microalgos": chain["amount_microalgos"],
                 "opted_in": chain["opted_in"],
                 "local_state_exists": chain["local_state_exists"],
+                "on_chain": chain["on_chain"],
+                "migrated": chain["migrated"],
             },
+            "aid_claimed_types": aid_claimed_types,
+            "migration_history": migration_history,
             "qr_payload": qr_payload,
             "profile": profile,
             "authorized_consent_wallets": sorted(_authorized_refugee_wallets(canonical_id)),
